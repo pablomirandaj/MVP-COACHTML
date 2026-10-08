@@ -1,0 +1,133 @@
+# Catálogo de roles y matriz de idoneidad — fcs catalog 1.0.0
+# Las puntuaciones son enteros 0–100. Ver docs/15 §7.
+catalog_version: 1.0.0
+roles:
+  TAKER:
+    label: Lanzador
+    phases: [SP_ATT]
+    movements: []
+    suitability:
+      - { factor: setpiece_role, value: "corner_taker_{side}", weight: 60 }
+      - { factor: tag, value: set_piece_specialist, weight: 30 }
+      - { factor: foot_matches_requested_swing, weight: 10 }
+  PRIMARY_TARGET:
+    label: Rematador principal
+    phases: [SP_ATT]
+    movements: [ATTACK_NEAR_POST, ATTACK_FAR_POST, ATTACK_PEN_SPOT, ATTACK_GA_CENTER, CROSS_RUN, LATE_ARRIVAL, RUN_IN_BEHIND]
+    suitability:
+      - { factor: tag, value: aerial, weight: 40 }
+      - { factor: height_norm, weight: 40 }
+      - { factor: setpiece_role, value: primary_target, weight: 20 }
+  SECONDARY_TARGET:
+    label: Rematador secundario
+    phases: [SP_ATT]
+    movements: [ATTACK_NEAR_POST, ATTACK_FAR_POST, ATTACK_PEN_SPOT, ATTACK_GA_CENTER, CROSS_RUN, LATE_ARRIVAL]
+    suitability:
+      - { factor: tag, value: aerial, weight: 30 }
+      - { factor: height_norm, weight: 30 }
+      - { factor: tag, value: finishing, weight: 20 }
+      - { factor: position_in, value: [ST, CB], weight: 20 }
+  BLOCKER:
+    label: Bloqueador (pantalla)
+    phases: [SP_ATT]
+    movements: [SCREEN]
+    suitability:
+      - { factor: tag, value: physical, weight: 40 }
+      - { factor: height_norm, weight: 30 }
+      - { factor: position_in, value: [CB, DM], weight: 30 }
+  DECOY:
+    label: Jugador de arrastre
+    phases: [SP_ATT]
+    movements: [DECOY_RUN]
+    suitability:
+      - { factor: tag, value: pace, weight: 40 }
+      - { factor: position_in, value: [ST, RW, LW], weight: 30 }
+      - { factor: tag, value: aerial, weight: 30 }
+  SHORT_RECEIVER:
+    label: Receptor de saque corto
+    phases: [SP_ATT]
+    movements: [SHORT_OPTION]
+    suitability:
+      - { factor: tag, value: technical, weight: 50 }
+      - { factor: position_in, value: [RW, LW, AM, CM], weight: 50 }
+  REBOUND:
+    label: Rechace
+    phases: [SP_ATT]
+    movements: [HOLD, LATE_ARRIVAL]
+    suitability:
+      - { factor: tag, value: long_shot, weight: 50 }
+      - { factor: position_in, value: [CM, AM, DM], weight: 50 }
+  REST_DEFENDER:
+    label: Vigilancia
+    phases: [SP_ATT]
+    movements: [HOLD]
+    suitability:
+      - { factor: position_in, value: [CB, RB, LB, DM], weight: 50 }
+      - { factor: tag, value: pace, weight: 50 }
+  GK_SCREEN:
+    label: Molestar al portero
+    phases: [SP_ATT]
+    movements: [HOLD]
+    suitability:
+      - { factor: tag, value: physical, weight: 60 }
+      - { factor: height_norm, weight: 40 }
+  COVER:
+    label: Cobertura
+    phases: [SP_ATT, SP_DEF]
+    movements: [HOLD]
+    suitability:
+      - { factor: position_in, value: [DM, CM, CB], weight: 100 }
+  ZONAL_DEFENDER:
+    label: Defensor en zona
+    phases: [SP_DEF]
+    movements: [HOLD]
+    suitability:
+      - { factor: tag, value: aerial, weight: 50 }
+      - { factor: height_norm, weight: 50 }
+  MAN_MARKER:
+    label: Marcador individual
+    phases: [SP_DEF]
+    movements: [FOLLOW]
+    suitability:
+      - { factor: tag, value: aerial, weight: 40 }
+      - { factor: position_in, value: [CB, DM, RB, LB], weight: 30 }
+      - { factor: height_norm, weight: 30 }
+  POST_GUARD:
+    label: Hombre de palo
+    phases: [SP_DEF]
+    movements: [HOLD]
+    suitability:
+      - { factor: position_in, value: [RB, LB, CM], weight: 100 }
+  EDGE_GUARD:
+    label: Defensor de frontal
+    phases: [SP_DEF]
+    movements: [HOLD]
+    suitability:
+      - { factor: position_in, value: [CM, AM, DM], weight: 100 }
+  COUNTER_OUTLET:
+    label: Salida a la contra
+    phases: [SP_DEF]
+    movements: [HOLD]
+    suitability:
+      - { factor: tag, value: pace, weight: 60 }
+      - { factor: position_in, value: [ST, RW, LW], weight: 40 }
+  WALL:
+    label: Barrera
+    phases: [SP_DEF]
+    movements: [HOLD]
+    suitability:
+      - { factor: height_norm, weight: 60 }
+      - { factor: tag, value: physical, weight: 40 }
+  GOALKEEPER:
+    label: Portero
+    phases: [ALL]
+    movements: [HOLD]
+    suitability:
+      - { factor: position_in, value: [GK], weight: 100 }
+height_norm:
+  # altura -> 0..100 ; ausente -> 50
+  min_cm: 165
+  max_cm: 195
+  missing: 50
+tie_break: [score_desc, shirt_number_asc, player_id_asc]
+team_preference_weight: 1000

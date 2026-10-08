@@ -1,0 +1,95 @@
+{
+  "schema": "fcs.play/1",
+  "engine_version": "1.0.0",
+  "catalog_version": "1.0.0",
+  "template": "CRN_ATT_STANDARD",
+  "type": "CORNER_ATT",
+  "side": "LEFT",
+  "pitch": { "length_m": 105, "width_m": 68 },
+  "delivery": {
+    "taker_actor": "a1",
+    "ball_start": { "u": 0.9966, "v": 0.0052 },
+    "swing": "INSWING",
+    "trajectory": "DRIVEN",
+    "technique": "INSIDE_FOOT",
+    "target_zone": "Z_FAR_POST",
+    "target_point": { "u": 0.9667, "v": 0.5809 },
+    "curve": 0.18,
+    "kick_t": 0,
+    "arrival_t": 1.84,
+    "provenance": { "swing": "EXPLICIT", "trajectory": "RULE:TPL-CRN_ATT_STANDARD", "target_zone": "RULE:BALL-TGT-01", "ball_start": "RULE:CRN-POS-01" }
+  },
+  "actors": [
+    { "id": "a1",  "team": "OWN", "player_id": "pl_7",  "label": "7",  "role": "TAKER",            "start": { "u": 1.0086, "v": -0.0176 }, "provenance": { "role": "EXPLICIT", "player_id": "EXPLICIT", "start": "RULE:CRN-POS-01" } },
+    { "id": "a2",  "team": "OWN", "player_id": "pl_4",  "label": "4",  "role": "BLOCKER",          "action_zone": "Z_FAR_POST", "group": "g1", "start": { "u": 0.8810, "v": 0.5588 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a3",  "team": "OWN", "player_id": "pl_5",  "label": "5",  "role": "PRIMARY_TARGET",   "action_zone": "Z_FAR_POST", "group": "g1", "start": { "u": 0.8762, "v": 0.5294 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a4",  "team": "OWN", "player_id": "pl_9",  "label": "9",  "role": "SECONDARY_TARGET", "action_zone": "Z_NEAR_POST", "start": { "u": 0.8714, "v": 0.5882 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a5",  "team": "OWN", "player_id": "pl_10", "label": "10", "role": "SECONDARY_TARGET", "action_zone": "Z_PEN_SPOT", "start": { "u": 0.8190, "v": 0.5000 }, "provenance": { "role": "RULE:TPL-CRN_ATT_STANDARD", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a6",  "team": "OWN", "player_id": "pl_17", "label": "17", "role": "DECOY",            "action_zone": "Z_NEAR_POST", "start": { "u": 0.8857, "v": 0.6029 }, "provenance": { "role": "RULE:TPL-CRN_ATT_STANDARD", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a7",  "team": "OWN", "player_id": "pl_6",  "label": "6",  "role": "REBOUND",          "action_zone": "Z_REBOUND", "start": { "u": 0.8238, "v": 0.4412 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a8",  "team": "OWN", "player_id": "pl_8",  "label": "8",  "role": "REBOUND",          "action_zone": "Z_REBOUND", "start": { "u": 0.8238, "v": 0.5588 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:ZONE-ANCHOR" } },
+    { "id": "a9",  "team": "OWN", "player_id": "pl_2",  "label": "2",  "role": "REST_DEFENDER",    "action_zone": "Z_REST", "start": { "u": 0.6190, "v": 0.3529 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:CRN-POS-07" } },
+    { "id": "a10", "team": "OWN", "player_id": "pl_11", "label": "11", "role": "REST_DEFENDER",    "action_zone": "Z_REST", "start": { "u": 0.6190, "v": 0.6471 }, "provenance": { "role": "EXPLICIT", "player_id": "RULE:ASG-01", "start": "RULE:CRN-POS-07" } },
+
+    { "id": "o1",  "team": "OPP", "label": "P",  "role": "GOALKEEPER",     "start": { "u": 0.9924, "v": 0.5000 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o2",  "team": "OPP", "label": "Z1", "role": "ZONAL_DEFENDER", "start": { "u": 0.9857, "v": 0.4412 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o3",  "team": "OPP", "label": "Z2", "role": "ZONAL_DEFENDER", "start": { "u": 0.9857, "v": 0.5000 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o4",  "team": "OPP", "label": "Z3", "role": "ZONAL_DEFENDER", "start": { "u": 0.9857, "v": 0.5588 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o5",  "team": "OPP", "label": "Z4", "role": "ZONAL_DEFENDER", "start": { "u": 0.9571, "v": 0.4706 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o6",  "team": "OPP", "label": "Z5", "role": "ZONAL_DEFENDER", "start": { "u": 0.9571, "v": 0.5368 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o7",  "team": "OPP", "label": "Z6", "role": "ZONAL_DEFENDER", "start": { "u": 0.9333, "v": 0.3824 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o8",  "team": "OPP", "label": "M1", "role": "MAN_MARKER",     "start": { "u": 0.8857, "v": 0.5294 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o9",  "team": "OPP", "label": "M2", "role": "MAN_MARKER",     "start": { "u": 0.8810, "v": 0.5882 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o10", "team": "OPP", "label": "M3", "role": "MAN_MARKER",     "start": { "u": 0.8286, "v": 0.5000 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } },
+    { "id": "o11", "team": "OPP", "label": "C",  "role": "COUNTER_OUTLET", "start": { "u": 0.6667, "v": 0.5000 }, "provenance": { "start": "RULE:TPL-OPP_CORNER_DEF_MIXED" } }
+  ],
+  "movements": [
+    { "id": "m2", "actor": "a2", "type": "SCREEN", "shape": "STRAIGHT", "speed_mps": 4.0,
+      "path": [{ "u": 0.8810, "v": 0.5588 }, { "u": 0.8963, "v": 0.5362 }],
+      "anchor": { "kind": "ARRIVES_AT", "event": "MOVEMENT_START", "ref": "m3", "offset_s": -0.3 },
+      "t_start": -0.47, "t_end": 0.09, "depends_on": [],
+      "provenance": { "type": "EXPLICIT", "path": "RULE:CRN-POS-05", "timing": "RULE:SEQ-SCREEN-01" } },
+    { "id": "m3", "actor": "a3", "type": "ATTACK_FAR_POST", "shape": "STRAIGHT", "speed_mps": 7.0,
+      "path": [{ "u": 0.8762, "v": 0.5294 }, { "u": 0.9667, "v": 0.5809 }],
+      "anchor": { "kind": "ARRIVES_AT", "event": "BALL_ARRIVAL", "offset_s": 0 },
+      "t_start": 0.39, "t_end": 1.84, "depends_on": ["m2"],
+      "provenance": { "type": "EXPLICIT", "timing": "RULE:SCH-SYNC-01" } },
+    { "id": "m4", "actor": "a4", "type": "ATTACK_NEAR_POST", "shape": "CURVED_IN", "speed_mps": 7.0,
+      "path": [{ "u": 0.8714, "v": 0.5882 }, { "u": 0.9667, "v": 0.4485 }],
+      "anchor": { "kind": "ARRIVES_AT", "event": "BALL_ARRIVAL", "offset_s": 0 },
+      "t_start": -0.13, "t_end": 1.84, "depends_on": [],
+      "provenance": { "type": "EXPLICIT", "timing": "RULE:MOV-ATTACK_NEAR_POST" } },
+    { "id": "m5", "actor": "a5", "type": "ATTACK_PEN_SPOT", "shape": "STRAIGHT", "speed_mps": 7.0,
+      "path": [{ "u": 0.8190, "v": 0.5000 }, { "u": 0.8952, "v": 0.5000 }],
+      "anchor": { "kind": "ARRIVES_AT", "event": "BALL_ARRIVAL", "offset_s": 0 },
+      "t_start": 0.70, "t_end": 1.84, "depends_on": [],
+      "provenance": { "type": "RULE:TPL-CRN_ATT_STANDARD", "timing": "RULE:MOV-ATTACK_PEN_SPOT" } },
+    { "id": "m6", "actor": "a6", "type": "DECOY_RUN", "shape": "STRAIGHT", "speed_mps": 6.0,
+      "path": [{ "u": 0.8857, "v": 0.6029 }, { "u": 0.9524, "v": 0.4265 }],
+      "anchor": { "kind": "STARTS_AT", "event": "KICK", "offset_s": -0.6 },
+      "t_start": -0.60, "t_end": 1.71, "depends_on": [],
+      "provenance": { "type": "RULE:TPL-CRN_ATT_STANDARD" } },
+    { "id": "m7",  "actor": "a7",  "type": "HOLD", "path": [{ "u": 0.8238, "v": 0.4412 }], "t_start": -2.5, "t_end": 2.84, "provenance": { "type": "EXPLICIT" } },
+    { "id": "m8",  "actor": "a8",  "type": "HOLD", "path": [{ "u": 0.8238, "v": 0.5588 }], "t_start": -2.5, "t_end": 2.84, "provenance": { "type": "EXPLICIT" } },
+    { "id": "m9",  "actor": "a9",  "type": "HOLD", "path": [{ "u": 0.6190, "v": 0.3529 }], "t_start": -2.5, "t_end": 2.84, "provenance": { "type": "EXPLICIT" } },
+    { "id": "m10", "actor": "a10", "type": "HOLD", "path": [{ "u": 0.6190, "v": 0.6471 }], "t_start": -2.5, "t_end": 2.84, "provenance": { "type": "EXPLICIT" } },
+    { "id": "mo8", "actor": "o8", "type": "FOLLOW", "path": [{ "u": 0.8857, "v": 0.5294 }], "t_start": 0.54, "t_end": 1.84, "depends_on": ["m3"], "provenance": { "type": "RULE:TPL-OPP_CORNER_DEF_MIXED" } }
+  ],
+  "relations": [
+    { "type": "SCREENS", "blocker": "a2", "defender": "o8", "beneficiary": "a3", "strict_legal": true, "origin": "EXPLICIT" },
+    { "type": "MARKS", "a": "o8", "b": "a3", "origin": "RULE:TPL-OPP_CORNER_DEF_MIXED" },
+    { "type": "MARKS", "a": "o9", "b": "a4", "origin": "RULE:TPL-OPP_CORNER_DEF_MIXED" },
+    { "type": "MARKS", "a": "o10", "b": "a5", "origin": "RULE:TPL-OPP_CORNER_DEF_MIXED" }
+  ],
+  "constraints": [
+    { "actor": "a9", "rule": "NO_JOIN_ATTACK", "origin": "RULE:TPL-CRN_ATT_STANDARD" },
+    { "actor": "a10", "rule": "NO_JOIN_ATTACK", "origin": "RULE:TPL-CRN_ATT_STANDARD" }
+  ],
+  "notes": [
+    { "id": "n1", "text": "Bloqueo sin contacto: llegar parado antes de que Mateo arranque.", "origin": "RULE:LAW-IMP-01", "anchor_actor": "a2" }
+  ],
+  "diagnostics": [
+    { "rule_id": "BALL-TGT-01", "class": "TACTICAL", "severity": "info", "message": "Destino del balón propuesto: segundo palo (zona del rematador principal)." },
+    { "rule_id": "LAW-OFF-INFO", "class": "LAW", "severity": "info", "message": "No hay fuera de juego al recibir directamente de córner." }
+  ]
+}

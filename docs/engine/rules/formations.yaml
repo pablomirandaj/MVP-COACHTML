@@ -1,0 +1,103 @@
+# Formaciones predefinidas — coordenadas normalizadas (u, v), marco de ataque, bloque medio.
+# Orden de cada línea: izquierda -> derecha (usado por order_hint SPOKEN_LEFT_TO_RIGHT).
+catalog_version: 1.0.0
+formations:
+  F_433:
+    label: "4-3-3"
+    voice: ["4 3 3", "cuatro tres tres"]
+    slots:
+      - { slot: GK,   u: 0.05, v: 0.50 }
+      - { slot: LB,   u: 0.24, v: 0.12 }
+      - { slot: CB_L, u: 0.21, v: 0.37 }
+      - { slot: CB_R, u: 0.21, v: 0.63 }
+      - { slot: RB,   u: 0.24, v: 0.88 }
+      - { slot: CM_L, u: 0.42, v: 0.30 }
+      - { slot: DM,   u: 0.36, v: 0.50 }
+      - { slot: CM_R, u: 0.42, v: 0.70 }
+      - { slot: LW,   u: 0.62, v: 0.14 }
+      - { slot: ST,   u: 0.66, v: 0.50 }
+      - { slot: RW,   u: 0.62, v: 0.86 }
+  F_442:
+    label: "4-4-2"
+    voice: ["4 4 2", "cuatro cuatro dos"]
+    slots:
+      - { slot: GK,   u: 0.05, v: 0.50 }
+      - { slot: LB,   u: 0.24, v: 0.12 }
+      - { slot: CB_L, u: 0.21, v: 0.37 }
+      - { slot: CB_R, u: 0.21, v: 0.63 }
+      - { slot: RB,   u: 0.24, v: 0.88 }
+      - { slot: LM,   u: 0.44, v: 0.12 }
+      - { slot: CM_L, u: 0.40, v: 0.38 }
+      - { slot: CM_R, u: 0.40, v: 0.62 }
+      - { slot: RM,   u: 0.44, v: 0.88 }
+      - { slot: ST_L, u: 0.63, v: 0.40 }
+      - { slot: ST_R, u: 0.63, v: 0.60 }
+  F_4231:
+    label: "4-2-3-1"
+    voice: ["4 2 3 1", "cuatro dos tres uno"]
+    slots:
+      - { slot: GK,   u: 0.05, v: 0.50 }
+      - { slot: LB,   u: 0.24, v: 0.12 }
+      - { slot: CB_L, u: 0.21, v: 0.37 }
+      - { slot: CB_R, u: 0.21, v: 0.63 }
+      - { slot: RB,   u: 0.24, v: 0.88 }
+      - { slot: DM_L, u: 0.36, v: 0.40 }
+      - { slot: DM_R, u: 0.36, v: 0.60 }
+      - { slot: LW,   u: 0.54, v: 0.15 }
+      - { slot: AM,   u: 0.52, v: 0.50 }
+      - { slot: RW,   u: 0.54, v: 0.85 }
+      - { slot: ST,   u: 0.66, v: 0.50 }
+  F_352:
+    label: "3-5-2"
+    voice: ["3 5 2", "tres cinco dos"]
+    slots:
+      - { slot: GK,   u: 0.05, v: 0.50 }
+      - { slot: CB_L, u: 0.21, v: 0.30 }
+      - { slot: CB_C, u: 0.19, v: 0.50 }
+      - { slot: CB_R, u: 0.21, v: 0.70 }
+      - { slot: LWB,  u: 0.40, v: 0.08 }
+      - { slot: CM_L, u: 0.42, v: 0.33 }
+      - { slot: DM,   u: 0.36, v: 0.50 }
+      - { slot: CM_R, u: 0.42, v: 0.67 }
+      - { slot: RWB,  u: 0.40, v: 0.92 }
+      - { slot: ST_L, u: 0.63, v: 0.40 }
+      - { slot: ST_R, u: 0.63, v: 0.60 }
+  F_532:
+    label: "5-3-2"
+    voice: ["5 3 2", "cinco tres dos"]
+    slots:
+      - { slot: GK,   u: 0.05, v: 0.50 }
+      - { slot: LWB,  u: 0.25, v: 0.08 }
+      - { slot: CB_L, u: 0.20, v: 0.30 }
+      - { slot: CB_C, u: 0.18, v: 0.50 }
+      - { slot: CB_R, u: 0.20, v: 0.70 }
+      - { slot: RWB,  u: 0.25, v: 0.92 }
+      - { slot: CM_L, u: 0.40, v: 0.30 }
+      - { slot: CM_C, u: 0.38, v: 0.50 }
+      - { slot: CM_R, u: 0.40, v: 0.70 }
+      - { slot: ST_L, u: 0.62, v: 0.40 }
+      - { slot: ST_R, u: 0.62, v: 0.60 }
+  F_4141:
+    label: "4-1-4-1"
+    voice: ["4 1 4 1", "cuatro uno cuatro uno"]
+    slots:
+      - { slot: GK,   u: 0.05, v: 0.50 }
+      - { slot: LB,   u: 0.24, v: 0.12 }
+      - { slot: CB_L, u: 0.21, v: 0.37 }
+      - { slot: CB_R, u: 0.21, v: 0.63 }
+      - { slot: RB,   u: 0.24, v: 0.88 }
+      - { slot: DM,   u: 0.33, v: 0.50 }
+      - { slot: LM,   u: 0.47, v: 0.12 }
+      - { slot: CM_L, u: 0.45, v: 0.38 }
+      - { slot: CM_R, u: 0.45, v: 0.62 }
+      - { slot: RM,   u: 0.47, v: 0.88 }
+      - { slot: ST,   u: 0.65, v: 0.50 }
+# Resto del catálogo MVP (misma estructura): F_4411, F_343, F_4312, F_541.
+groups:
+  CENTER_BACKS: ["CB_*"]
+  FULLBACKS: [LB, RB, LWB, RWB]
+  WINGERS: [LW, RW]          # en formaciones sin LW/RW se ofrecen LM/RM con aclaración AMB-OP
+  STRIKERS: ["ST*", SS]
+  MID: ["DM*", "CM*", LM, RM, AM, LWB_in_352, RWB_in_352]
+  DEF: [LB, RB, LWB, RWB, "CB_*"]
+  ATT: [LW, RW, "ST*", SS]

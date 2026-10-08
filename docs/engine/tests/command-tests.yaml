@@ -1,0 +1,337 @@
+# Casos de prueba deterministas — @fcs/nlu + @fcs/engine
+# Estado: DISEÑADOS (no ejecutados). Cada caso: entrada de texto (como si viniera del STT),
+# contexto, IR esperado y aserciones sobre el documento resultante.
+# Ejecución prevista: vitest + snapshot por hash canónico (docs/22 §4).
+suite_version: 1.0.0
+
+fixtures:
+  team: { id: team_1, name: "CD Ejemplo", pitch: { length_m: 105, width_m: 68 } }
+  roster:
+    - { id: pl_1,  n: 1,  name: Pablo,  surname: Ruiz,    pos: GK,  foot: RIGHT, status: AVAILABLE }
+    - { id: pl_2,  n: 2,  name: Martín, surname: López,   pos: RB,  foot: RIGHT, tags: [pace], status: AVAILABLE }
+    - { id: pl_4,  n: 4,  name: Diego,  surname: Sanz,    pos: CB,  foot: RIGHT, height: 188, tags: [physical, aerial], status: AVAILABLE }
+    - { id: pl_5,  n: 5,  name: Mateo,  surname: Gil,     pos: CB,  foot: LEFT,  height: 185, tags: [aerial], setpiece: [primary_target], status: AVAILABLE }
+    - { id: pl_6,  n: 6,  name: Sergio, surname: Vidal,   pos: DM,  foot: RIGHT, height: 178, tags: [long_shot], status: AVAILABLE }
+    - { id: pl_7,  n: 7,  name: Lucas,  surname: Pérez,   pos: RW,  secondary: [AM], foot: LEFT, tags: [set_piece_specialist], setpiece: [corner_taker_right], status: AVAILABLE }
+    - { id: pl_8,  n: 8,  name: Adrián, surname: Moreno,  pos: CM,  foot: RIGHT, height: 174, tags: [long_shot], status: AVAILABLE }
+    - { id: pl_9,  n: 9,  name: Álvaro, surname: Castro,  pos: ST,  foot: RIGHT, height: 183, tags: [aerial, finishing], status: AVAILABLE }
+    - { id: pl_10, n: 10, name: Marcos, surname: Gómez,   pos: CM,  secondary: [AM], foot: LEFT, height: 170, tags: [technical], status: AVAILABLE }
+    - { id: pl_11, n: 11, name: Hugo,   surname: Díaz,    pos: LW,  foot: RIGHT, height: 172, tags: [pace], status: AVAILABLE }
+    - { id: pl_13, n: 13, name: Iker,   surname: Romero,  pos: GK,  foot: RIGHT, status: AVAILABLE }
+    - { id: pl_14, n: 14, name: Álvaro, surname: Ruiz,    pos: CM,  foot: RIGHT, status: AVAILABLE }
+    - { id: pl_15, n: 15, name: Raúl,   surname: Ortega,  pos: CB,  foot: RIGHT, height: 186, tags: [physical], status: INJURED }
+    - { id: pl_16, n: 16, name: Dani,   surname: Prieto,  pos: LB,  foot: LEFT, status: AVAILABLE }
+    - { id: pl_17, n: 17, name: Pedro,  surname: Navarro, pos: RW,  foot: LEFT, height: 169, tags: [pace, finishing], status: AVAILABLE }
+  saved_lineups:
+    - { id: lu_31, label: "vs Sporting B (J7)", opponent: "Sporting B", formation: F_4231, date: 2026-03-14 }
+  matches:
+    - { id: m_12, date: 2026-10-11, weekday: SUNDAY, opponent: "UD Rival" }
+  now: 2026-10-08T10:00:00+02:00   # jueves
+
+cases:
+  # ======================= ALINEACIÓN =======================
+  - id: T-LU-01
+    title: Alineación completa por voz (ejemplo del enunciado) con homónimo
+    ctx: { screen: MATCHDAY, match_id: m_12 }
+    input: "Para el domingo vamos a jugar 4-3-3. En portería Pablo, centrales Mateo y Diego, laterales Lucas y Martín. En el medio Sergio, Adrián y Marcos. Arriba Hugo, Álvaro y Pedro."
+    expect_ir:
+      - { op: lineup.set_formation, formation: F_433 }
+      - { op: lineup.link_match, match_ref: { match_id: m_12 } }
+      - { op: lineup.assign, player: pl_1, slot: GK }
+      - { op: lineup.assign_group, group: CENTER_BACKS, players: [pl_5, pl_4], order_hint: POSITION_FIT }
+      - { op: lineup.assign_group, group: FULLBACKS, players: [pl_7, pl_2], order_hint: POSITION_FIT }
+      - { op: lineup.assign_group, group: MID, players: [pl_6, pl_8, pl_10], order_hint: POSITION_FIT }
+      - { op: lineup.assign_group, group: ATT, players: [pl_11, "?", pl_17], order_hint: POSITION_FIT }
+    expect_clarifications:
+      - { code: AMB-ENTITY, span_text: "Álvaro", options: ["Álvaro Castro (9) — delantero", "Álvaro Ruiz (14) — centrocampista"], preselected: 0 }
+    expect_doc_after_option_0:
+      slots: { GK: pl_1, CB_L: pl_5, CB_R: pl_4, LB: pl_7, RB: pl_2, CM_L: pl_10, DM: pl_6, CM_R: pl_8, LW: pl_11, ST: pl_9, RW: pl_17 }
+      slot_provenance: "INFERRED (docs/18 §4) para todas las ranuras dentro de grupo; EXPLICIT para GK"
+      diagnostics_include: [LINEUP-05]   # Lucas (RW) no tiene LB entre sus posiciones -> info
+    notes: "Asignación dentro de grupo por ajuste de posición (docs/18 §4): Sergio (MCD) -> DM; Marcos zurdo -> CM_L; Adrián diestro -> CM_R; Mateo zurdo -> CB_L; Lucas zurdo -> LB; empates -> orden hablado izq->der."
+
+  - id: T-LU-02
+    title: Sustitución simple
+    given: { lineup_from: T-LU-01 }
+    input: "Cambia a Lucas por Dani"
+    expect_ir: [{ op: lineup.substitute, out: pl_7, in: pl_16 }]
+    expect_doc: { slots: { LB: pl_16 }, bench_contains: [pl_7] }
+
+  - id: T-LU-03
+    title: "«Cambia a Lucas por Mateo» con ambos titulares -> aclaración, sin cambio"
+    given: { lineup_from: T-LU-01 }
+    input: "Cambia a Lucas por Mateo"
+    expect_ir: []
+    expect_clarifications: [{ code: AMB-OP, options: ["Intercambiar posiciones de Lucas y Mateo", "Cancelar"] }]
+    expect_doc_unchanged: true
+
+  - id: T-LU-04
+    title: Adelantar extremos (intensidad cualitativa)
+    given: { lineup_from: T-LU-01 }
+    input: "Adelanta un poco los extremos"
+    expect_ir: [{ op: lineup.shift_group, group: WINGERS, du_m: 3.0, confidence: { du_m: DEFAULTED } }]
+    expect_doc: { LW.u: 0.6486, RW.u: 0.6486 }       # 0.62 + 3/105
+    expect_unchanged_slots: [GK, LB, CB_L, CB_R, RB, CM_L, DM, CM_R, ST]
+
+  - id: T-LU-05
+    title: Juntar líneas
+    given: { lineup_from: T-LU-01 }
+    input: "Junta más las líneas"
+    expect_ir: [{ op: lineup.compact, axis: U, factor: 0.85 }]
+    expect_doc: { rule: "distancia DEF-ATT reducida 15% alrededor del centroide de jugadores de campo; GK sin cambios", min_line_gap_m: 6 }
+
+  - id: T-LU-06
+    title: Cargar alineación guardada contra un rival
+    input: "Utiliza la formación que guardamos contra el Sporting B"
+    expect_ir: [{ op: lineup.load, query: { opponent_name: "Sporting B" } }]
+    expect_doc: { source_lineup: lu_31, formation: F_4231 }
+
+  - id: T-LU-07
+    title: Guardar como alternativa
+    given: { lineup_from: T-LU-01 }
+    input: "Guarda esta alineación como alternativa ofensiva"
+    expect_ir: [{ op: lineup.save, label: "alternativa ofensiva", tags: [ofensiva] }]
+
+  - id: T-LU-08
+    title: Jugador lesionado en el once
+    input: "Raúl de central"
+    ctx: { screen: LINEUP_EDITOR, formation: F_433 }
+    expect_ir: [{ op: lineup.assign, player: pl_15, slot: CB_L }]
+    expect_diagnostics: [{ rule_id: LINEUP-04, severity: warning }]
+
+  - id: T-LU-09
+    title: Jugador duplicado
+    given: { lineup_from: T-LU-01 }
+    input: "Pon a Diego de lateral derecho"
+    expect_clarifications: [{ code: AMB-OP, question_contains: "Diego ya es central", options: ["Mover a Diego a lateral derecho (Martín al banquillo)", "Intercambiar Diego y Martín", "Cancelar"] }]
+
+  - id: T-LU-10
+    title: Nombre inexistente
+    input: "En portería Pedrito"
+    expect_clarifications: [{ code: AMB-UNKNOWN-ENTITY, suggestions: [pl_17] , options_contain: "Añadir jugador" }]
+
+  - id: T-LU-11
+    title: Coincidencia fonética (STT escribe 'Matheo')
+    ctx: { screen: LINEUP_EDITOR, formation: F_433, empty: true }
+    input: "Matheo de central"
+    expect_ir: [{ op: lineup.assign, player: pl_5, slot: CB_L, confidence: { player: FUZZY, slot: INFERRED } }]
+    expect_requires_confirmation: true
+
+  - id: T-LU-12
+    title: Formación sin extremos + "los extremos"
+    given: { formation: F_442 }
+    input: "Adelanta los extremos"
+    expect_clarifications: [{ code: AMB-OP, question_contains: "no hay extremos", options: ["Adelantar a los medios de banda (MI y MD)", "Cancelar"] }]
+
+  # ======================= CÓRNER: CREACIÓN =======================
+  - id: T-CRN-01
+    title: Córner del enunciado (6.3) — interpretación
+    ctx: { screen: PLAY_EDITOR, lineup: T-LU-01 }
+    input: "Créame un córner ofensivo desde la izquierda. Lo saca Lucas, que es diestro, para ponerla cerrada. Quiero dos jugadores en el segundo palo. Uno bloquea legalmente al defensor que sigue al otro, para liberar su carrera. Otro jugador entra al primer palo, dos esperan el rechace y quiero mantener dos jugadores atrás."
+    expect_ir:
+      - { op: play.create, type: CORNER_ATT, side: LEFT }
+      - { op: play.set_taker, player: pl_7 }
+      - { op: assert, player: pl_7, attribute: dominant_foot, value: RIGHT }
+      - { op: play.set_delivery, swing: INSWING }
+      - { op: play.add_roles, count: 2, zone: Z_FAR_POST, group_id: g1 }
+      - { op: play.set_role, target: { group: g1, index: 0 }, role: BLOCKER, strict_legal: true }
+      - { op: play.set_role, target: { group: g1, index: 1 }, role: PRIMARY_TARGET }
+      - { op: play.relation, type: SCREENS, blocker: { group: g1, index: 0 }, defender: { marker_of: { group: g1, index: 1 } }, beneficiary: { group: g1, index: 1 } }
+      - { op: play.add_roles, count: 1, role: SECONDARY_TARGET, movement: ATTACK_NEAR_POST }
+      - { op: play.add_roles, count: 2, role: REBOUND }
+      - { op: play.add_roles, count: 2, role: REST_DEFENDER }
+    expect_clarifications:
+      - { code: AMB-CONFLICT-FACT, rule: TECH-FOOT-CONFLICT, options: ["Actualizar ficha: Lucas es diestro", "Mantener ficha (zurdo) y golpear de exterior", "Elegir otro lanzador", "Cancelar"] }
+
+  - id: T-CRN-02
+    title: Córner 6.3 — documento tras elegir "Actualizar ficha"
+    given: { from: T-CRN-01, choose_option: 0 }
+    expect_doc_equals: docs/engine/examples/corner-left-inswing-screen.play.json
+    expect_side_effects: [{ audit: "player.update dominant_foot LEFT->RIGHT pl_7 by coach via clarification" }]
+    assertions:
+      - "count(actors where team=OWN) == 10"
+      - "actor(role=BLOCKER).player_id == pl_4"
+      - "actor(role=PRIMARY_TARGET).player_id == pl_5"
+      - "delivery.target_zone == Z_FAR_POST and provenance.target_zone == RULE:BALL-TGT-01"
+      - "actors with provenance.role starting 'RULE:' == [a5, a6]"
+      - "no diagnostics with severity in [error, warning]"
+      - "movement(m2).t_end <= movement(m3).t_start - 0.3"
+
+  - id: T-CRN-03
+    title: Simetría — mismo córner desde la derecha
+    input: "Créame un córner ofensivo desde la derecha. Lo saca Lucas para ponerla cerrada. Quiero dos jugadores en el segundo palo. Uno bloquea al defensor que sigue al otro. Otro entra al primer palo, dos esperan el rechace y dos atrás."
+    expect_property: "for all OWN actors: right.start.v == round4(1 - left.start.v) and right.start.u == left.start.u (with T-CRN-02 as left)"
+    expect_diagnostics: []   # Lucas zurdo desde la derecha -> cerrado natural, sin conflicto
+
+  - id: T-CRN-04
+    title: Conflicto técnico sin afirmación (zurdo desde la izquierda, cerrado)
+    input: "Córner ofensivo desde la izquierda, lo saca Lucas cerrado"
+    expect_diagnostics: [{ rule_id: TECH-SWING-01, severity: warning }]
+    expect_suggestions: ["Usar golpeo de exterior", "Cambiar a abierto", "Elegir lanzador diestro: Martín (2), Diego (4)…"]
+
+  - id: T-CRN-05
+    title: Instrucción mínima — todo propuesto
+    input: "Créame un córner desde la izquierda"
+    expect_clarifications: []   # en PLAY_EDITOR de ABP ofensivo 'córner' -> CORNER_ATT
+    assertions:
+      - "count(actors where team=OWN) == 10"
+      - "all OWN actors provenance.role startsWith 'RULE:'"
+      - "actor(role=TAKER).player_id resolved by ASG (Lucas tiene corner_taker_right, no left) -> highest score con foot match"
+
+  - id: T-CRN-06
+    title: Córner sin lado
+    input: "Créame un córner ofensivo"
+    expect_clarifications: [{ code: AMB-MISSING-REQUIRED, question: "¿Desde qué lado?", options: [Izquierda, Derecha] }]
+    expect_doc_created: false
+
+  - id: T-CRN-07
+    title: Exceso de jugadores
+    input: "Córner desde la izquierda, cinco al segundo palo, cuatro al primero y dos atrás"
+    expect_diagnostics: [{ rule_id: GEO-02, severity: error }]
+    expect_clarifications: [{ code: AMB-CONFLICT-RULE, question_contains: "12 jugadores de campo" }]
+
+  - id: T-CRN-08
+    title: Saque corto
+    input: "Córner desde la derecha en corto para Marcos"
+    expect_ir:
+      - { op: play.create, type: CORNER_ATT, side: RIGHT }
+      - { op: play.set_delivery, trajectory: SHORT, target_zone: Z_SHORT }
+      - { op: play.add_roles, count: 1, role: SHORT_RECEIVER, players: [pl_10] }
+
+  # ======================= CÓRNER: EDICIÓN INCREMENTAL =======================
+  - id: T-EDT-01
+    title: Mover a los dos del segundo palo 1 m a la izquierda
+    given: { doc: T-CRN-02 }
+    input: "Mueve a los dos del segundo palo un metro hacia la izquierda"
+    expect_ir: [{ op: play.move_actor, target: { zone: Z_FAR_POST, expect_count: 2 }, dx_m: 0, dy_m: -1.0 }]
+    expect_touch_set: [a2, a3, m2, m3]
+    expect_doc: { a2.start.v: 0.5441, a3.start.v: 0.5147 }   # -1/68
+    expect_unchanged: [a1, a4, a5, a6, a7, a8, a9, a10, delivery]
+
+  - id: T-EDT-02
+    title: Retrasar al del rechace (hay dos)
+    given: { doc: T-CRN-02 }
+    input: "Retrasa al jugador del rechace"
+    expect_clarifications: [{ code: AMB-TARGET-MULTI, options: ["Al de la izquierda (6, Sergio)", "Al de la derecha (8, Adrián)", "A los dos"] }]
+
+  - id: T-EDT-03
+    title: Retrasar tras aclarar
+    given: { from: T-EDT-02, choose_option: 2 }
+    expect_ir: [{ op: play.move_actor, target: { role: REBOUND }, dx_m: -3.0 }]
+    expect_doc: { a7.start.u: 0.7952, a8.start.u: 0.7952 }
+
+  - id: T-EDT-04
+    title: Haz que el número 5 ataque el primer palo
+    given: { doc: T-CRN-02 }
+    input: "Haz que el número 5 ataque el primer palo"
+    expect_ir: [{ op: play.set_movement, target: { player: pl_5 }, movement: ATTACK_NEAR_POST }]
+    expect_diagnostics:
+      - { rule_id: TAC-CRN-TGT-01, severity: warning }        # el balón va al segundo palo y ya nadie lo ataca
+    expect_suggestions: ["Cambiar el destino del balón al primer palo"]
+    expect_relation_effect: "SCREENS(a2,o8,a3) se recalcula: punto de bloqueo sobre la nueva trayectoria de a3"
+
+  - id: T-EDT-05
+    title: El bloqueo tiene que empezar antes
+    given: { doc: T-CRN-02 }
+    input: "El bloqueo tiene que empezar antes"
+    expect_ir: [{ op: play.shift_timing, target: { role: BLOCKER }, delta_s: -0.5 }]
+    expect_doc: { m2.t_start: -0.97, m2.t_end: -0.41 }
+    expect_unchanged: [m3, m4, m5, m6, delivery]
+
+  - id: T-EDT-06
+    title: Que Lucas saque más cerrado
+    given: { doc: T-CRN-02 }
+    input: "Que Lucas saque más cerrado"
+    expect_ir: [{ op: play.adjust_delivery, closer_to_goal_m: 1.5, curve_delta: 0.04 }]
+    expect_doc: { delivery.curve: 0.22, "delivery.target_point.u": 0.9810 }
+    expect_cascade: "m3 (objetivo principal) re-sincroniza llegada (SCH-SYNC-01); t de llegada del balón recalculado"
+
+  - id: T-EDT-07
+    title: Los dos de atrás no se incorporan
+    given: { doc: T-CRN-02 }
+    input: "Los dos jugadores de atrás no deben incorporarse al remate"
+    expect_ir: [{ op: play.constraint, target: { role: REST_DEFENDER, expect_count: 2 }, rule: NO_JOIN_ATTACK }]
+    expect_doc: { "constraints[a9].origin": EXPLICIT, "constraints[a10].origin": EXPLICIT }
+
+  - id: T-EDT-08
+    title: Restricción explícita violada después
+    given: { doc: T-EDT-07 }
+    input: "Haz que Martín entre desde atrás"
+    expect_diagnostics: [{ rule_id: SEQ-CONSTR-01, severity: error }]
+    expect_clarifications: [{ code: AMB-CONFLICT-RULE, options: ["Quitar la restricción a Martín y aplicar", "Cancelar"] }]
+
+  - id: T-EDT-09
+    title: Deshacer agrupa la locución
+    given: { doc: T-CRN-02, applied: [T-EDT-01] }
+    input: "Deshaz"
+    expect_doc_equals_hash_of: T-CRN-02
+
+  - id: T-EDT-10
+    title: Pantalla con desplazamiento hacia el rival (riesgo arbitral)
+    given: { doc: T-CRN-02 }
+    action: { manual_drag: { movement: m2, end_point_toward: o8, distance_m: 1.0, at_t: 0.3 } }
+    expect_diagnostics: [{ rule_id: LAW-IMP-01, severity: warning }]
+
+  - id: T-EDT-11
+    title: Rival dentro de 9,15 m del cuadrante
+    given: { doc: T-CRN-02 }
+    action: { manual_drag: { actor: o7, to_m: [100, 4] } }
+    expect_diagnostics: [{ rule_id: LAW-CRN-02, severity: warning }]
+
+  - id: T-EDT-12
+    title: "Polisemia «que cierre» en jugada con sujeto lanzador"
+    given: { doc: T-CRN-02 }
+    input: "Que el córner vaya cerrado"
+    expect_ir: [{ op: play.set_delivery, swing: INSWING }]
+    expect_doc_unchanged: true    # ya era INSWING -> no-op idempotente, sin entrada en historial
+
+  - id: T-EDT-13
+    title: Fuera de cobertura
+    given: { doc: T-CRN-02 }
+    input: "Que vayan con más alegría"
+    expect_ir: []
+    expect_unparsed: [{ reason: OUT_OF_COVERAGE }]
+    expect_offer: "Guardar como nota de la jugada"
+
+  - id: T-EDT-14
+    title: Pronombre sin antecedente
+    given: { doc: T-CRN-02 }
+    input: "Muévelo un poco a la derecha"
+    expect_clarifications: [{ code: AMB-MISSING-REQUIRED, question: "¿A quién muevo?" }]
+
+  # ======================= DETERMINISMO =======================
+  - id: T-DET-01
+    title: Mismo texto, mismo resultado
+    input_from: T-CRN-01
+    repeat: 100
+    expect: "sha256(canonical(doc)) idéntico en las 100 ejecuciones y en Node 22 / Chromium / WebKit"
+
+  - id: T-DET-02
+    title: Reversibilidad
+    property: "para todo doc válido d y comando c aplicable: apply(apply(d,c).inverse) == d"
+    generator: fast-check, 1000 casos
+
+  - id: T-DET-03
+    title: Localidad
+    property: "diff(d, apply(d,c)) ⊆ touchSet(c) ∪ dependents(touchSet(c))"
+
+  # ======================= ANÁLISIS DE RIVAL (extracción) =======================
+  - id: T-ANA-01
+    title: Extracción del ejemplo 8.1
+    ctx: { screen: OPPONENT_NOTES }
+    input: "El rival de este domingo suele jugar 4-3-3, pero cuando defiende pasa a 4-4-2. Presiona mucho por fuera. Su lateral izquierdo deja espacio a la espalda. En los córners meten cinco jugadores al remate y el número 9 ataca el primer palo. Tenemos que intentar salir por nuestra derecha."
+    expect_items:
+      - { category: SYSTEM, tags: { nominal: F_433 }, text: "suele jugar 4-3-3" }
+      - { category: SYSTEM, tags: { phase: ORG_DEF, shape: F_442 }, text: "cuando defiende pasa a 4-4-2" }
+      - { category: DEFENSIVE_ORG, tags: { pressing: HIGH, zone: WIDE }, text: "Presiona mucho por fuera" }
+      - { category: WEAKNESS, tags: { player_role: LB, space: BEHIND }, text: "Su lateral izquierdo deja espacio a la espalda" }
+      - { category: SET_PIECES_ATT, tags: { players_in_box: 5 }, text: "En los córners meten cinco jugadores al remate" }
+      - { category: KEY_PLAYERS, tags: { shirt: 9, movement: ATTACK_NEAR_POST }, text: "el número 9 ataca el primer palo" }
+      - { category: COACH_RECOMMENDATION, tags: { side: RIGHT, phase: ORG_ATT }, text: "Tenemos que intentar salir por nuestra derecha" }
+    expect_conflicts: []   # 4-3-3 nominal vs 4-4-2 en defensa NO es contradicción (fase distinta)
+    expect_no_generated_text: true
+
+  - id: T-ANA-02
+    title: Contradicción real
+    input: "Juegan con línea de cuatro. Atrás siempre ponen tres centrales y dos carrileros."
+    expect_conflicts: [{ code: ANA-CONFLICT-SYSTEM, items: [0, 1], message: "Línea de cuatro vs. tres centrales + dos carrileros en la misma fase" }]

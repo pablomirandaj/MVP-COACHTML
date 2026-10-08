@@ -1,0 +1,214 @@
+# Lexicón español (España) — @fcs/nlu 1.0
+# Formas normalizadas: minúsculas, sin tildes en la clave de búsqueda. La coincidencia más larga gana.
+# Ampliable sin tocar el motor. Variantes regionales (es-AR, es-MX) heredan de este fichero.
+lexicon_version: 1.0.0
+locale: es-ES
+
+fillers: [vale, bueno, eh, em, a ver, pues, venga, vamos a ver, o sea, digamos, mira]
+
+clitic_imperatives:            # forma -> verbo base
+  creame: crea
+  hazme: haz
+  ponmelo: pon
+  ponlo: pon
+  ponle: pon
+  muevelo: mueve
+  muevelos: mueve
+  guardala: guarda
+  guardalo: guarda
+  quitalo: quita
+
+numbers:
+  un: 1
+  uno: 1
+  una: 1
+  dos: 2
+  tres: 3
+  cuatro: 4
+  cinco: 5
+  seis: 6
+  siete: 7
+  ocho: 8
+  nueve: 9
+  diez: 10
+  once: 11
+  doce: 12
+  quince: 15
+  veinte: 20
+  medio: 0.5
+  "y medio": "+0.5"
+
+formations:
+  F_433:  ["4 3 3", "cuatro tres tres"]
+  F_442:  ["4 4 2", "cuatro cuatro dos"]
+  F_4231: ["4 2 3 1", "cuatro dos tres uno", "cuatro doble pivote tres uno"]
+  F_352:  ["3 5 2", "tres cinco dos"]
+  F_532:  ["5 3 2", "cinco tres dos"]
+  F_4141: ["4 1 4 1", "cuatro uno cuatro uno"]
+  F_4411: ["4 4 1 1", "cuatro cuatro uno uno"]
+  F_343:  ["3 4 3", "tres cuatro tres"]
+  F_4312: ["4 3 1 2", "cuatro tres uno dos", "rombo"]
+  F_541:  ["5 4 1", "cinco cuatro uno"]
+
+positions:
+  GK:  [portero, porteria, "bajo palos", meta, guardameta]
+  RB:  ["lateral derecho", "lateral diestro", "el dos"]
+  LB:  ["lateral izquierdo", "lateral zurdo", "el tres"]
+  RWB: ["carrilero derecho"]
+  LWB: ["carrilero izquierdo"]
+  CB:  [central, "defensa central", zaguero]
+  DM:  [pivote, mediocentro defensivo, "el cinco", "medio centro defensivo"]
+  CM:  [interior, mediocentro, "medio centro", "el ocho"]
+  RM:  ["medio derecho", "volante derecho", "interior derecho"]
+  LM:  ["medio izquierdo", "volante izquierdo", "interior izquierdo"]
+  AM:  [mediapunta, "media punta", "el diez", enganche]
+  RW:  ["extremo derecho", "banda derecha arriba"]
+  LW:  ["extremo izquierdo", "banda izquierda arriba"]
+  ST:  [delantero, "delantero centro", punta, "nueve", ariete]
+  SS:  ["segundo delantero", "segunda punta"]
+# Nota: "el cinco", "el ocho", "el dos" son ambiguos con dorsales. Regla: si existe un jugador con ese dorsal
+# en la plantilla y el contexto es de jugador ("que el cinco ataque") -> dorsal; si el contexto es de puesto
+# ("pon a Diego de cinco") -> posición. Si ambos encajan -> AMB-ENTITY.
+
+position_groups:
+  GK:           ["en porteria", "de portero", "bajo palos"]
+  CENTER_BACKS: [centrales, "los centrales", "pareja de centrales"]
+  FULLBACKS:    [laterales, "los laterales", carrileros]
+  WINGERS:      [extremos, "los extremos", "los de banda", "por fuera arriba"]
+  STRIKERS:     [delanteros, puntas, "arriba los dos"]
+  DEF:          [defensa, "atras", "la linea de cuatro", "la linea defensiva", "linea de cinco"]
+  MID:          ["en el medio", "en el centro del campo", "medio campo", centrocampistas, "la medular"]
+  ATT:          [arriba, "en ataque", "adelante", "la delantera"]
+
+action_types:
+  CORNER_ATT:      ["corner ofensivo", "corner a favor", "corner en ataque", "saque de esquina a favor"]
+  CORNER_DEF:      ["corner defensivo", "corner en contra", "defender el corner", "defensa de corner"]
+  FK_WIDE_ATT:     ["falta lateral", "falta en banda", "falta escorada"]
+  FK_CENTRAL_ATT:  ["falta frontal", "falta directa", "falta en la frontal"]
+  FK_INDIRECT_ATT: ["falta indirecta", "libre indirecto"]
+  THROW_IN_ATT:    ["saque de banda", "saque de banda a favor", "banda"]
+  KICKOFF:         ["saque de centro", "saque inicial", "saque de medio campo"]
+# "corner" solo: se resuelve a CORNER_ATT si la pantalla es ABP ofensivo; si no -> AMB-MISSING-REQUIRED (ofensivo/defensivo).
+
+sides:
+  LEFT:  ["desde la izquierda", "por la izquierda", "izquierda", "banda izquierda", "lado izquierdo", "costado izquierdo"]
+  RIGHT: ["desde la derecha", "por la derecha", "derecha", "banda derecha", "lado derecho", "costado derecho"]
+
+zones:
+  Z_NEAR_POST:  ["primer palo", "palo corto", "el primero", "primer poste"]
+  Z_FAR_POST:   ["segundo palo", "palo largo", "el segundo", "segundo poste"]
+  Z_GA_CENTER:  ["centro del area pequeña", "area chica", "el seis", "centro del area de meta"]
+  Z_PEN_SPOT:   ["punto de penalti", "el punto", "penalti", "once metros"]
+  Z_FAR_ZONE:   ["fuera del segundo palo", "mas alla del segundo palo", "pasado"]
+  Z_EDGE:       [frontal, "la frontal", "borde del area", "balcon del area"]
+  Z_REBOUND:    [rechace, "el rechace", "segunda jugada", "el rebote"]
+  Z_GK:         ["encima del portero", "con el portero", "delante del portero"]
+  Z_SHORT:      ["en corto", "para el corto", "cerca del corner"]
+  Z_REST:       [atras, vigilancia, "cuidando la contra", "en el medio campo"]
+
+roles:
+  TAKER:            [lanzador, "el que saca", "el que la pone", "el que la tira"]
+  PRIMARY_TARGET:   ["rematador principal", "el que remata", "el rematador", "al que va el balon"]
+  SECONDARY_TARGET: ["rematador secundario", "segundo rematador"]
+  BLOCKER:          [bloqueo, bloqueador, pantalla, "el que bloquea", "el que hace la pantalla"]
+  DECOY:            [arrastre, "el que arrastra", señuelo]
+  SHORT_RECEIVER:   ["el del corto", "para el corto", "receptor del corto"]
+  REBOUND:          ["el del rechace", "los del rechace", "esperar el rechace", "segunda jugada"]
+  REST_DEFENDER:    [vigilancia, "los de atras", "quedarse atras", "mantener atras", "guardar la espalda"]
+  GK_SCREEN:        ["molestar al portero", "tapar al portero", "encima del portero"]
+  COVER:            [cobertura, "dar cobertura", equilibrio]
+
+movements:
+  ATTACK_NEAR_POST: ["atacar el primer palo", "entrar al primer palo", "entra al primer palo", "ir al primero"]
+  ATTACK_FAR_POST:  ["atacar el segundo palo", "entrar al segundo palo", "ir al segundo"]
+  ATTACK_PEN_SPOT:  ["atacar el punto de penalti", "entrar al punto"]
+  ATTACK_GA_CENTER: ["atacar el centro", "entrar al seis"]
+  RUN_IN_BEHIND:    ["atacar el espacio", "a la espalda", "romper", "ruptura", "desmarque de ruptura", "tirar el desmarque"]
+  DECOY_RUN:        ["arrastrar a su marca", "arrastrar al defensor", "llevarse a su marca", "llevarse al central"]
+  SCREEN:           ["hacer la pantalla", "bloquear", "bloquea", "hacer el bloqueo", "poner la pantalla"]
+  CROSS_RUN:        [cruzarse, "hacer el cruce", "cruce", "se cruzan"]
+  LATE_ARRIVAL:     ["entrar desde atras", "llegar desde atras", "llegada de segunda linea", "entrar de segunda linea"]
+  CHECK_TO_BALL:    ["venir a recibir", "dar apoyo", "venir al balon", "ofrecerse"]
+  SHORT_OPTION:     ["ofrecer el corto", "pedirla en corto"]
+  HOLD:             [quedarse, esperar, aguantar, "mantener la posicion", "no moverse"]
+  FOLLOW:           ["marcar a", "seguir a", "estar con", "pegarse a"]
+
+deliveries:
+  swing:
+    INSWING:  [cerrado, cerrada, "hacia dentro", "a pierna cambiada", "con rosca hacia la porteria"]
+    OUTSWING: [abierto, abierta, "hacia fuera", "a pierna natural"]
+  trajectory:
+    DRIVEN:   [tenso, tensa, fuerte, "con fuerza"]
+    LOFTED:   [bombeado, bombeada, colgado, colgada, "por arriba", "con parabola"]
+    LOW:      [raso, rasa, "por abajo", "a ras"]
+    SHORT:    ["en corto", corto]
+  technique:
+    OUTSIDE_FOOT: ["con el exterior", "de exterior", "con el empeine exterior"]
+
+feet:
+  RIGHT: [diestro, "de pierna derecha", "con la derecha"]
+  LEFT:  [zurdo, "de pierna izquierda", "con la izquierda"]
+  BOTH:  [ambidiestro, "con las dos"]
+
+directions:           # en marco de ataque
+  "a la izquierda":  { dv: -1 }
+  "hacia la izquierda": { dv: -1 }
+  "a la derecha":    { dv: +1 }
+  "hacia la derecha": { dv: +1 }
+  adelante:          { du: +1 }
+  "hacia delante":   { du: +1 }
+  adelanta:          { du: +1 }
+  sube:              { du: +1 }
+  atras:             { du: -1 }
+  "hacia atras":     { du: -1 }
+  retrasa:           { du: -1 }
+  baja:              { du: -1 }
+  "mas cerca de porteria": { toward_goal: +1 }
+  "mas lejos":       { toward_goal: -1 }
+  abre:              { away_from_center: +1 }
+  "mas abierto":     { away_from_center: +1 }
+  cierra:            { away_from_center: -1 }     # solo con sujeto jugador; con balón -> INSWING (ver polysemy)
+  junta:             { compact: +1 }
+  "mas juntas":      { compact: +1 }
+  separa:            { compact: -1 }
+
+timing:
+  antes:             { delta_s: -0.5 }
+  "un poco antes":   { delta_s: -0.3 }
+  "mucho antes":     { delta_s: -1.0 }
+  despues:           { delta_s: +0.5 }
+  "mas tarde":       { delta_s: +0.5 }
+  "a la vez":        { sync: true }
+
+intensities:          # ver docs/14 §11 (configurable por equipo)
+  "un poquito":  { m: 1.5, s: 0.2, pct: 5 }
+  algo:          { m: 1.5, s: 0.2, pct: 5 }
+  "un poco":     { m: 3.0, s: 0.3, pct: 10 }
+  _default:      { m: 3.0, s: 0.5, pct: 15 }
+  bastante:      { m: 5.0, s: 0.7, pct: 15 }
+  mas:           { m: 5.0, s: 0.7, pct: 15 }
+  mucho:         { m: 8.0, s: 1.0, pct: 25 }
+
+units:
+  m: [metro, metros, m]
+  s: [segundo, segundos, s]
+  yd: [yarda, yardas]    # 1 yd = 0.9144 m
+
+polysemy:
+  cerrar:
+    - when: { subject_type: [BALL, TAKER, DELIVERY], screen: PLAY_EDITOR }
+      means: { op: play.set_delivery, swing: INSWING }
+    - when: { subject_type: [PLAYER, SLOT], screen: LINEUP_EDITOR }
+      means: { op: lineup.shift_slot, toward: CENTER }
+    - otherwise: AMB-OP
+  banda:
+    - when: { preceded_by: ["saque de"] }
+      means: { action_type: THROW_IN_ATT }
+    - otherwise: { side_context: true }
+
+match_refs:
+  "para el domingo":  { date_ref: next_weekday_7 }
+  "para el sabado":   { date_ref: next_weekday_6 }
+  "este fin de semana": { date_ref: next_match }
+  "el proximo partido": { date_ref: next_match }
+  "el jueves":        { date_ref: weekday_4_of_current_week }

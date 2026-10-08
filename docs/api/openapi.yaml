@@ -1,0 +1,672 @@
+openapi: 3.1.0
+info:
+  title: Football Coach Studio API
+  version: 0.1.0
+  description: |
+    API REST del MVP. Estado: DISEÑADA. Autenticación con JWT de Supabase Auth (Bearer).
+    Errores en formato RFC 9457 (application/problem+json). Concurrencia optimista con ETag/If-Match.
+    Los esquemas IR y PlayDoc se referencian desde docs/engine/*.schema.json.
+servers:
+  - url: https://api.fcs.example/v1
+security:
+  - bearer: []
+tags:
+  - { name: teams }
+  - { name: roster }
+  - { name: calendar }
+  - { name: lineups }
+  - { name: plays }
+  - { name: commands }
+  - { name: voice }
+  - { name: opponents }
+  - { name: presentations }
+  - { name: sharing }
+  - { name: admin }
+
+paths:
+  /me:
+    get:
+      tags: [teams]
+      summary: Perfil y equipos con rol
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Me' } } } }
+
+  /teams:
+    post:
+      tags: [teams]
+      summary: Crear equipo
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/TeamCreate' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Team' } } } }
+        '422': { $ref: '#/components/responses/Problem' }
+  /teams/{teamId}:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [teams]
+      summary: Detalle de equipo
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Team' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [teams]
+      summary: Actualizar equipo (incluye preferencias del motor)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/TeamCreate' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Team' } } } }
+
+  /teams/{teamId}/players:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [roster]
+      summary: Plantilla
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/PlayerStatus' } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Player' } } } } }
+    post:
+      tags: [roster]
+      summary: Alta de jugador
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PlayerInput' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Player' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /players/{playerId}:
+    parameters: [{ $ref: '#/components/parameters/playerId' }]
+    get:
+      tags: [roster]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Player' } } } }
+    patch:
+      tags: [roster]
+      parameters: [{ $ref: '#/components/parameters/ifMatch' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PlayerInput' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Player' } } } }
+        '412': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [roster]
+      summary: Baja (borrado lógico)
+      responses: { '204': { description: Eliminado } }
+
+  /teams/{teamId}/calendar/import:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    post:
+      tags: [calendar]
+      summary: Importar calendario (CSV, XLSX, ICS) — devuelve previsualización
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, competition_id]
+              properties:
+                file: { type: string, format: binary }
+                competition_id: { type: string, format: uuid }
+                column_map: { type: string, description: 'JSON {date,time,home,away,venue,matchday}' }
+      responses:
+        '200': { description: Previsualización, content: { application/json: { schema: { $ref: '#/components/schemas/CalendarImportPreview' } } } }
+        '422': { $ref: '#/components/responses/Problem' }
+  /teams/{teamId}/calendar/import/{previewId}/commit:
+    parameters: [{ $ref: '#/components/parameters/teamId' }, { name: previewId, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [calendar]
+      summary: Confirmar importación
+      responses: { '201': { description: Jornadas creadas } }
+  /teams/{teamId}/calendar.ics:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [calendar]
+      summary: Suscripción ICS (token en query, solo lectura)
+      security: []
+      parameters: [{ name: token, in: query, required: true, schema: { type: string } }]
+      responses: { '200': { description: ICS, content: { text/calendar: { schema: { type: string } } } } }
+  /teams/{teamId}/matches:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [calendar]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: competition_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Match' } } } } }
+    post:
+      tags: [calendar]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MatchInput' } } } }
+      responses: { '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Match' } } } } }
+  /matches/{matchId}:
+    parameters: [{ $ref: '#/components/parameters/matchId' }]
+    patch:
+      tags: [calendar]
+      summary: Cambiar fecha, aplazar, notas
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MatchInput' } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Match' } } } } }
+  /matches/{matchId}/workspace:
+    parameters: [{ $ref: '#/components/parameters/matchId' }]
+    get:
+      tags: [calendar]
+      summary: Espacio de trabajo de la jornada (agregado)
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MatchWorkspace' } } } } }
+  /matches/{matchId}/squad:
+    parameters: [{ $ref: '#/components/parameters/matchId' }]
+    put:
+      tags: [calendar]
+      summary: Convocatoria
+      requestBody: { required: true, content: { application/json: { schema: { type: array, items: { type: object, properties: { player_id: { type: string }, called: { type: boolean }, note: { type: string } } } } } } }
+      responses: { '200': { description: OK } }
+
+  /teams/{teamId}/lineups:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [lineups]
+      parameters:
+        - { name: match_id, in: query, schema: { type: string } }
+        - { name: opponent, in: query, schema: { type: string } }
+        - { name: tag, in: query, schema: { type: string } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Lineup' } } } } } }
+    post:
+      tags: [lineups]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LineupInput' } } } }
+      responses: { '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Lineup' } } } } }
+  /lineups/{lineupId}:
+    parameters: [{ name: lineupId, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [lineups]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Lineup' } } } } }
+    put:
+      tags: [lineups]
+      summary: Edición manual completa (drag & drop)
+      parameters: [{ $ref: '#/components/parameters/ifMatch' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LineupInput' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Lineup' } } } }
+        '412': { $ref: '#/components/responses/Problem' }
+
+  /teams/{teamId}/plays:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [plays]
+      summary: Biblioteca de jugadas
+      parameters:
+        - { name: type, in: query, schema: { type: string } }
+        - { name: player_id, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PlaySummary' } } } } } }
+    post:
+      tags: [plays]
+      summary: Crear jugada (documento ya calculado por el cliente; el servidor revalida)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PlayCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/PlayVersion' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /plays/{playId}:
+    parameters: [{ $ref: '#/components/parameters/playId' }]
+    get:
+      tags: [plays]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlayVersion' } } } } }
+    delete:
+      tags: [plays]
+      responses: { '204': { description: Eliminada } }
+  /plays/{playId}/versions:
+    parameters: [{ $ref: '#/components/parameters/playId' }]
+    get:
+      tags: [plays]
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PlayVersionMeta' } } } } } }
+  /plays/{playId}/versions/{version}:
+    parameters: [{ $ref: '#/components/parameters/playId' }, { name: version, in: path, required: true, schema: { type: integer } }]
+    get:
+      tags: [plays]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlayVersion' } } } } }
+  /plays/{playId}/variants:
+    parameters: [{ $ref: '#/components/parameters/playId' }]
+    post:
+      tags: [plays]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [label], properties: { label: { type: string } } } } } }
+      responses: { '201': { description: Variante creada, content: { application/json: { schema: { $ref: '#/components/schemas/PlayVersion' } } } } }
+
+  /commands:
+    post:
+      tags: [commands]
+      summary: Aplicar un IR confirmado sobre un documento (alineación, jugada, presentación)
+      description: |
+        El servidor valida el IR contra command-ir.schema.json, comprueba permisos, ejecuta @fcs/engine con la
+        misma versión que el cliente (cabecera X-Engine-Version) y guarda la nueva versión. No reinterpreta texto.
+      parameters:
+        - { name: X-Engine-Version, in: header, required: true, schema: { type: string } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ApplyCommands' } } } }
+      responses:
+        '200': { description: Aplicado, content: { application/json: { schema: { $ref: '#/components/schemas/ApplyResult' } } } }
+        '409': { description: Versión base desfasada o ENGINE_VERSION_MISMATCH, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+        '422': { description: IR inválido o con errores de validación bloqueantes, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+  /commands/{commandId}/undo:
+    parameters: [{ name: commandId, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [commands]
+      summary: Deshacer (aplica el parche inverso; transacción completa de la locución)
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApplyResult' } } } } }
+
+  /voice/recordings:
+    post:
+      tags: [voice]
+      summary: Registrar grabación y obtener URL firmada de subida
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [team_id, context, mime_type, duration_ms]
+              properties:
+                team_id: { type: string }
+                context: { type: string, enum: [LINEUP_EDITOR, PLAY_EDITOR, OPPONENT_NOTES, TALK_BUILDER, MATCHDAY, GLOBAL] }
+                context_ref: { type: string }
+                mime_type: { type: string, enum: [audio/webm, audio/ogg, audio/mp4] }
+                duration_ms: { type: integer, minimum: 300, maximum: 120000 }
+      responses:
+        '201': { description: OK, content: { application/json: { schema: { type: object, properties: { id: { type: string }, upload_url: { type: string, format: uri }, expires_at: { type: string, format: date-time } } } } } }
+  /voice/recordings/{recordingId}/transcribe:
+    parameters: [{ name: recordingId, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [voice]
+      summary: Encolar transcripción (keyterms derivados de la plantilla y la jornada)
+      responses: { '202': { description: Encolado, content: { application/json: { schema: { type: object, properties: { transcription_id: { type: string } } } } } } }
+  /transcriptions/{transcriptionId}:
+    parameters: [{ name: transcriptionId, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [voice]
+      summary: Estado/resultado (admite SSE con Accept text/event-stream)
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Transcription' } } } } }
+    patch:
+      tags: [voice]
+      summary: Corregir texto antes de interpretar
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { edited_text: { type: string } } } } } }
+      responses: { '200': { description: OK } }
+
+  /opponents:
+    get:
+      tags: [opponents]
+      parameters: [{ name: q, in: query, schema: { type: string } }]
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Opponent' } } } } } }
+  /opponents/{opponentId}/history:
+    parameters: [{ name: opponentId, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [opponents]
+      summary: Ficha histórica (partidos, análisis, ítems por categoría con fecha y fuente)
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/OpponentHistory' } } } } }
+  /opponents/{opponentId}/analyses:
+    parameters: [{ name: opponentId, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [opponents]
+      summary: Crear análisis (opcionalmente desde una transcripción → extracción)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_kind]
+              properties:
+                match_id: { type: string }
+                source_kind: { type: string, enum: [LIVE_OBSERVATION, VIDEO, REPORT_THIRD_PARTY, OWN_MATCH, OTHER] }
+                source_detail: { type: string }
+                observed_on: { type: string, format: date }
+                transcription_id: { type: string }
+      responses: { '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Analysis' } } } } }
+  /analyses/{analysisId}/items:
+    parameters: [{ name: analysisId, in: path, required: true, schema: { type: string } }]
+    put:
+      tags: [opponents]
+      summary: Guardar ítems revisados (categoría, etiquetas, evidencia)
+      requestBody: { required: true, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AnalysisItem' } } } } }
+      responses: { '200': { description: OK } }
+
+  /matches/{matchId}/presentation:
+    parameters: [{ $ref: '#/components/parameters/matchId' }]
+    post:
+      tags: [presentations]
+      summary: Generar o regenerar el guion de la charla desde la jornada
+      responses: { '201': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Presentation' } } } } }
+    put:
+      tags: [presentations]
+      summary: Guardar guion editado (secciones, orden, activación)
+      parameters: [{ $ref: '#/components/parameters/ifMatch' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Presentation' } } } }
+      responses: { '200': { description: OK } }
+  /presentations/{presentationId}/exports:
+    parameters: [{ name: presentationId, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [presentations]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [format], properties: { format: { type: string, enum: [PPTX, PDF, PNG] } } } } } }
+      responses: { '202': { description: Encolado (o 200 si ya existe en caché por input_hash), content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } } } }
+  /exports/{exportId}:
+    parameters: [{ name: exportId, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [presentations]
+      responses: { '200': { description: Estado y URL firmada, content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } } } }
+
+  /teams/{teamId}/shares:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    post:
+      tags: [sharing]
+      summary: Publicar y compartir un recurso
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ShareInput' } } } }
+      responses:
+        '201': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Share' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+  /shares/{shareId}:
+    parameters: [{ name: shareId, in: path, required: true, schema: { type: string } }]
+    delete:
+      tags: [sharing]
+      summary: Revocar
+      responses: { '204': { description: Revocado } }
+  /me/feed:
+    get:
+      tags: [sharing]
+      summary: Panel del jugador (solo recursos publicados dirigidos a él)
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Share' } } } } } }
+
+  /teams/{teamId}/members:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [admin]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [admin]
+      summary: Invitar (staff, jugador o tutor)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [HEAD_COACH, ASSISTANT_COACH, ANALYST, PLAYER, GUARDIAN] }
+                player_id: { type: string }
+      responses: { '201': { description: Invitación enviada }, '422': { $ref: '#/components/responses/Problem' } }
+  /teams/{teamId}/permissions:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    put:
+      tags: [admin]
+      summary: Permisos finos por elemento
+      requestBody: { required: true, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Permission' } } } } }
+      responses: { '200': { description: OK } }
+  /players/{playerId}/consents:
+    parameters: [{ $ref: '#/components/parameters/playerId' }]
+    post:
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, granted_as]
+              properties:
+                kind: { type: string, enum: [DATA_PROCESSING, PHOTO, PLAYER_ACCOUNT, VOICE_CORPUS] }
+                granted_as: { type: string, enum: [SELF, GUARDIAN, CLUB_ON_BEHALF] }
+                evidence: { type: string }
+      responses: { '201': { description: OK } }
+
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    teamId:   { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
+    playerId: { name: playerId, in: path, required: true, schema: { type: string, format: uuid } }
+    matchId:  { name: matchId, in: path, required: true, schema: { type: string, format: uuid } }
+    playId:   { name: playId, in: path, required: true, schema: { type: string, format: uuid } }
+    ifMatch:  { name: If-Match, in: header, required: true, schema: { type: string }, description: 'ETag = revisión actual' }
+  responses:
+    Problem:
+      description: Error (RFC 9457)
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string, examples: [ENGINE_VERSION_MISMATCH, STALE_REVISION, VALIDATION_ERROR, FORBIDDEN_RESOURCE, MINOR_CONSENT_REQUIRED] }
+        diagnostics: { type: array, items: { $ref: '#/components/schemas/Diagnostic' } }
+    Diagnostic:
+      type: object
+      properties:
+        rule_id: { type: string }
+        class: { type: string }
+        severity: { type: string, enum: [error, warning, info, clarification] }
+        message: { type: string }
+    Me:
+      type: object
+      properties:
+        id: { type: string }
+        display_name: { type: string }
+        memberships: { type: array, items: { type: object, properties: { team_id: { type: string }, team_name: { type: string }, role: { type: string } } } }
+    TeamCreate:
+      type: object
+      required: [name, category, season_label]
+      properties:
+        name: { type: string }
+        category: { type: string }
+        season_label: { type: string, examples: ['2026/27'] }
+        is_youth: { type: boolean }
+        pitch_length_m: { type: number, minimum: 90, maximum: 120 }
+        pitch_width_m: { type: number, minimum: 45, maximum: 90 }
+        preferences: { type: object }
+    Team:
+      allOf:
+        - $ref: '#/components/schemas/TeamCreate'
+        - type: object
+          properties: { id: { type: string }, club_id: { type: string } }
+    PlayerStatus: { type: string, enum: [AVAILABLE, INJURED, SUSPENDED, UNAVAILABLE, DOUBTFUL] }
+    PlayerInput:
+      type: object
+      required: [first_name, primary_position]
+      properties:
+        first_name: { type: string }
+        last_name: { type: string }
+        nickname: { type: string }
+        shirt_number: { type: integer, minimum: 1, maximum: 99 }
+        primary_position: { type: string }
+        secondary_positions: { type: array, items: { type: string } }
+        dominant_foot: { type: string, enum: [RIGHT, LEFT, BOTH] }
+        height_cm: { type: integer }
+        attributes: { type: object, additionalProperties: { type: integer, minimum: 0, maximum: 5 } }
+        setpiece_roles: { type: array, items: { type: string } }
+        status: { $ref: '#/components/schemas/PlayerStatus' }
+        coach_notes: { type: string }
+    Player:
+      allOf:
+        - $ref: '#/components/schemas/PlayerInput'
+        - type: object
+          properties: { id: { type: string }, revision: { type: integer }, photo_url: { type: string } }
+    MatchInput:
+      type: object
+      properties:
+        competition_id: { type: string }
+        matchday_number: { type: integer }
+        opponent_name: { type: string }
+        kickoff_at: { type: string, format: date-time }
+        is_home: { type: boolean }
+        venue: { type: string }
+        status: { type: string, enum: [SCHEDULED, POSTPONED, PLAYED, CANCELLED, BYE] }
+        objectives: { type: string }
+        training_notes: { type: string }
+        post_match_notes: { type: string }
+    Match:
+      allOf:
+        - $ref: '#/components/schemas/MatchInput'
+        - type: object
+          properties: { id: { type: string }, opponent_id: { type: string }, original_kickoff_at: { type: string, format: date-time } }
+    CalendarImportPreview:
+      type: object
+      properties:
+        preview_id: { type: string }
+        rows: { type: array, items: { type: object, properties: { row: { type: integer }, match: { $ref: '#/components/schemas/MatchInput' }, issues: { type: array, items: { type: string } } } } }
+        new_opponents: { type: array, items: { type: string } }
+        possible_duplicates: { type: array, items: { type: object, properties: { name: { type: string }, existing: { type: string } } } }
+    MatchWorkspace:
+      type: object
+      properties:
+        match: { $ref: '#/components/schemas/Match' }
+        squad: { type: array, items: { type: object } }
+        lineup: { $ref: '#/components/schemas/Lineup' }
+        plays: { type: array, items: { $ref: '#/components/schemas/PlaySummary' } }
+        opponent_history: { $ref: '#/components/schemas/OpponentHistory' }
+        presentation: { $ref: '#/components/schemas/Presentation' }
+        checklist: { type: object, additionalProperties: { type: boolean } }
+    LineupInput:
+      type: object
+      required: [formation_code, assignments]
+      properties:
+        match_id: { type: string }
+        formation_code: { type: string }
+        label: { type: string }
+        tags: { type: array, items: { type: string } }
+        assignments: { type: array, items: { type: object, required: [slot, player_id], properties: { slot: { type: string }, player_id: { type: string } } } }
+        slot_overrides: { type: object }
+        is_primary: { type: boolean }
+    Lineup:
+      allOf:
+        - $ref: '#/components/schemas/LineupInput'
+        - type: object
+          properties: { id: { type: string }, revision: { type: integer }, state: { type: string }, diagnostics: { type: array, items: { $ref: '#/components/schemas/Diagnostic' } } }
+    PlayCreate:
+      type: object
+      required: [name, document]
+      properties:
+        name: { type: string }
+        tags: { type: array, items: { type: string } }
+        document: { type: object, description: 'fcs.play/1 (docs/engine/play.schema.json)' }
+        command_ids: { type: array, items: { type: string } }
+    PlaySummary:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        current_version: { type: integer }
+        state: { type: string }
+        thumbnail_url: { type: string }
+        players: { type: array, items: { type: string } }
+    PlayVersionMeta:
+      type: object
+      properties:
+        version: { type: integer }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        document_hash: { type: string }
+        engine_version: { type: string }
+    PlayVersion:
+      allOf:
+        - $ref: '#/components/schemas/PlayVersionMeta'
+        - type: object
+          properties: { play_id: { type: string }, name: { type: string }, document: { type: object } }
+    ApplyCommands:
+      type: object
+      required: [target_type, target_id, base_version, ir]
+      properties:
+        target_type: { type: string, enum: [LINEUP, TACTICAL_PLAY, PRESENTATION] }
+        target_id: { type: string }
+        base_version: { type: integer }
+        transcription_id: { type: string }
+        ir: { type: object, description: 'command-ir 1.0 (docs/engine/command-ir.schema.json)' }
+    ApplyResult:
+      type: object
+      properties:
+        command_id: { type: string }
+        new_version: { type: integer }
+        document_hash: { type: string }
+        diagnostics: { type: array, items: { $ref: '#/components/schemas/Diagnostic' } }
+    Transcription:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [QUEUED, RUNNING, DONE, FAILED] }
+        text: { type: string }
+        segments: { type: array, items: { type: object, properties: { start_ms: { type: integer }, end_ms: { type: integer }, text: { type: string }, confidence: { type: number } } } }
+    Opponent:
+      type: object
+      properties: { id: { type: string }, name: { type: string }, usual_formation: { type: string }, crest_url: { type: string } }
+    AnalysisItem:
+      type: object
+      required: [category, text]
+      properties:
+        id: { type: string }
+        category: { type: string, enum: [SYSTEM, OFFENSIVE_ORG, DEFENSIVE_ORG, PRESSING, TRANSITIONS, STRENGTH, WEAKNESS, SET_PIECES_ATT, SET_PIECES_DEF, KEY_PLAYERS, COACH_RECOMMENDATION, OTHER] }
+        tags: { type: object }
+        text: { type: string }
+        span: { type: array, items: { type: integer }, minItems: 2, maxItems: 2 }
+        evidence: { type: string, enum: [OBSERVED, HYPOTHESIS, CONFIRMED, REFUTED] }
+        supersedes_id: { type: string }
+        conflict_with: { type: string }
+    Analysis:
+      type: object
+      properties:
+        id: { type: string }
+        opponent_id: { type: string }
+        match_id: { type: string }
+        source_kind: { type: string }
+        observed_on: { type: string, format: date }
+        items: { type: array, items: { $ref: '#/components/schemas/AnalysisItem' } }
+        conflicts: { type: array, items: { type: object } }
+    OpponentHistory:
+      type: object
+      properties:
+        opponent: { $ref: '#/components/schemas/Opponent' }
+        matches: { type: array, items: { $ref: '#/components/schemas/Match' } }
+        analyses: { type: array, items: { $ref: '#/components/schemas/Analysis' } }
+        by_category: { type: object, additionalProperties: { type: array, items: { $ref: '#/components/schemas/AnalysisItem' } } }
+    Presentation:
+      type: object
+      properties:
+        id: { type: string }
+        match_id: { type: string }
+        template: { type: string }
+        revision: { type: integer }
+        outline:
+          type: array
+          items:
+            type: object
+            properties:
+              section: { type: string }
+              title: { type: string }
+              enabled: { type: boolean }
+              ord: { type: integer }
+              items: { type: array, items: { type: object, properties: { kind: { type: string }, ref_id: { type: string }, text: { type: string }, origin: { type: string, enum: [COACH_TEXT, COACH_VOICE, DATA_REF] } } } }
+    ExportJob:
+      type: object
+      properties:
+        id: { type: string }
+        format: { type: string }
+        status: { type: string, enum: [QUEUED, RUNNING, DONE, FAILED] }
+        download_url: { type: string, format: uri }
+        input_hash: { type: string }
+    ShareInput:
+      type: object
+      required: [resource_type, resource_id, audience]
+      properties:
+        resource_type: { type: string, enum: [LINEUP, TACTICAL_PLAY, MATCH_PLAN, PRESENTATION, SQUAD_CALL, INDIVIDUAL_INSTRUCTION, OPPONENT_EXTRACT] }
+        resource_id: { type: string }
+        resource_version: { type: integer }
+        audience: { type: string, enum: [TEAM_PLAYERS, STAFF, PLAYERS_LIST, PUBLIC_LINK] }
+        player_ids: { type: array, items: { type: string } }
+        message: { type: string }
+        expires_at: { type: string, format: date-time }
+    Share:
+      allOf:
+        - $ref: '#/components/schemas/ShareInput'
+        - type: object
+          properties: { id: { type: string }, published_at: { type: string, format: date-time }, link: { type: string } }
+    Permission:
+      type: object
+      required: [grantee_user, action, resource_type]
+      properties:
+        grantee_user: { type: string }
+        resource_type: { type: string }
+        resource_id: { type: string }
+        action: { type: string, enum: [VIEW, EDIT, PUBLISH, DELETE, MANAGE] }

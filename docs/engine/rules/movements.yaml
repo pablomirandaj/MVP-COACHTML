@@ -1,0 +1,92 @@
+# Catálogo de movimientos — fcs catalog 1.0.0. Ver docs/14 §9 y docs/15 §9.
+catalog_version: 1.0.0
+speeds_mps: { walk: 2.0, jog: 4.0, run: 5.5, sprint: 7.0 }
+ball_speeds_mps: { DRIVEN: 22, LOFTED: 14, LOW: 12, SHORT: 12 }
+timeline: { prep_start_s: -2.5, end_after_arrival_s: 1.0 }
+movements:
+  ATTACK_NEAR_POST:
+    label: Ataque al primer palo
+    default_start_zone: Z_START_CLUSTER
+    end_zone: Z_NEAR_POST
+    shape: CURVED_IN
+    speed: sprint
+    anchor: { kind: ARRIVES_AT, event: BALL_ARRIVAL, offset_s: 0.0 }
+  ATTACK_FAR_POST:
+    label: Ataque al segundo palo
+    default_start_zone: Z_PEN_SPOT
+    end_zone: Z_FAR_POST
+    shape: STRAIGHT
+    speed: sprint
+    anchor: { kind: ARRIVES_AT, event: BALL_ARRIVAL, offset_s: 0.0 }
+  ATTACK_PEN_SPOT:
+    label: Ataque al punto de penalti
+    default_start_zone: Z_EDGE
+    end_zone: Z_PEN_SPOT
+    shape: STRAIGHT
+    speed: sprint
+    anchor: { kind: ARRIVES_AT, event: BALL_ARRIVAL, offset_s: 0.0 }
+  ATTACK_GA_CENTER:
+    label: Ataque al centro del área pequeña
+    default_start_zone: Z_PEN_SPOT
+    end_zone: Z_GA_CENTER
+    shape: STRAIGHT
+    speed: sprint
+    anchor: { kind: ARRIVES_AT, event: BALL_ARRIVAL, offset_s: 0.0 }
+  RUN_IN_BEHIND:
+    label: Desmarque de ruptura
+    default_start_zone: current
+    end_zone: param
+    shape: STRAIGHT
+    speed: sprint
+    anchor: { kind: STARTS_AT, event: KICK, offset_s: -0.2 }
+  DECOY_RUN:
+    label: Movimiento de arrastre
+    default_start_zone: Z_START_CLUSTER
+    end_zone: away_from_target   # zona de remate más alejada del destino del balón
+    shape: STRAIGHT
+    speed: 6.0
+    anchor: { kind: STARTS_AT, event: KICK, offset_s: -0.6 }
+  SCREEN:
+    label: Bloqueo posicional
+    default_start_zone: current
+    end_zone: computed_screen_point   # docs/15 §8 CRN-POS-05
+    shape: STRAIGHT
+    speed: jog
+    static_on_arrival: true
+    anchor: { kind: ARRIVES_AT, event: MOVEMENT_START, ref: beneficiary_movement, offset_s: -0.3 }
+    constraints: [SEQ-SCREEN-01, LAW-IMP-01]
+  CROSS_RUN:
+    label: Movimiento cruzado
+    pair: true
+    shape: CURVED_OPPOSITE
+    speed: sprint
+    anchor: { kind: ARRIVES_AT, event: BALL_ARRIVAL, offset_s: 0.0 }
+  LATE_ARRIVAL:
+    label: Llegada desde segunda línea
+    default_start_zone: Z_EDGE
+    end_zone: Z_PEN_SPOT
+    shape: STRAIGHT
+    speed: sprint
+    anchor: { kind: ARRIVES_AT, event: BALL_ARRIVAL, offset_s: 0.3 }
+  CHECK_TO_BALL:
+    label: Venir a recibir
+    default_start_zone: current
+    end_zone: toward_ball_6m
+    shape: STRAIGHT
+    speed: 5.0
+    anchor: { kind: STARTS_AT, event: KICK, offset_s: -0.5 }
+  SHORT_OPTION:
+    label: Ofrecer el corto
+    default_start_zone: Z_SHORT
+    end_zone: Z_SHORT_NEAR
+    shape: STRAIGHT
+    speed: 5.0
+    anchor: { kind: STARTS_AT, event: KICK, offset_s: -1.0 }
+  HOLD:
+    label: Mantener posición
+    shape: NONE
+  FOLLOW:
+    label: Seguir a un rival
+    derived_from: marked_actor
+    delay_s: 0.15
+    goal_side_offset_m: 1.0

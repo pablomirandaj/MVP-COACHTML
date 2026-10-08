@@ -1,0 +1,71 @@
+# Catálogo de zonas — fcs catalog 1.0.0
+# Coordenadas en METROS, marco de ataque, campo de referencia 105 x 68.
+# Definidas para acciones desde el lado IZQUIERDO (v = 0). Para el lado derecho: y' = W - y (mirror_v).
+# Para campos de otras dimensiones: las zonas relativas a la portería se anclan a la línea de gol
+# (x' = L - (105 - x)) y al centro de la portería (y' = W/2 + (y - 34)). Las zonas de campo (Z_REST)
+# se escalan proporcionalmente.
+catalog_version: 1.0.0
+reference_pitch: { length_m: 105, width_m: 68 }
+anchoring:
+  goal_relative: [Z_NEAR_POST, Z_FAR_POST, Z_GA_CENTER, Z_PEN_SPOT, Z_FAR_ZONE, Z_EDGE, Z_REBOUND, Z_GK, Z_START_CLUSTER]
+  corner_relative: [Z_SHORT]
+  proportional: [Z_REST]
+landmarks:
+  GOAL_C:    [105, 34]
+  POST_L:    [105, 30.34]
+  POST_R:    [105, 37.66]
+  PEN_SPOT:  [94, 34]
+  CORNER_L:  [105, 0]
+  CORNER_R:  [105, 68]
+  GA:        { x: [99.5, 105], y: [24.84, 43.16] }
+  PA:        { x: [88.5, 105], y: [13.84, 54.16] }
+zones:
+  Z_NEAR_POST:
+    label: Primer palo
+    rect: { x: [99.5, 105], y: [26, 32.5] }
+    anchors: [[101.5, 30.5], [100, 29], [102.5, 31.8]]
+  Z_FAR_POST:
+    label: Segundo palo
+    rect: { x: [99.5, 105], y: [36, 42.5] }
+    anchors: [[101.5, 39.5], [100, 41], [102.8, 38]]
+  Z_GA_CENTER:
+    label: Centro del área pequeña
+    rect: { x: [100, 105], y: [32.5, 36] }
+    anchors: [[102, 34.2], [100.5, 33.2]]
+  Z_PEN_SPOT:
+    label: Punto de penalti
+    rect: { x: [92, 97], y: [30, 38] }
+    anchors: [[94, 34], [95.5, 36.5], [95.5, 31.5]]
+  Z_FAR_ZONE:
+    label: Fuera del segundo palo
+    rect: { x: [96, 101], y: [42.5, 49] }
+    anchors: [[98.5, 45], [97, 47.5]]
+  Z_EDGE:
+    label: Frontal del área
+    rect: { x: [83, 88.5], y: [24, 44] }
+    anchors: [[86, 34], [86, 29], [86, 39]]
+  Z_REBOUND:
+    label: Zona de rechace
+    rect: { x: [82, 89], y: [20, 48] }
+    anchors: [[86.5, 30], [86.5, 38], [84, 24], [84, 44]]
+  Z_GK:
+    label: Junto al portero rival
+    rect: { x: [103.5, 105], y: [32, 36] }
+    anchors: [[104, 34.6]]
+  Z_SHORT:
+    label: Opción de corto
+    rect: { x: [94, 103], y: [0, 8] }
+    anchors: [[100, 5], [97, 7]]
+  Z_REST:
+    label: Vigilancia
+    rect: { x: [55, 72], y: [10, 58] }
+    anchors: [[65, 24], [65, 44], [60, 34]]
+  Z_START_CLUSTER:
+    label: Salida agrupada
+    rect: { x: [90, 94], y: [34, 42] }
+    anchors: [[92, 36], [92.5, 38], [91.5, 40], [93, 41]]
+placement:
+  min_spacing_m: 1.0
+  fallback_grid_step_m: 1.0
+  fallback_order: "x desc, |y - anchor0.y| asc, y asc"
+  rounding_decimals_normalized: 4

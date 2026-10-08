@@ -1,0 +1,63 @@
+# Plantillas de jugadas — DSL FCS-Play 1.0. Ver docs/15 §5.
+catalog_version: 1.0.0
+templates:
+  - template: CRN_ATT_STANDARD
+    type: CORNER_ATT
+    version: 1.0.0
+    params:
+      side:        { enum: [LEFT, RIGHT], required: true }
+      swing:       { enum: [INSWING, OUTSWING], default: from_taker_foot }   # TECH-SWING-01
+      trajectory:  { enum: [DRIVEN, LOFTED], default: DRIVEN }
+      target_zone: { enum: [Z_NEAR_POST, Z_FAR_POST, Z_GA_CENTER, Z_PEN_SPOT], default: zone_of_primary_target_else_Z_FAR_POST }  # BALL-TGT-01
+    ball_start: { corner_offset_m: 0.5 }
+    role_defaults:
+      TAKER:            { count: 1, rule: CRN-POS-01 }
+      PRIMARY_TARGET:   { count: 1, start_zone: Z_START_CLUSTER, movement: ATTACK_TO_TARGET }
+      SECONDARY_TARGET: { count: 2, start_zone: Z_START_CLUSTER, movements: [ATTACK_NEAR_POST, ATTACK_PEN_SPOT] }
+      DECOY:            { count: 1, start_zone: Z_START_CLUSTER, movement: DECOY_RUN }
+      GK_SCREEN:        { count: 1, start_zone: Z_GK, movement: HOLD }
+      REBOUND:          { count: 2, start_zone: Z_REBOUND, movement: HOLD }
+      REST_DEFENDER:    { count: 2, start_zone: Z_REST, movement: HOLD, rule: CRN-POS-07 }
+    # Suma de defaults = 10 jugadores de campo + portero propio (no aparece en ABP ofensivo salvo vista completa).
+    fill_order: [TAKER, REST_DEFENDER, PRIMARY_TARGET, BLOCKER, SECONDARY_TARGET, REBOUND, DECOY, GK_SCREEN]
+    outfield_total: 10
+    opponents_default: OPP_CORNER_DEF_MIXED
+    constraints: [LAW-CRN-01, LAW-CRN-02, LAW-CRN-03, GEO-01, GEO-02, GEO-03, GEO-SPACING-01, TECH-SWING-01, TAC-CRN-REST-01, TAC-CRN-TGT-01, SEQ-SCREEN-01, SCH-SYNC-01, SEQ-CONSTR-01]
+
+  - template: OPP_CORNER_DEF_MIXED
+    type: CORNER_DEF
+    team: OPP
+    version: 1.0.0
+    description: Defensa rival por defecto para visualizar un córner ofensivo. Representación genérica, no predicción.
+    actors:
+      - { role: GOALKEEPER,     at: [104.2, 34] }
+      - { role: ZONAL_DEFENDER, at: [103.5, 30.0] }
+      - { role: ZONAL_DEFENDER, at: [103.5, 34.0] }
+      - { role: ZONAL_DEFENDER, at: [103.5, 38.0] }
+      - { role: ZONAL_DEFENDER, at: [100.5, 32.0] }
+      - { role: ZONAL_DEFENDER, at: [100.5, 36.5] }
+      - { role: ZONAL_DEFENDER, at: [98.0,  26.0] }   # frente al primer palo
+      - { role: MAN_MARKER, marks: PRIMARY_TARGET,   offset: goal_side_1m }
+      - { role: MAN_MARKER, marks: SECONDARY_TARGET, index: 0, offset: goal_side_1m }
+      - { role: MAN_MARKER, marks: SECONDARY_TARGET, index: 1, offset: goal_side_1m }
+      - { role: COUNTER_OUTLET, at: [70, 34] }
+
+  - template: CRN_DEF_MIXED
+    type: CORNER_DEF
+    version: 1.0.0
+    params:
+      side: { enum: [LEFT, RIGHT], required: true }   # lado desde el que saca el rival
+      zonal_count: { int: [3, 7], default: 5 }
+      man_count:   { int: [0, 5], default: 3 }
+      post_guard:  { enum: [NONE, NEAR, BOTH], default: NEAR }
+      outlets:     { int: [0, 2], default: 1 }
+    role_defaults:
+      GOALKEEPER:     { count: 1 }
+      ZONAL_DEFENDER: { count: "{zonal_count}", zone_line: six_yard_line_and_penalty_spot }
+      MAN_MARKER:     { count: "{man_count}" }
+      POST_GUARD:     { count: "{post_guard == NEAR ? 1 : post_guard == BOTH ? 2 : 0}" }
+      EDGE_GUARD:     { count: 1 }
+      COUNTER_OUTLET: { count: "{outlets}" }
+    fill_order: [GOALKEEPER, ZONAL_DEFENDER, MAN_MARKER, POST_GUARD, EDGE_GUARD, COUNTER_OUTLET]
+    outfield_total: 10
+    constraints: [GEO-01, GEO-02, GEO-03, TAC-CRNDEF-01]

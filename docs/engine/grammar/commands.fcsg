@@ -1,0 +1,240 @@
+# ============================================================================
+# FCSG 1.0 — Football Coach Studio Grammar (es-ES)
+# Gramática de marcos determinista. Compilada en build a matchers TypeScript.
+# Ver docs/16 §5 para la sintaxis.
+#
+#   {slot}       entidad tipada (definida en slots:)
+#   "lit"        literal (forma normalizada)
+#   [ ... ]      opcional
+#   ( a | b )    alternativa
+#   ~            relleno de 0..3 tokens no reconocidos
+#   VERB<x>      cualquier forma (imperativo, subjuntivo "que", infinitivo tras "quiero/vamos a") del verbo x
+#
+# Resolución de empates: más slots obligatorios cubiertos > más tokens consumidos > priority (mayor gana).
+# ============================================================================
+
+# ----------------------------- ALINEACIÓN ----------------------------------
+
+frame LINEUP_SET_FORMATION -> lineup.set_formation
+  ctx: LINEUP_EDITOR, MATCHDAY, GLOBAL
+  slots: formation:FORMATION!, when:DATE_REF?
+  pattern: [{when}] ~ (VERB<jugar> | VERB<poner> | VERB<usar> | VERB<cambiar> [a] | "sistema" | "formacion" | "con") ~ {formation}
+         | {formation} [{when}]
+  map: { formation: formation }
+  also_emit_if(when): lineup.link_match { match_ref: { date_ref: when } }
+  priority: 10
+
+frame LINEUP_ASSIGN_GROUP -> lineup.assign_group
+  ctx: LINEUP_EDITOR, MATCHDAY, GLOBAL
+  slots: group:POSITION_GROUP!, players:PLAYER*!
+  pattern: [en] {group} ~ {players}
+         | {players} (de | en | como) {group}
+  map: { group: group, players: players, order_hint: "POSITION_FIT" }
+  note: "Si group = GK, se emite lineup.assign con slot GK."
+  priority: 20
+
+frame LINEUP_ASSIGN_ONE -> lineup.assign
+  ctx: LINEUP_EDITOR, MATCHDAY
+  slots: player:PLAYER!, position:POSITION!
+  pattern: (VERB<poner> | VERB<jugar> | "va") [a] {player} (de | en | como) {position}
+         | {player} (de | en | como) {position}
+         | (de | en) {position} {player}
+  map: { player: player, slot: resolve_slot(position, current_formation) }
+  priority: 25
+
+frame LINEUP_SUBSTITUTE -> lineup.substitute
+  ctx: LINEUP_EDITOR, MATCHDAY
+  slots: a:PLAYER!, b:PLAYER!
+  pattern: (VERB<cambiar> | VERB<sustituir> | VERB<quitar>) [a] {a} por [a] {b}
+         | (VERB<entrar>) {b} por {a}
+  map: { out: a, in: b }
+  disambiguation:
+    - if: in_lineup(a) and not in_lineup(b)    then: emit
+    - if: in_lineup(a) and in_lineup(b)        then: clarify AMB-OP ["Intercambiar posiciones de {a} y {b}" -> lineup.swap, "Cancelar"]
+    - if: not in_lineup(a) and in_lineup(b)    then: clarify AMB-OP ["Sale {b}, entra {a}" -> lineup.substitute{out:b,in:a}, "Cancelar"]
+    - if: not in_lineup(a) and not in_lineup(b) then: clarify AMB-OP ["Ninguno está en el once"]
+  priority: 30
+
+frame LINEUP_SWAP -> lineup.swap
+  ctx: LINEUP_EDITOR
+  slots: a:PLAYER!, b:PLAYER!
+  pattern: VERB<intercambiar> [a] {a} (y | con) [a] {b}
+  priority: 35
+
+frame LINEUP_SHIFT_GROUP -> lineup.shift_group
+  ctx: LINEUP_EDITOR
+  slots: dir:DIRECTION!, group:POSITION_GROUP!, intensity:INTENSITY?, distance:DISTANCE?
+  pattern: {dir} ~ [{intensity} | {distance}] ~ [a] {group}
+         | {group} ~ [{intensity} | {distance}] ~ {dir}
+  map: { group: group, du_m: du(dir, distance ?? intensity.m), away_from_center_m: away(dir, distance ?? intensity.m) }
+  priority: 20
+
+frame LINEUP_COMPACT -> lineup.compact
+  ctx: LINEUP_EDITOR
+  slots: verb:DIRECTION!, intensity:INTENSITY?
+  pattern: ("junta" | "juntar" | "acerca" | "separa") ~ [{intensity}] ~ "las lineas"
+         | "lineas" ~ [{intensity}] ~ ("juntas" | "cerca" | "separadas")
+  map: { axis: "U", factor: 1 - sign(verb.compact) * (intensity.pct ?? 15) / 100 }
+  priority: 20
+
+frame LINEUP_LOAD -> lineup.load
+  ctx: LINEUP_EDITOR, MATCHDAY
+  slots: opponent:OPPONENT?, label:SAVED_LABEL?
+  pattern: (VERB<usar> | VERB<cargar> | VERB<recuperar> | VERB<poner>) ~ ("la formacion" | "la alineacion" | "el once") ~ [que guardamos] ~ (contra [el] {opponent} | {label})
+  require_one_of: [opponent, label]
+  map: { query: { opponent_name: opponent, label: label } }
+  disambiguation:
+    - if: results == 0  then: clarify AMB-UNKNOWN-ENTITY "No hay alineaciones guardadas contra {opponent}."
+    - if: results > 1   then: clarify AMB-ENTITY (lista por fecha, máx. 4)
+  priority: 20
+
+frame LINEUP_SAVE -> lineup.save
+  ctx: LINEUP_EDITOR
+  slots: label:FREE_TEXT!
+  pattern: VERB<guardar> ~ ("esta alineacion" | "este once" | "la alineacion") como {label}
+  map: { label: label, tags: tag_from_label(label) }
+  priority: 20
+
+frame LINEUP_CLEAR -> lineup.clear_slot
+  ctx: LINEUP_EDITOR
+  slots: player:PLAYER!
+  pattern: (VERB<quitar> | VERB<sacar>) [a] {player} [del once]
+  priority: 15
+
+# ----------------------------- JUGADAS -------------------------------------
+
+frame PLAY_CREATE -> play.create
+  ctx: PLAY_EDITOR, MATCHDAY, GLOBAL
+  slots: type:ACTION_TYPE!, side:SIDE?
+  pattern: (VERB<crear> | VERB<hacer> | VERB<preparar> | "nuevo" | "nueva" | "quiero") ~ {type} ~ [{side}]
+  map: { type: type, side: side }
+  missing: { side: clarify AMB-MISSING-REQUIRED "¿Desde qué lado?" ["Izquierda", "Derecha"] when type in [CORNER_*, FK_WIDE_*, THROW_IN_*] }
+  priority: 40
+
+frame PLAY_SET_TAKER -> play.set_taker
+  ctx: PLAY_EDITOR
+  slots: player:PLAYER!
+  pattern: ("lo" | "la") ~ (VERB<sacar> | VERB<tirar> | VERB<lanzar> | VERB<poner>) {player}
+         | {player} ~ (VERB<sacar> | VERB<tirar> | VERB<lanzar>)
+         | "lanzador" {player}
+  priority: 30
+
+frame ASSERT_FOOT -> assert
+  ctx: ANY
+  slots: player:PLAYER!, foot:FOOT!
+  pattern: {player} [,] "que es" {foot}
+         | {player} "es" {foot}
+  map: { player: player, attribute: "dominant_foot", value: foot }
+  priority: 50
+
+frame PLAY_SET_DELIVERY -> play.set_delivery
+  ctx: PLAY_EDITOR
+  slots: swing:SWING?, traj:TRAJECTORY?, zone:ZONE?, tech:TECHNIQUE?
+  pattern: ["para"] (VERB<poner> | VERB<sacar> | VERB<ir> | "que vaya" | "balon" | "centro") ~ [{swing}] ~ [{traj}] ~ [al {zone}] ~ [{tech}]
+         | "el corner" ~ "vaya" ~ {swing}
+  require_one_of: [swing, traj, zone, tech]
+  priority: 25
+
+frame PLAY_ADJUST_DELIVERY -> play.adjust_delivery
+  ctx: PLAY_EDITOR
+  slots: comp:COMPARATIVE!
+  pattern: ~ (VERB<sacar> | VERB<poner> | "balon") ~ "mas" ("cerrado" | "cerrada" | "pasado" | "pasada" | "corto" | "corta" | "abierto" | "abierta")
+  map:
+    "mas cerrado": { closer_to_goal_m: 1.5, curve_delta: +0.04 }
+    "mas abierto": { closer_to_goal_m: -1.5, curve_delta: -0.04 }
+    "mas pasado":  { further_m: 2.0 }
+    "mas corto":   { further_m: -2.0 }
+  priority: 30
+
+frame PLAY_ADD_ROLES -> play.add_roles
+  ctx: PLAY_EDITOR
+  slots: n:QUANTITY!, role:ROLE?, zone:ZONE?, movement:MOVEMENT?
+  pattern: ["quiero"] [VERB<mantener> | VERB<dejar> | VERB<poner>] {n} ["jugador" | "jugadores"] ~ ({zone} | {role} | {movement})
+         | {n} (VERB<esperar> | VERB<estar> | VERB<quedarse>) ~ ({role} | {zone})
+         | ("otro" | "otro jugador") ~ {movement}
+  map: { count: n, role: role ?? role_from_zone(zone) ?? role_from_movement(movement), zone: zone, movement: movement, group_id: new_group() }
+  priority: 20
+
+frame PLAY_SCREEN_IN_GROUP -> [play.set_role, play.set_role, play.relation]
+  ctx: PLAY_EDITOR
+  slots: legal:LEGAL_ADV?
+  pattern: "uno" (VERB<bloquear> | "hace la pantalla") [{legal}] ~ ("al defensor" | "a la marca" | "al que") ("que sigue" | "que marca" | "de") ~ ("al otro" | "del otro")
+  requires_context: last_group.size == 2
+  map:
+    - { op: play.set_role, target: { group: last_group, index: 0 }, role: BLOCKER, strict_legal: legal != null }
+    - { op: play.set_role, target: { group: last_group, index: 1 }, role: PRIMARY_TARGET }
+    - { op: play.relation, type: SCREENS, blocker: { group: last_group, index: 0 }, defender: { marker_of: { group: last_group, index: 1 } }, beneficiary: { group: last_group, index: 1 } }
+  priority: 45
+
+frame PLAY_SET_ROLE -> play.set_role
+  ctx: PLAY_EDITOR
+  slots: target:ACTOR_SELECTOR!, role:ROLE!
+  pattern: ["que"] {target} ("sea" | "haga de" | "este en" | "va a") ~ {role}
+  priority: 25
+
+frame PLAY_SET_MOVEMENT -> play.set_movement
+  ctx: PLAY_EDITOR
+  slots: target:ACTOR_SELECTOR!, movement:MOVEMENT!
+  pattern: ["haz que" | "que"] {target} ~ {movement}
+  priority: 30
+
+frame PLAY_MOVE_ACTOR -> play.move_actor
+  ctx: PLAY_EDITOR
+  slots: target:ACTOR_SELECTOR!, distance:DISTANCE?, intensity:INTENSITY?, dir:DIRECTION!
+  pattern: (VERB<mover> | VERB<desplazar> | VERB<poner> | VERB<llevar>) {target} ~ [{distance} | {intensity}] ~ [hacia] {dir}
+         | (VERB<retrasar> | VERB<adelantar> | VERB<abrir> | VERB<cerrar>) [{intensity} | {distance}] [a] {target}
+  map: { target: target, dx_m: du(dir, distance ?? intensity.m), dy_m: dv(dir, distance ?? intensity.m) }
+  priority: 25
+
+frame PLAY_SHIFT_TIMING -> play.shift_timing
+  ctx: PLAY_EDITOR
+  slots: target:ACTOR_SELECTOR!, timing:TIMING!
+  pattern: {target} ~ ("tiene que" | "debe" | "que") ~ (VERB<empezar> | VERB<salir> | VERB<arrancar> | VERB<llegar>) ~ {timing}
+  map: { target: target, delta_s: timing.delta_s }
+  note: "'el bloqueo' se resuelve como selector {role: BLOCKER}."
+  priority: 30
+
+frame PLAY_CONSTRAINT_STAY -> play.constraint
+  ctx: PLAY_EDITOR
+  slots: target:ACTOR_SELECTOR!
+  pattern: {target} ~ ("no deben" | "no pueden" | "que no") ~ (VERB<incorporar> | VERB<subir> | VERB<entrar>) ~ ["al remate" | "al area"]
+  map: { target: target, rule: "NO_JOIN_ATTACK" }
+  priority: 35
+
+frame PLAY_ASSIGN_PLAYER -> play.assign_player
+  ctx: PLAY_EDITOR
+  slots: player:PLAYER!, target:ACTOR_SELECTOR!
+  pattern: VERB<poner> [a] {player} (en | de | como) {target}
+  priority: 28
+
+frame PLAY_REMOVE -> play.remove_actor
+  ctx: PLAY_EDITOR
+  slots: target:ACTOR_SELECTOR!
+  pattern: (VERB<quitar> | VERB<eliminar> | VERB<borrar>) [a | al] {target}
+  priority: 20
+
+frame PLAY_SAVE_VARIANT -> play.save_variant
+  ctx: PLAY_EDITOR
+  slots: label:FREE_TEXT!
+  pattern: VERB<guardar> ~ como ["variante"] {label}
+  priority: 20
+
+# ----------------------------- GLOBALES ------------------------------------
+
+frame UNDO -> undo
+  ctx: ANY
+  pattern: ("deshaz" | "deshacer" | "vuelve atras" | "anula eso" | "eso no")
+frame REDO -> redo
+  ctx: ANY
+  pattern: ("rehaz" | "rehacer" | "vuelve a ponerlo")
+frame CONFIRM -> confirm
+  ctx: CLARIFICATION, REVIEW
+  pattern: ("si" | "vale" | "correcto" | "confirma" | "adelante")
+frame CANCEL -> cancel
+  ctx: CLARIFICATION, REVIEW
+  pattern: ("no" | "cancela" | "dejalo")
+frame CHOOSE -> choose_option
+  ctx: CLARIFICATION
+  slots: idx:ORDINAL?, label:OPTION_LABEL?
+  pattern: ["la" | "el"] ({idx} | {label})
+  note: "Ordinales: la primera, la segunda… o texto que coincida con la etiqueta de una opción ('a los dos', 'el de la izquierda')."

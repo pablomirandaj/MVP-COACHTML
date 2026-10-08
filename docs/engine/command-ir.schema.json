@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fcs.example/schemas/command-ir/1.0",
+  "title": "Football Coach Studio — Command IR 1.0",
+  "description": "Representación intermedia determinista producida por @fcs/nlu y consumida por @fcs/engine. Ver docs/16 §8.",
+  "type": "object",
+  "required": ["ir_version", "utterance_id", "source", "context", "reference_frame", "commands"],
+  "additionalProperties": false,
+  "properties": {
+    "ir_version": { "const": "1.0" },
+    "utterance_id": { "type": "string", "pattern": "^utt_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "source": { "enum": ["VOICE", "TEXT", "MANUAL", "CLARIFICATION"] },
+    "context": {
+      "type": "object",
+      "required": ["screen", "team_id"],
+      "additionalProperties": false,
+      "properties": {
+        "screen": { "enum": ["LINEUP_EDITOR", "PLAY_EDITOR", "OPPONENT_NOTES", "TALK_BUILDER", "MATCHDAY", "GLOBAL"] },
+        "team_id": { "type": "string" },
+        "match_id": { "type": ["string", "null"] },
+        "doc_id": { "type": ["string", "null"] },
+        "doc_version": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "reference_frame": { "enum": ["ATTACKING_TEAM", "SCREEN"] },
+    "transaction": { "type": "boolean", "default": true },
+    "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } },
+    "clarifications": { "type": "array", "items": { "$ref": "#/$defs/clarification" } },
+    "unparsed": {
+      "type": "array",
+      "items": { "type": "object", "required": ["span", "reason"], "properties": { "span": { "$ref": "#/$defs/span" }, "reason": { "enum": ["OUT_OF_COVERAGE", "NO_ENTITY", "LOW_STT_CONFIDENCE"] } } }
+    }
+  },
+  "$defs": {
+    "span": { "type": "array", "prefixItems": [{ "type": "integer", "minimum": 0 }, { "type": "integer", "minimum": 0 }], "minItems": 2, "maxItems": 2 },
+    "confidenceLevel": { "enum": ["EXACT", "NORMALIZED", "FUZZY", "DEFAULTED", "INFERRED", "MISSING"] },
+    "confidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/confidenceLevel" } },
+    "playerRef": { "type": "string", "pattern": "^pl_[A-Za-z0-9]+$" },
+    "zone": { "enum": ["Z_NEAR_POST", "Z_FAR_POST", "Z_GA_CENTER", "Z_PEN_SPOT", "Z_FAR_ZONE", "Z_EDGE", "Z_REBOUND", "Z_GK", "Z_SHORT", "Z_REST", "Z_START_CLUSTER"] },
+    "role": { "enum": ["TAKER", "PRIMARY_TARGET", "SECONDARY_TARGET", "BLOCKER", "DECOY", "SHORT_RECEIVER", "REBOUND", "REST_DEFENDER", "GK_SCREEN", "COVER", "ZONAL_DEFENDER", "MAN_MARKER", "POST_GUARD", "EDGE_GUARD", "COUNTER_OUTLET", "WALL", "GOALKEEPER"] },
+    "movement": { "enum": ["ATTACK_NEAR_POST", "ATTACK_FAR_POST", "ATTACK_PEN_SPOT", "ATTACK_GA_CENTER", "RUN_IN_BEHIND", "DECOY_RUN", "SCREEN", "CROSS_RUN", "LATE_ARRIVAL", "CHECK_TO_BALL", "SHORT_OPTION", "HOLD", "FOLLOW"] },
+    "playType": { "enum": ["CORNER_ATT", "CORNER_DEF", "FK_WIDE_ATT", "FK_WIDE_DEF", "FK_CENTRAL_ATT", "FK_CENTRAL_DEF", "FK_INDIRECT_ATT", "FK_INDIRECT_DEF", "THROW_IN_ATT", "THROW_IN_DEF", "KICKOFF", "CUSTOM"] },
+    "slotCode": { "type": "string", "pattern": "^(GK|RB|LB|RWB|LWB|CB|DM|CM|RM|LM|AM|RW|LW|ST|SS)(_(L|C|R))?$" },
+    "positionGroup": { "enum": ["GK", "DEF", "MID", "ATT", "CENTER_BACKS", "FULLBACKS", "WINGERS", "STRIKERS", "MIDFIELD_CENTER"] },
+    "formationCode": { "type": "string", "pattern": "^F_[0-9]{3,5}$|^custom:[A-Za-z0-9_-]+$" },
+    "actorSelector": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "actor": { "type": "string" },
+        "player": { "$ref": "#/$defs/playerRef" },
+        "role": { "$ref": "#/$defs/role" },
+        "zone": { "$ref": "#/$defs/zone" },
+        "group": { "type": "string", "description": "id de grupo creado en la misma locución (p. ej. g1)" },
+        "index": { "type": "integer", "minimum": 0 },
+        "team": { "enum": ["OWN", "OPP"], "default": "OWN" },
+        "expect_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "commandBase": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": { "type": "string" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "span": { "$ref": "#/$defs/span" }
+      }
+    },
+    "command": {
+      "allOf": [{ "$ref": "#/$defs/commandBase" }],
+      "oneOf": [
+        { "properties": { "op": { "const": "lineup.set_formation" }, "formation": { "$ref": "#/$defs/formationCode" } }, "required": ["formation"] },
+        { "properties": { "op": { "const": "lineup.assign" }, "player": { "$ref": "#/$defs/playerRef" }, "slot": { "$ref": "#/$defs/slotCode" } }, "required": ["player", "slot"] },
+        { "properties": { "op": { "const": "lineup.assign_group" }, "group": { "$ref": "#/$defs/positionGroup" }, "players": { "type": "array", "items": { "$ref": "#/$defs/playerRef" }, "minItems": 1 }, "order_hint": { "enum": ["POSITION_FIT", "SPOKEN_LEFT_TO_RIGHT"] } }, "required": ["group", "players"] },
+        { "properties": { "op": { "const": "lineup.substitute" }, "out": { "$ref": "#/$defs/playerRef" }, "in": { "$ref": "#/$defs/playerRef" } }, "required": ["out", "in"] },
+        { "properties": { "op": { "const": "lineup.swap" }, "a": { "$ref": "#/$defs/playerRef" }, "b": { "$ref": "#/$defs/playerRef" } }, "required": ["a", "b"] },
+        { "properties": { "op": { "const": "lineup.shift_group" }, "group": { "$ref": "#/$defs/positionGroup" }, "du_m": { "type": "number" }, "away_from_center_m": { "type": "number" } }, "required": ["group"] },
+        { "properties": { "op": { "const": "lineup.shift_slot" }, "slot": { "$ref": "#/$defs/slotCode" }, "du_m": { "type": "number" }, "dv_m": { "type": "number" }, "toward": { "enum": ["CENTER", "TOUCHLINE"] } }, "required": ["slot"] },
+        { "properties": { "op": { "const": "lineup.compact" }, "axis": { "enum": ["U", "V", "BOTH"] }, "factor": { "type": "number", "exclusiveMinimum": 0.5, "exclusiveMaximum": 1.5 } }, "required": ["axis", "factor"] },
+        { "properties": { "op": { "const": "lineup.load" }, "query": { "type": "object", "properties": { "opponent_name": { "type": "string" }, "label": { "type": "string" }, "lineup_id": { "type": "string" } } } }, "required": ["query"] },
+        { "properties": { "op": { "const": "lineup.save" }, "label": { "type": "string", "minLength": 1, "maxLength": 80 }, "tags": { "type": "array", "items": { "type": "string" } } }, "required": ["label"] },
+        { "properties": { "op": { "const": "lineup.link_match" }, "match_ref": { "type": "object", "properties": { "match_id": { "type": "string" }, "date_ref": { "type": "string", "description": "ISO date resuelta" } } } }, "required": ["match_ref"] },
+        { "properties": { "op": { "const": "lineup.clear_slot" }, "player": { "$ref": "#/$defs/playerRef" } }, "required": ["player"] },
+
+        { "properties": { "op": { "const": "play.create" }, "type": { "$ref": "#/$defs/playType" }, "side": { "enum": ["LEFT", "RIGHT", "CENTER"] }, "template": { "type": "string" } }, "required": ["type"] },
+        { "properties": { "op": { "const": "play.set_taker" }, "player": { "$ref": "#/$defs/playerRef" } }, "required": ["player"] },
+        { "properties": { "op": { "const": "play.set_delivery" }, "swing": { "enum": ["INSWING", "OUTSWING", "NONE"] }, "trajectory": { "enum": ["DRIVEN", "LOFTED", "LOW", "SHORT"] }, "target_zone": { "$ref": "#/$defs/zone" }, "technique": { "enum": ["INSIDE_FOOT", "OUTSIDE_FOOT", "INSTEP"] } } },
+        { "properties": { "op": { "const": "play.adjust_delivery" }, "closer_to_goal_m": { "type": "number" }, "further_m": { "type": "number" }, "curve_delta": { "type": "number", "minimum": -0.1, "maximum": 0.1 } } },
+        { "properties": { "op": { "const": "play.add_roles" }, "count": { "type": "integer", "minimum": 1, "maximum": 10 }, "role": { "$ref": "#/$defs/role" }, "zone": { "$ref": "#/$defs/zone" }, "movement": { "$ref": "#/$defs/movement" }, "players": { "type": "array", "items": { "$ref": "#/$defs/playerRef" } }, "group_id": { "type": "string" } }, "required": ["count"] },
+        { "properties": { "op": { "const": "play.set_role" }, "target": { "$ref": "#/$defs/actorSelector" }, "role": { "$ref": "#/$defs/role" }, "strict_legal": { "type": "boolean" } }, "required": ["target", "role"] },
+        { "properties": { "op": { "const": "play.set_movement" }, "target": { "$ref": "#/$defs/actorSelector" }, "movement": { "$ref": "#/$defs/movement" }, "to_zone": { "$ref": "#/$defs/zone" } }, "required": ["target", "movement"] },
+        { "properties": { "op": { "const": "play.relation" }, "type": { "enum": ["SCREENS", "CROSSES_WITH", "MARKS"] }, "blocker": { "$ref": "#/$defs/actorSelector" }, "defender": { "oneOf": [{ "$ref": "#/$defs/actorSelector" }, { "type": "object", "properties": { "marker_of": { "$ref": "#/$defs/actorSelector" } }, "required": ["marker_of"] }] }, "beneficiary": { "$ref": "#/$defs/actorSelector" }, "a": { "$ref": "#/$defs/actorSelector" }, "b": { "$ref": "#/$defs/actorSelector" } }, "required": ["type"] },
+        { "properties": { "op": { "const": "play.move_actor" }, "target": { "$ref": "#/$defs/actorSelector" }, "dx_m": { "type": "number", "minimum": -30, "maximum": 30 }, "dy_m": { "type": "number", "minimum": -30, "maximum": 30 }, "to_zone": { "$ref": "#/$defs/zone" }, "move_path": { "enum": ["START_ONLY", "WHOLE_PATH"], "default": "START_ONLY" } }, "required": ["target"] },
+        { "properties": { "op": { "const": "play.shift_timing" }, "target": { "$ref": "#/$defs/actorSelector" }, "delta_s": { "type": "number", "minimum": -3, "maximum": 3 } }, "required": ["target", "delta_s"] },
+        { "properties": { "op": { "const": "play.constraint" }, "target": { "$ref": "#/$defs/actorSelector" }, "rule": { "enum": ["STAY", "NO_JOIN_ATTACK", "NO_CONTACT", "MUST_REACH_TARGET"] } }, "required": ["target", "rule"] },
+        { "properties": { "op": { "const": "play.assign_player" }, "target": { "$ref": "#/$defs/actorSelector" }, "player": { "$ref": "#/$defs/playerRef" } }, "required": ["target", "player"] },
+        { "properties": { "op": { "const": "play.remove_actor" }, "target": { "$ref": "#/$defs/actorSelector" } }, "required": ["target"] },
+        { "properties": { "op": { "const": "play.add_opponents" }, "setup": { "enum": ["ZONAL", "MAN", "MIXED"] }, "count": { "type": "integer", "minimum": 1, "maximum": 11 } }, "required": ["setup"] },
+        { "properties": { "op": { "const": "play.save" }, "label": { "type": "string" } } },
+        { "properties": { "op": { "const": "play.save_variant" }, "label": { "type": "string", "minLength": 1 } }, "required": ["label"] },
+
+        { "properties": { "op": { "const": "assert" }, "player": { "$ref": "#/$defs/playerRef" }, "attribute": { "enum": ["dominant_foot", "main_position"] }, "value": { "type": "string" } }, "required": ["player", "attribute", "value"] },
+        { "properties": { "op": { "const": "talk.order" }, "sections": { "type": "array", "items": { "type": "string" } } }, "required": ["sections"] },
+        { "properties": { "op": { "const": "talk.include" }, "resource": { "type": "object" } }, "required": ["resource"] },
+        { "properties": { "op": { "const": "talk.note" }, "section": { "type": "string" }, "text_span": { "$ref": "#/$defs/span" } }, "required": ["section", "text_span"] },
+        { "properties": { "op": { "enum": ["undo", "redo", "confirm", "cancel"] } } },
+        { "properties": { "op": { "const": "choose_option" }, "clarification_id": { "type": "string" }, "option_index": { "type": "integer", "minimum": 0 } }, "required": ["clarification_id", "option_index"] }
+      ]
+    },
+    "clarification": {
+      "type": "object",
+      "required": ["id", "code", "question", "options"],
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "enum": ["AMB-ENTITY", "AMB-UNKNOWN-ENTITY", "AMB-FUZZY", "AMB-TARGET-MULTI", "AMB-OP", "AMB-MISSING-REQUIRED", "AMB-CONFLICT-FACT", "AMB-CONFLICT-RULE", "AMB-OUT-OF-COVERAGE", "AMB-CONTEXT"] },
+        "question": { "type": "string" },
+        "span": { "$ref": "#/$defs/span" },
+        "options": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": { "type": "object", "required": ["label", "commands"], "properties": { "label": { "type": "string" }, "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } } } }
+        }
+      }
+    }
+  }
+}

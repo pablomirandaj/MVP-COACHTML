@@ -1,0 +1,39 @@
+# Reglas de validación — fcs catalog 1.0.0. Ver docs/15 §10.
+# class: LAW (reglamento IFAB, no configurable) | GEOMETRY | ROSTER | TECHNIQUE | TACTICAL (configurable) | SEQUENCE | LINEUP
+catalog_version: 1.0.0
+rules:
+  - { id: GEO-01, class: GEOMETRY, severity: error, check: actors_within, params: { min: -0.04, max: 1.04 }, message: "{actor} está fuera del terreno de juego." }
+  - { id: GEO-02, class: GEOMETRY, severity: error, check: max_per_team, params: { players: 11, goalkeepers: 1 }, message: "Hay {count} jugadores de {team}; el máximo es 11." }
+  - { id: GEO-03, class: GEOMETRY, severity: error, check: unique_player, message: "{player} aparece dos veces." }
+  - { id: GEO-SPACING-01, class: GEOMETRY, severity: warning, check: min_teammate_distance, params: { meters: 1.0, at_t: -2.5 }, message: "{a} y {b} están a menos de 1 m." }
+  - { id: GEO-PATH-01, class: GEOMETRY, severity: warning, check: path_within, except_roles: [TAKER], message: "La carrera de {actor} sale del campo." }
+  - { id: AVAIL-01, class: ROSTER, severity: warning, check: player_available, message: "{player} figura como {status}." }
+  - { id: LAW-CRN-01, class: LAW, law: "IFAB Regla 17", severity: error, check: ball_in_corner_area, params: { radius_m: 1.0 }, message: "El balón debe estar en el área de esquina del lado {side}." }
+  - { id: LAW-CRN-02, class: LAW, law: "IFAB Regla 17", severity: warning, check: opponents_min_distance_from_corner_arc, params: { meters: 9.15, until: KICK }, message: "Los rivales deben estar a 9,15 m del área de esquina hasta el saque." }
+  - { id: LAW-CRN-03, class: LAW, law: "IFAB Regla 17", severity: warning, check: taker_no_double_touch, message: "El lanzador vuelve a tocar el balón antes que otro jugador (tiro libre indirecto)." }
+  - { id: LAW-FK-01, class: LAW, law: "IFAB Regla 13", severity: warning, check: opponents_min_distance_from_ball, params: { meters: 9.15, until: KICK }, message: "Los rivales deben estar a 9,15 m del balón." }
+  - { id: LAW-FK-02, class: LAW, law: "IFAB Regla 13", severity: warning, check: attackers_min_distance_from_wall, params: { meters: 1.0, wall_min_size: 3 }, message: "Con barrera de 3 o más, los atacantes deben estar a 1 m de ella." }
+  - { id: LAW-TI-01, class: LAW, law: "IFAB Regla 15", severity: warning, check: opponents_min_distance_from_ball, params: { meters: 2.0, until: KICK }, message: "Los rivales deben estar a 2 m del punto del saque." }
+  - { id: LAW-KO-01, class: LAW, law: "IFAB Regla 8", severity: warning, check: kickoff_halves, message: "En el saque inicial todos deben estar en su propio campo." }
+  - { id: LAW-OFF-INFO, class: LAW, law: "IFAB Regla 11", severity: info, check: offside_info, message: "No hay fuera de juego al recibir directamente de córner o saque de banda; sí en tiros libres." }
+  - { id: LAW-IMP-01, class: LAW, law: "IFAB Regla 12", severity: warning, check: screen_is_static, params: { static_window_s: 0.3, max_speed_mps: 0.5 }, message: "El bloqueo se mueve hacia el rival justo antes de su paso: riesgo de sanción por impedir el avance. La legalidad la decide el árbitro." }
+  - { id: TECH-SWING-01, class: TECHNIQUE, severity: warning, check: swing_matches_foot_and_side, message: "{player} es {foot}: desde la {side} su golpeo natural sale {natural_swing}. Has pedido {requested_swing}." }
+  - { id: TECH-FOOT-CONFLICT, class: TECHNIQUE, severity: clarification, check: asserted_foot_matches_profile, message: "Has dicho que {player} es {asserted}, pero su ficha indica {profile}." }
+  - { id: ROLE-01, class: TACTICAL, severity: warning, check: own_gk_role, message: "El portero tiene asignado el rol {role}." }
+  - { id: ROLE-02, class: TACTICAL, severity: warning, check: role_movement_compatible, message: "El rol {role} no suele usar el movimiento {movement}." }
+  - { id: TAC-CRN-REST-01, class: TACTICAL, configurable: true, severity: warning, check: min_role_count, params: { role: REST_DEFENDER, min: 1 }, message: "No queda nadie de vigilancia: recomendación del equipo, no obligación." }
+  - { id: TAC-CRN-TGT-01, class: TACTICAL, configurable: true, severity: warning, check: someone_attacks_target, message: "Nadie ataca la zona donde va el balón ({zone})." }
+  - { id: TAC-CRN-OVR-01, class: TACTICAL, configurable: true, severity: info, check: max_per_zone, params: { max: 3 }, message: "Hay {count} jugadores en {zone}." }
+  - { id: TAC-CRNDEF-01, class: TACTICAL, configurable: true, severity: warning, check: near_post_covered, message: "El primer palo queda sin defensor." }
+  - { id: SEQ-SCREEN-01, class: SEQUENCE, severity: warning, check: screen_set_before_beneficiary, params: { lead_s: 0.3 }, message: "El bloqueo se establece {gap}s tarde. Propuesta: empezar {fix_s}s antes." }
+  - { id: SEQ-CYCLE-01, class: SEQUENCE, severity: error, check: acyclic_dependencies, message: "Las dependencias de tiempos forman un ciclo." }
+  - { id: SCH-SYNC-01, class: SEQUENCE, severity: warning, check: primary_arrives_with_ball, params: { tolerance_s: 0.15 }, message: "{actor} llega {gap}s {early_late} respecto al balón." }
+  - { id: SCH-NEG-01, class: SEQUENCE, severity: warning, check: no_start_before, params: { t: -2.5 }, message: "Un movimiento empieza antes del inicio de la jugada." }
+  - { id: SEQ-CONSTR-01, class: SEQUENCE, severity: error, check: explicit_constraints_hold, message: "{actor} incumple tu indicación: {constraint}." }
+  - { id: BALL-TGT-01, class: TACTICAL, severity: info, check: default_target_info, message: "Destino del balón propuesto: {zone} (zona del rematador principal)." }
+  - { id: LINEUP-01, class: LINEUP, severity: error, check: lineup_eleven, message: "La alineación tiene {count} jugadores." }
+  - { id: LINEUP-02, class: LINEUP, severity: error, check: lineup_unique_players, message: "{player} está en dos posiciones." }
+  - { id: LINEUP-03, class: LINEUP, severity: error, check: lineup_one_gk, message: "Debe haber exactamente un portero." }
+  - { id: LINEUP-04, class: LINEUP, severity: warning, check: lineup_available, message: "{player} no está disponible ({status})." }
+  - { id: LINEUP-05, class: LINEUP, severity: info, check: lineup_position_fit, message: "{player} no tiene {slot} entre sus posiciones." }
+  - { id: LINEUP-06, class: LINEUP, severity: warning, check: lineup_line_spacing, params: { min_m: 6 }, message: "Las líneas {a} y {b} están a menos de 6 m." }
