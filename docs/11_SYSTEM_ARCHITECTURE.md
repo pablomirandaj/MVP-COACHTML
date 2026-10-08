@@ -101,7 +101,7 @@ sequenceDiagram
   S-->>K: texto + segmentos + confianza
   K->>A: guarda transcription
   A-->>W: transcripción (SSE / long-poll)
-  W->>W: @fcs/nlu → IR; @fcs/engine → propuesta + diagnósticos
+  W->>W: @fcs/nlu → IR, luego @fcs/engine → propuesta + diagnósticos
   W-->>C: Revisión: texto resaltado + cambios + preguntas
   C->>W: confirma / aclara / ajusta
   W->>A: POST /commands (IR + versión base)

@@ -81,6 +81,8 @@ Panel de revisión (antes de aplicar, si la preferencia "revisar siempre" está 
 
 Cada plantilla nueva requiere: YAML de plantilla, reglas LAW específicas (ya catalogadas en 15 §10), 5 casos de prueba dorados y validación del asesor táctico.
 
+Estado: `engine/rules/templates.yaml` define ya `CRN_ATT_STANDARD`, `CRN_DEF_MIXED` y la defensa rival por defecto `OPP_CORNER_DEF_MIXED`. El resto de plantillas de esta tabla se escribe dentro de BK‑025 (piloto) y BK‑100 (V1).
+
 ## 6. Biblioteca de jugadas
 
 - Filtros: tipo, lado, jugador participante, etiqueta, estado (borrador/publicada), jornada en la que se usó.

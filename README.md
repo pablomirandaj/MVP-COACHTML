@@ -12,10 +12,11 @@ Principio rector: **el motor táctico es determinista y no depende de IA generat
 |---|---|
 | Investigación de mercado y tecnológica | Realizada (con limitaciones declaradas en 02/03) |
 | Especificación funcional, arquitectura, datos, API | **Diseñado** |
-| Motor táctico (ontología, gramática, IR, reglas, tests) | **Diseñado** (especificaciones ejecutables en `docs/engine`) |
-| Mockups visuales | **Prototipado** (HTML estático, `docs/mockups/index.html`) |
+| Motor táctico (ontología, gramática, IR, reglas, tests) | **Diseñado** (especificaciones máquina en `docs/engine`) |
+| Esquemas y contratos | **Verificados con herramientas**: JSON Schema (IR y PlayDoc) válidos, la jugada de ejemplo y los 35 comandos IR de los tests validan; `openapi.yaml` válido; `schema.sql` carga en PostgreSQL 16 |
+| Mockups visuales | **Prototipado** (HTML estático, `docs/mockups/index.html`, anima la jugada de ejemplo) |
 | Código de producción | **No iniciado** (requiere autorización expresa) |
-| Pruebas | **Diseñadas, no ejecutadas** |
+| Pruebas del motor (39 casos) | **Diseñadas, no ejecutadas** (no hay motor implementado) |
 
 ## Índice
 
@@ -45,7 +46,7 @@ Lectura recomendada: `00` → `30` → `23` → `15` → `16`.
 | 19 | [Análisis de rivales](docs/19_OPPONENT_ANALYSIS.md) | Extracción, histórico, trazabilidad |
 | 20 | [Generador de presentaciones](docs/20_PRESENTATION_GENERATOR.md) | Charla, PPTX/PDF |
 | 21 | [Seguridad y permisos](docs/21_SECURITY_AND_PERMISSIONS.md) | RBAC, ACL, menores, RGPD |
-| 22 | [Estrategia de pruebas](docs/22_TESTING_STRATEGY.md) | Plan de pruebas y 35 comandos de prueba |
+| 22 | [Estrategia de pruebas](docs/22_TESTING_STRATEGY.md) | Plan de pruebas y 39 casos deterministas |
 | 23 | [Alcance MVP](docs/23_MVP_SCOPE.md) | Piloto, V1, V1.5, V2 |
 | 24 | [Roadmap](docs/24_ROADMAP.md) | Hitos |
 | 25 | [Backlog](docs/25_BACKLOG.md) | Backlog técnico priorizado |
@@ -69,6 +70,6 @@ docs/
 │   ├── lexicon/es-ES.yaml              Diccionario de términos y sinónimos
 │   ├── rules/*.yaml                    Biblioteca inicial de reglas, zonas, roles, movimientos
 │   ├── examples/*.json                 Jugadas de ejemplo
-│   └── tests/command-tests.yaml        35 casos de prueba deterministas
+│   └── tests/command-tests.yaml        39 casos de prueba deterministas
 └── mockups/index.html                  Mockups visuales de pantallas clave
 ```

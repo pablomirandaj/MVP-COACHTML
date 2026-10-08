@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Football Coach Studio — Mockups</title>
+<style>
+:root{
+  --bg:#f4f6f3; --surface:#ffffff; --surface2:#eef1ec; --text:#14201a; --muted:#5b6b62; --line:#d6ddd7;
+  --grass1:#3a7d45; --grass2:#357240; --pitchline:#f2f5f0; --own:#1e5bd8; --own-ink:#ffffff; --opp:#6b7280;
+  --accent:#1e5bd8; --warn:#b26a00; --err:#c62828; --info:#1565c0; --ok:#2e7d32; --hl1:#dbe7ff; --hl2:#fde8c8; --hl3:#d9f2de;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1512; --surface:#18211c; --surface2:#1f2a24; --text:#e8efe9; --muted:#9db0a5; --line:#2c3a32;
+    --grass1:#2f6b3a; --grass2:#2a6034; --accent:#6f9bff; --own:#3b74f0; --hl1:#23324f; --hl2:#4a3a1e; --hl3:#1f3b27;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#18211c; --surface2:#1f2a24; --text:#e8efe9; --muted:#9db0a5; --line:#2c3a32;
+  --grass1:#2f6b3a; --grass2:#2a6034; --accent:#6f9bff; --own:#3b74f0; --hl1:#23324f; --hl2:#4a3a1e; --hl3:#1f3b27;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Inter,Roboto,sans-serif}
+header.top{padding:20px 16px 8px;max-width:1200px;margin:0 auto}
+h1{font:700 22px/1.2 "Barlow Condensed",system-ui,sans-serif;letter-spacing:.3px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;max-width:1200px;margin:12px auto 0;padding:0 16px}
+nav.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:999px;font:inherit;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+main{max-width:1200px;margin:0 auto;padding:16px}
+section.screen{display:none}
+section.screen.active{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){section.screen.active.with-notes{grid-template-columns:minmax(0,auto) minmax(260px,1fr)}}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;align-self:start}
+.notes h3{margin:0 0 6px;font-size:15px}
+.notes ul{margin:6px 0 0;padding-left:18px}
+.notes li{margin:3px 0}
+.phone{width:min(390px,100%);border:10px solid #111;border-radius:36px;background:var(--surface);overflow:hidden;margin:0 auto;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.tablet{width:100%;max-width:1040px;border:12px solid #111;border-radius:24px;background:var(--surface);overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
+.bar b{font:700 17px "Barlow Condensed",system-ui,sans-serif}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.card{background:var(--surface2);border-radius:12px;padding:12px;margin:10px 12px}
+.progress{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0 2px}
+.progress>i{display:block;height:100%;width:56%;background:var(--ok)}
+.check{list-style:none;margin:0;padding:0 12px}
+.check li{display:flex;justify-content:space-between;gap:8px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.check li span:first-child::before{content:"○ ";color:var(--muted)}
+.check li.done span:first-child::before{content:"✔ ";color:var(--ok)}
+.mic{display:flex;justify-content:center;padding:12px}
+.mic button{width:64px;height:64px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:26px;box-shadow:0 4px 14px rgba(30,91,216,.4)}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);font-size:11.5px;text-align:center;color:var(--muted)}
+.tabbar div{padding:8px 0}
+.tabbar .on{color:var(--accent);font-weight:600}
+svg{display:block;width:100%;height:auto}
+.transcript{background:var(--surface2);border-radius:10px;padding:10px;margin:8px 12px;font-size:14px}
+.transcript mark{border-radius:4px;padding:0 2px;color:inherit}
+.m1{background:var(--hl1)} .m2{background:var(--hl3)} .m3{background:var(--hl2)}
+.changes{list-style:none;margin:0;padding:0 12px}
+.changes li{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;border:1px dashed var(--muted);color:var(--muted);margin-left:4px;white-space:nowrap}
+.q{border:2px solid var(--warn);border-radius:12px;padding:10px 12px;margin:10px 12px}
+.q label{display:flex;gap:8px;padding:6px 0}
+.actions{display:flex;gap:8px;justify-content:flex-end;padding:10px 12px 14px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 14px;border-radius:10px;font:inherit}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.editor{display:grid;grid-template-columns:minmax(0,1fr);}
+@media(min-width:760px){.editor{grid-template-columns:minmax(0,1fr) 250px}}
+.side{border-left:1px solid var(--line);padding:10px 12px;font-size:13.5px}
+.side h4{margin:6px 0;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.side ul{list-style:none;margin:0 0 10px;padding:0}
+.side li{display:flex;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.diag{font-size:12.5px;padding:6px 8px;border-radius:8px;background:var(--surface2);margin:4px 0}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+.controls input[type=range]{flex:1;min-width:140px}
+.phases{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);padding:0 12px 10px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);padding:8px 12px}
+.player-hero{padding:14px;background:var(--surface2);margin:12px;border-radius:12px}
+.badge{display:inline-block;background:var(--ok);color:#fff;border-radius:6px;padding:1px 8px;font-size:12px}
+footer{max-width:1200px;margin:0 auto;padding:8px 16px 30px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Football Coach Studio — mockups</h1>
+  <p class="sub">Prototipo estático de pantallas clave (docs/09). El editor de balón parado anima la jugada real <code>engine/examples/corner-left-inswing-screen.play.json</code>.</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Pantallas">
+  <button role="tab" aria-selected="true" data-s="s-abp">P08 Editor de balón parado</button>
+  <button role="tab" aria-selected="false" data-s="s-day">P06 Jornada</button>
+  <button role="tab" aria-selected="false" data-s="s-lineup">P07 Alineación</button>
+  <button role="tab" aria-selected="false" data-s="s-review">P11 Revisión</button>
+  <button role="tab" aria-selected="false" data-s="s-player">P15 Panel del jugador</button>
+</nav>
+<main>
+
+<section class="screen active with-notes" id="s-abp" role="tabpanel">
+  <div class="tablet">
+    <div class="bar"><b>Córner izq. · cerrado · 2º palo</b><span class="muted small">v1 · borrador · ↶ ↷</span></div>
+    <div class="editor">
+      <div>
+        <svg id="abp" viewBox="50 -4 58 76" role="img" aria-label="Medio campo ofensivo con la jugada de córner"></svg>
+        <div class="controls">
+          <button class="btn" id="play" aria-label="Reproducir">▶</button>
+          <select id="speed" class="btn" aria-label="Velocidad"><option value="0.25">0,25×</option><option value="0.5" selected>0,5×</option><option value="1">1×</option></select>
+          <input type="range" id="scrub" min="-2.5" max="2.84" step="0.01" value="-2.5" aria-label="Tiempo de la jugada">
+          <span id="tlabel" class="small muted" style="min-width:64px">t = −2,50 s</span>
+        </div>
+        <div class="phases"><span>PREP −2,5 s</span><span>GOLPEO 0 s</span><span>LLEGADA 1,84 s</span><span>FIN</span></div>
+        <div class="legend"><span>● propio</span><span>■ rival</span><span>── dicho por el entrenador</span><span>- - - propuesta del sistema</span><span>┃ bloqueo</span></div>
+      </div>
+      <aside class="side">
+        <h4>Roles</h4>
+        <ul id="roles"></ul>
+        <h4>Avisos</h4>
+        <div class="diag">ℹ <b>Recomendación</b> · Destino del balón propuesto: segundo palo (zona del rematador principal).</div>
+        <div class="diag">ℹ <b>Reglamento (R11)</b> · No hay fuera de juego al recibir directamente de córner.</div>
+        <div class="diag">✎ Ficha de Lucas actualizada a diestro (aclaración de voz).</div>
+      </aside>
+    </div>
+    <div class="mic"><button aria-label="Mantén pulsado para hablar">🎙</button></div>
+  </div>
+  <div class="notes">
+    <h3>Qué muestra</h3>
+    <ul>
+      <li>Resultado del escenario 2 (docs/08): 10 propios, 11 rivales, balón cerrado al segundo palo.</li>
+      <li>Marcos (10) y Pedro (17) en discontinuo: el entrenador no los mencionó; los propuso la plantilla <code>CRN_ATT_STANDARD</code>.</li>
+      <li>El bloqueo de Diego (4) termina 0,3 s antes de que Mateo (5) arranque (regla SEQ‑SCREEN‑01).</li>
+      <li>La animación interpola el documento según docs/15 §13: Bézier cuadrática para el balón y <i>ease‑in‑out</i> para las carreras.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="screen with-notes" id="s-day" role="tabpanel">
+  <div class="phone">
+    <div class="bar"><b>J5 · UD Rival</b><span class="muted small">Dom 11/10 · 11:30</span></div>
+    <div class="card"><div class="small muted">Campo Municipal · Primera Regional</div><div class="progress"><i></i></div><div class="small">5 de 9 preparado</div></div>
+    <ul class="check">
+      <li class="done"><span>Convocatoria</span><span class="muted">16 jug.</span></li>
+      <li class="done"><span>Once</span><span class="muted">4‑3‑3</span></li>
+      <li class="done"><span>Jugadas</span><span class="muted">2 córners</span></li>
+      <li class="done"><span>Rival</span><span class="muted">7 notas</span></li>
+      <li><span>Notas de entrenamiento</span><span class="muted">—</span></li>
+      <li class="done"><span>Objetivos</span><span class="muted">2</span></li>
+      <li><span>Charla</span><span style="color:var(--accent)">Preparar ›</span></li>
+      <li><span>Compartido</span><span class="muted">—</span></li>
+    </ul>
+    <div class="mic"><button aria-label="Mantén pulsado para hablar">🎙</button></div>
+    <div class="tabbar"><div>Inicio</div><div class="on">Jornadas</div><div>Plantilla</div><div>Jugadas</div><div>Más</div></div>
+  </div>
+  <div class="notes"><h3>Qué muestra</h3><ul><li>La jornada es la unidad de trabajo. El checklist se calcula a partir de los datos; el entrenador no lo marca a mano.</li><li>El botón de voz conserva el contexto: lo que se dicte aquí se envía al módulo que corresponda.</li></ul></div>
+</section>
+
+<section class="screen with-notes" id="s-lineup" role="tabpanel">
+  <div class="phone">
+    <div class="bar"><b>Once · 4‑3‑3</b><span class="muted small">J5 · borrador</span></div>
+    <svg id="lineup" viewBox="-3 -3 74 111" role="img" aria-label="Alineación 4-3-3 en campo vertical"></svg>
+    <div class="card small">Banquillo: Iker (13) · Álvaro R. (14) · Dani (16) · <span style="color:var(--err)">Raúl (15) lesionado</span></div>
+    <div class="mic"><button aria-label="Mantén pulsado para hablar">🎙</button></div>
+  </div>
+  <div class="notes"><h3>Qué muestra</h3><ul><li>El resultado del escenario 1 en vista vertical: ataque hacia arriba, así la izquierda del entrenador es la izquierda de la pantalla (docs/14 §1.3).</li><li>△ indica jugador fuera de su posición (Lucas de lateral izquierdo, LINEUP‑05).</li><li>El borde discontinuo marca la ranura inferida dentro de su grupo (docs/18 §4).</li></ul></div>
+</section>
+
+<section class="screen with-notes" id="s-review" role="tabpanel">
+  <div class="phone">
+    <div class="bar"><b>Revisar instrucciones</b><span class="muted small">14 s de audio</span></div>
+    <div class="transcript">«Para el domingo vamos a jugar <mark class="m1">4‑3‑3</mark>. En portería <mark class="m2">Pablo</mark>, centrales <mark class="m1">Mateo y Diego</mark>, laterales <mark class="m2">Lucas y Martín</mark>. En el medio <mark class="m1">Sergio, Adrián y Marcos</mark>. Arriba <mark class="m2">Hugo</mark>, <mark class="m3">Álvaro</mark> y <mark class="m2">Pedro</mark>.»</div>
+    <ul class="changes">
+      <li>☑ <span>Sistema 4‑3‑3 · partido del domingo 11/10</span></li>
+      <li>☑ <span>Portero: Pablo (1)</span></li>
+      <li>☑ <span>Centrales: Mateo (izq., zurdo) · Diego (der.)<span class="chip">inferido</span></span></li>
+      <li>☑ <span>Laterales: Lucas (izq.) △ · Martín (der.)<span class="chip">inferido</span></span></li>
+      <li>☑ <span>Medio: Marcos (izq.) · Sergio (pivote) · Adrián (der.)<span class="chip">inferido</span></span></li>
+      <li>☑ <span>Delantera: Hugo (izq.) · ? · Pedro (der.)</span></li>
+    </ul>
+    <div class="q" role="radiogroup" aria-label="¿Qué Álvaro?">
+      <b>¿Qué Álvaro?</b>
+      <label><input type="radio" name="alv" checked> Álvaro Castro (9) · delantero</label>
+      <label><input type="radio" name="alv"> Álvaro Ruiz (14) · centrocampista</label>
+    </div>
+    <div class="actions"><button class="btn">Descartar</button><button class="btn primary">Aplicar ✔</button></div>
+  </div>
+  <div class="notes"><h3>Qué muestra</h3><ul><li>Cada fragmento de la transcripción se colorea con el comando que generó.</li><li>Hay una sola pregunta abierta, con la opción más probable preseleccionada pero sin aplicar.</li><li>Las asignaciones deducidas dentro de un grupo llevan la etiqueta «inferido».</li></ul></div>
+</section>
+
+<section class="screen with-notes" id="s-player" role="tabpanel">
+  <div class="phone">
+    <div class="bar"><b>CD Ejemplo</b><span class="muted small">Hugo Díaz (11)</span></div>
+    <div class="player-hero"><span class="badge">Convocado</span><div style="margin-top:6px"><b>Dom 11/10 · vs UD Rival</b></div><div class="small muted">Citación 10:30 · Campo Municipal</div></div>
+    <div class="card"><b>Mi papel</b><div class="small">Extremo izquierdo en el once (4‑3‑3).</div><div class="small">Córner izq.: <b>te quedas de vigilancia en la izquierda</b> (no subes al remate).</div></div>
+    <div class="card"><b>Jugadas</b><div class="small">Córner izq. · cerrado · 2º palo ▶</div></div>
+    <div class="card"><b>Charla</b><div class="small">Publicada el sáb 10/10 ▶</div></div>
+    <div class="card small muted">No ves el análisis del rival ni los borradores del cuerpo técnico.</div>
+  </div>
+  <div class="notes"><h3>Qué muestra</h3><ul><li>Solo aparece lo publicado y dirigido al jugador (docs/21).</li><li>La descripción de su papel se genera a partir del documento de la jugada (rol, zona y restricción); no se redacta texto libre.</li></ul></div>
+</section>
+</main>
+<footer>Mockup estático: no se conecta a ningún servicio. Paleta de equipo por defecto.</footer>
+
+<script>
+const PLAY = {"schema":"fcs.play/1","engine_version":"1.0.0","catalog_version":"1.0.0","template":"CRN_ATT_STANDARD","type":"CORNER_ATT","side":"LEFT","pitch":{"length_m":105,"width_m":68},"delivery":{"taker_actor":"a1","ball_start":{"u":0.9966,"v":0.0052},"swing":"INSWING","trajectory":"DRIVEN","technique":"INSIDE_FOOT","target_zone":"Z_FAR_POST","target_point":{"u":0.9667,"v":0.5809},"curve":0.18,"kick_t":0,"arrival_t":1.84,"provenance":{"swing":"EXPLICIT","trajectory":"RULE:TPL-CRN_ATT_STANDARD","target_zone":"RULE:BALL-TGT-01","ball_start":"RULE:CRN-POS-01"}},"actors":[{"id":"a1","team":"OWN","player_id":"pl_7","label":"7","role":"TAKER","start":{"u":1.0086,"v":-0.0176},"provenance":{"role":"EXPLICIT","player_id":"EXPLICIT","start":"RULE:CRN-POS-01"}},{"id":"a2","team":"OWN","player_id":"pl_4","label":"4","role":"BLOCKER","action_zone":"Z_FAR_POST","group":"g1","start":{"u":0.881,"v":0.5588},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a3","team":"OWN","player_id":"pl_5","label":"5","role":"PRIMARY_TARGET","action_zone":"Z_FAR_POST","group":"g1","start":{"u":0.8762,"v":0.5294},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a4","team":"OWN","player_id":"pl_9","label":"9","role":"SECONDARY_TARGET","action_zone":"Z_NEAR_POST","start":{"u":0.8714,"v":0.5882},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a5","team":"OWN","player_id":"pl_10","label":"10","role":"SECONDARY_TARGET","action_zone":"Z_PEN_SPOT","start":{"u":0.819,"v":0.5},"provenance":{"role":"RULE:TPL-CRN_ATT_STANDARD","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a6","team":"OWN","player_id":"pl_17","label":"17","role":"DECOY","action_zone":"Z_NEAR_POST","start":{"u":0.8857,"v":0.6029},"provenance":{"role":"RULE:TPL-CRN_ATT_STANDARD","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a7","team":"OWN","player_id":"pl_6","label":"6","role":"REBOUND","action_zone":"Z_REBOUND","start":{"u":0.8238,"v":0.4412},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a8","team":"OWN","player_id":"pl_8","label":"8","role":"REBOUND","action_zone":"Z_REBOUND","start":{"u":0.8238,"v":0.5588},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:ZONE-ANCHOR"}},{"id":"a9","team":"OWN","player_id":"pl_2","label":"2","role":"REST_DEFENDER","action_zone":"Z_REST","start":{"u":0.619,"v":0.3529},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:CRN-POS-07"}},{"id":"a10","team":"OWN","player_id":"pl_11","label":"11","role":"REST_DEFENDER","action_zone":"Z_REST","start":{"u":0.619,"v":0.6471},"provenance":{"role":"EXPLICIT","player_id":"RULE:ASG-01","start":"RULE:CRN-POS-07"}},{"id":"o1","team":"OPP","label":"P","role":"GOALKEEPER","start":{"u":0.9924,"v":0.5},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o2","team":"OPP","label":"Z1","role":"ZONAL_DEFENDER","start":{"u":0.9857,"v":0.4412},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o3","team":"OPP","label":"Z2","role":"ZONAL_DEFENDER","start":{"u":0.9857,"v":0.5},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o4","team":"OPP","label":"Z3","role":"ZONAL_DEFENDER","start":{"u":0.9857,"v":0.5588},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o5","team":"OPP","label":"Z4","role":"ZONAL_DEFENDER","start":{"u":0.9571,"v":0.4706},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o6","team":"OPP","label":"Z5","role":"ZONAL_DEFENDER","start":{"u":0.9571,"v":0.5368},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o7","team":"OPP","label":"Z6","role":"ZONAL_DEFENDER","start":{"u":0.9333,"v":0.3824},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o8","team":"OPP","label":"M1","role":"MAN_MARKER","start":{"u":0.8857,"v":0.5294},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o9","team":"OPP","label":"M2","role":"MAN_MARKER","start":{"u":0.881,"v":0.5882},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o10","team":"OPP","label":"M3","role":"MAN_MARKER","start":{"u":0.8286,"v":0.5},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}},{"id":"o11","team":"OPP","label":"C","role":"COUNTER_OUTLET","start":{"u":0.6667,"v":0.5},"provenance":{"start":"RULE:TPL-OPP_CORNER_DEF_MIXED"}}],"movements":[{"id":"m2","actor":"a2","type":"SCREEN","shape":"STRAIGHT","speed_mps":4.0,"path":[{"u":0.881,"v":0.5588},{"u":0.8963,"v":0.5362}],"anchor":{"kind":"ARRIVES_AT","event":"MOVEMENT_START","ref":"m3","offset_s":-0.3},"t_start":-0.47,"t_end":0.09,"depends_on":[],"provenance":{"type":"EXPLICIT","path":"RULE:CRN-POS-05","timing":"RULE:SEQ-SCREEN-01"}},{"id":"m3","actor":"a3","type":"ATTACK_FAR_POST","shape":"STRAIGHT","speed_mps":7.0,"path":[{"u":0.8762,"v":0.5294},{"u":0.9667,"v":0.5809}],"anchor":{"kind":"ARRIVES_AT","event":"BALL_ARRIVAL","offset_s":0},"t_start":0.39,"t_end":1.84,"depends_on":["m2"],"provenance":{"type":"EXPLICIT","timing":"RULE:SCH-SYNC-01"}},{"id":"m4","actor":"a4","type":"ATTACK_NEAR_POST","shape":"CURVED_IN","speed_mps":7.0,"path":[{"u":0.8714,"v":0.5882},{"u":0.9667,"v":0.4485}],"anchor":{"kind":"ARRIVES_AT","event":"BALL_ARRIVAL","offset_s":0},"t_start":-0.13,"t_end":1.84,"depends_on":[],"provenance":{"type":"EXPLICIT","timing":"RULE:MOV-ATTACK_NEAR_POST"}},{"id":"m5","actor":"a5","type":"ATTACK_PEN_SPOT","shape":"STRAIGHT","speed_mps":7.0,"path":[{"u":0.819,"v":0.5},{"u":0.8952,"v":0.5}],"anchor":{"kind":"ARRIVES_AT","event":"BALL_ARRIVAL","offset_s":0},"t_start":0.7,"t_end":1.84,"depends_on":[],"provenance":{"type":"RULE:TPL-CRN_ATT_STANDARD","timing":"RULE:MOV-ATTACK_PEN_SPOT"}},{"id":"m6","actor":"a6","type":"DECOY_RUN","shape":"STRAIGHT","speed_mps":6.0,"path":[{"u":0.8857,"v":0.6029},{"u":0.9524,"v":0.4265}],"anchor":{"kind":"STARTS_AT","event":"KICK","offset_s":-0.6},"t_start":-0.6,"t_end":1.71,"depends_on":[],"provenance":{"type":"RULE:TPL-CRN_ATT_STANDARD"}},{"id":"m7","actor":"a7","type":"HOLD","path":[{"u":0.8238,"v":0.4412}],"t_start":-2.5,"t_end":2.84,"provenance":{"type":"EXPLICIT"}},{"id":"m8","actor":"a8","type":"HOLD","path":[{"u":0.8238,"v":0.5588}],"t_start":-2.5,"t_end":2.84,"provenance":{"type":"EXPLICIT"}},{"id":"m9","actor":"a9","type":"HOLD","path":[{"u":0.619,"v":0.3529}],"t_start":-2.5,"t_end":2.84,"provenance":{"type":"EXPLICIT"}},{"id":"m10","actor":"a10","type":"HOLD","path":[{"u":0.619,"v":0.6471}],"t_start":-2.5,"t_end":2.84,"provenance":{"type":"EXPLICIT"}},{"id":"mo8","actor":"o8","type":"FOLLOW","path":[{"u":0.8857,"v":0.5294}],"t_start":0.54,"t_end":1.84,"depends_on":["m3"],"provenance":{"type":"RULE:TPL-OPP_CORNER_DEF_MIXED"}}],"relations":[{"type":"SCREENS","blocker":"a2","defender":"o8","beneficiary":"a3","strict_legal":true,"origin":"EXPLICIT"},{"type":"MARKS","a":"o8","b":"a3","origin":"RULE:TPL-OPP_CORNER_DEF_MIXED"},{"type":"MARKS","a":"o9","b":"a4","origin":"RULE:TPL-OPP_CORNER_DEF_MIXED"},{"type":"MARKS","a":"o10","b":"a5","origin":"RULE:TPL-OPP_CORNER_DEF_MIXED"}],"constraints":[{"actor":"a9","rule":"NO_JOIN_ATTACK","origin":"RULE:TPL-CRN_ATT_STANDARD"},{"actor":"a10","rule":"NO_JOIN_ATTACK","origin":"RULE:TPL-CRN_ATT_STANDARD"}],"notes":[{"id":"n1","text":"Bloqueo sin contacto: llegar parado antes de que Mateo arranque.","origin":"RULE:LAW-IMP-01","anchor_actor":"a2"}],"diagnostics":[{"rule_id":"BALL-TGT-01","class":"TACTICAL","severity":"info","message":"Destino del balón propuesto: segundo palo (zona del rematador principal)."},{"rule_id":"LAW-OFF-INFO","class":"LAW","severity":"info","message":"No hay fuera de juego al recibir directamente de córner."}]};
+const ROSTER = {pl_1:"Pablo",pl_2:"Martín",pl_4:"Diego",pl_5:"Mateo",pl_6:"Sergio",pl_7:"Lucas",pl_8:"Adrián",pl_9:"Álvaro C.",pl_10:"Marcos",pl_11:"Hugo",pl_17:"Pedro"};
+const ROLE_ES = {TAKER:"Lanzador",BLOCKER:"Bloqueo",PRIMARY_TARGET:"Rematador principal",SECONDARY_TARGET:"Rematador secundario",DECOY:"Arrastre",REBOUND:"Rechace",REST_DEFENDER:"Vigilancia"};
+const NS="http://www.w3.org/2000/svg";
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function el(tag, attrs, parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+const L=PLAY.pitch.length_m, W=PLAY.pitch.width_m;
+const P = p => [p.u*L, p.v*W];
+const isRule = s => typeof s==="string" && s.startsWith("RULE:");
+
+/* ---------- pitch drawing (meters) ---------- */
+function drawHalfPitch(svg){
+  el("rect",{x:50,y:-4,width:58,height:76,fill:css("--grass2")},svg);
+  for(let i=0;i<6;i++) el("rect",{x:52.5+i*8.75,y:0,width:4.375,height:68,fill:css("--grass1")},svg);
+  const s={fill:"none",stroke:css("--pitchline"),"stroke-width":0.25};
+  el("rect",Object.assign({x:52.5,y:0,width:52.5,height:68},s),svg);
+  el("rect",Object.assign({x:88.5,y:13.84,width:16.5,height:40.32},s),svg);
+  el("rect",Object.assign({x:99.5,y:24.84,width:5.5,height:18.32},s),svg);
+  el("circle",{cx:94,cy:34,r:0.3,fill:css("--pitchline")},svg);
+  el("path",Object.assign({d:"M 88.5 26.69 A 9.15 9.15 0 0 0 88.5 41.31"},s),svg);
+  el("path",Object.assign({d:"M 52.5 24.85 A 9.15 9.15 0 0 1 52.5 43.15"},s),svg);
+  el("path",Object.assign({d:"M 104 0 A 1 1 0 0 0 105 1"},s),svg);
+  el("path",Object.assign({d:"M 105 67 A 1 1 0 0 0 104 68"},s),svg);
+  el("rect",{x:105,y:30.34,width:1.6,height:7.32,fill:"none",stroke:css("--pitchline"),"stroke-width":0.35},svg);
+}
+
+/* ---------- geometry of movements and ball ---------- */
+const ease = x => x<0.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+function quad(p0,c,p1,s){const a=(1-s)*(1-s),b=2*(1-s)*s,d=s*s;return [a*p0[0]+b*c[0]+d*p1[0], a*p0[1]+b*c[1]+d*p1[1]];}
+function controlFor(p0,p1,k,side){ // side: +1 control toward larger x (goal line), -1 away
+  const mx=(p0[0]+p1[0])/2,my=(p0[1]+p1[1])/2,dx=p1[0]-p0[0],dy=p1[1]-p0[1],len=Math.hypot(dx,dy);
+  let nx=-dy/len,ny=dx/len; if(Math.sign(nx)!==side) {nx=-nx;ny=-ny;}
+  return [mx+nx*k*len,my+ny*k*len];
+}
+function movementPoint(m,t){
+  const a=P(m.path[0]), b=P(m.path[m.path.length-1]);
+  if(m.path.length<2) return a;
+  const s = t<=m.t_start?0 : t>=m.t_end?1 : ease((t-m.t_start)/(m.t_end-m.t_start));
+  if(m.shape==="CURVED_IN"){const c=controlFor(a,b,0.15,-1);return quad(a,c,b,s);}
+  return [a[0]+(b[0]-a[0])*s, a[1]+(b[1]-a[1])*s];
+}
+const movByActor={}; PLAY.movements.forEach(m=>{(movByActor[m.actor] ||= []).push(m);});
+function actorPos(a,t){
+  const ms=(movByActor[a.id]||[]).filter(m=>m.type!=="HOLD");
+  const f=ms.find(m=>m.type==="FOLLOW");
+  if(f){ // follow the marked actor with delay, 1 m goal-side
+    const rel=PLAY.relations.find(r=>r.type==="MARKS"&&r.a===a.id);
+    const target=PLAY.actors.find(x=>x.id===rel.b);
+    const p=actorPos(target,Math.max(t-0.15,-2.5)); return [p[0]+1,p[1]];
+  }
+  if(ms.length) return movementPoint(ms[0],t);
+  return P(a.start);
+}
+const d=PLAY.delivery, B0=P(d.ball_start), B1=P(d.target_point);
+const BC=controlFor(B0,B1,d.curve, d.swing==="INSWING"?-1:+1);
+function ballPos(t){ if(t<=0) return B0; if(t>=d.arrival_t) return B1; return quad(B0,BC,B1,t/d.arrival_t); }
+
+/* ---------- editor ABP ---------- */
+const abp=document.getElementById("abp");
+drawHalfPitch(abp);
+const defs=el("defs",{},abp);
+const mk=el("marker",{id:"ah",viewBox:"0 0 10 10",refX:"8",refY:"5",markerWidth:"5",markerHeight:"5",orient:"auto-start-reverse"},defs);
+el("path",{d:"M0,0 L10,5 L0,10 z",fill:"#ffffff"},mk);
+const gPaths=el("g",{},abp), gActors=el("g",{},abp);
+// static movement arrows
+PLAY.movements.filter(m=>m.path.length>1).forEach(m=>{
+  const a=P(m.path[0]), b=P(m.path[m.path.length-1]);
+  const proposal=isRule(m.provenance.type);
+  let dAttr=`M ${a[0]} ${a[1]} L ${b[0]} ${b[1]}`;
+  if(m.shape==="CURVED_IN"){const c=controlFor(a,b,0.15,-1);dAttr=`M ${a[0]} ${a[1]} Q ${c[0]} ${c[1]} ${b[0]} ${b[1]}`;}
+  if(m.type==="SCREEN"){
+    el("path",{d:dAttr,stroke:"#fff","stroke-width":0.3,fill:"none",opacity:0.9},gPaths);
+    const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy),nx=-dy/len*1.2,ny=dx/len*1.2;
+    el("line",{x1:b[0]+nx,y1:b[1]+ny,x2:b[0]-nx,y2:b[1]-ny,stroke:"#fff","stroke-width":0.6},gPaths);
+  } else {
+    el("path",{d:dAttr,stroke:"#fff","stroke-width":0.3,fill:"none","marker-end":"url(#ah)","stroke-dasharray":proposal?"1.2 0.8":"none",opacity:0.9},gPaths);
+  }
+});
+el("path",{d:`M ${B0[0]} ${B0[1]} Q ${BC[0]} ${BC[1]} ${B1[0]} ${B1[1]}`,stroke:"#fff","stroke-width":0.18,fill:"none","stroke-dasharray":"0.5 0.6",opacity:0.85},gPaths);
+// actors
+const nodes=PLAY.actors.map(a=>{
+  const g=el("g",{},gActors);
+  const proposal=isRule(a.provenance.role);
+  let shape;
+  if(a.team==="OWN"){
+    shape=el("circle",{r:1.25,fill:css("--own"),stroke:"#fff","stroke-width":0.25,"stroke-dasharray":proposal?"0.6 0.4":"none"},g);
+    const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":1.25,"font-weight":700,fill:"#fff","font-family":"system-ui"},g); t.textContent=a.label;
+  } else {
+    shape=el("rect",{x:-1,y:-1,width:2,height:2,rx:0.35,fill:css("--opp"),stroke:"#e5e7eb","stroke-width":0.15,opacity:0.9},g);
+  }
+  const name = a.player_id ? `${ROSTER[a.player_id]} (${a.label}), ${ROLE_ES[a.role]||a.role}` : `Rival, ${a.role}`;
+  el("title",{},g).textContent = name + (proposal?" — propuesta":"");
+  return {a,g};
+});
+const ball=el("circle",{r:0.55,fill:"#fff",stroke:"#111","stroke-width":0.15},abp);
+// roles panel
+const roles=document.getElementById("roles");
+PLAY.actors.filter(a=>a.team==="OWN").forEach(a=>{
+  const li=document.createElement("li");
+  const prop=isRule(a.provenance.role);
+  li.innerHTML=`<span>${a.label} ${ROSTER[a.player_id]}</span><span class="muted">${ROLE_ES[a.role]}${prop?'<span class="chip">propuesta</span>':''}</span>`;
+  roles.appendChild(li);
+});
+const scrub=document.getElementById("scrub"), tl=document.getElementById("tlabel");
+function render(t){
+  nodes.forEach(({a,g})=>{const p=actorPos(a,t);g.setAttribute("transform",`translate(${p[0].toFixed(3)} ${p[1].toFixed(3)})`);});
+  const b=ballPos(t); ball.setAttribute("cx",b[0]); ball.setAttribute("cy",b[1]);
+  const air = t>0 && t<d.arrival_t ? Math.sin(Math.PI*t/d.arrival_t) : 0;
+  ball.setAttribute("r",(0.55+0.35*air).toFixed(3));
+  tl.textContent="t = "+t.toFixed(2).replace(".",",").replace("-","−")+" s";
+}
+let playing=false,last=0,T=-2.5;
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const PH=[-2.5,0,d.arrival_t,2.84];
+function loop(ts){
+  if(!playing) return;
+  const dt=(ts-last)/1000; last=ts;
+  T+=dt*parseFloat(document.getElementById("speed").value);
+  if(T>2.84){T=-2.5;}
+  scrub.value=T; render(T); requestAnimationFrame(loop);
+}
+document.getElementById("play").addEventListener("click",e=>{
+  if(reduce){ // step by phases
+    const i=PH.findIndex(p=>p>T+0.001); T=i<0?PH[0]:PH[i]; scrub.value=T; render(T); return;
+  }
+  playing=!playing; e.currentTarget.textContent=playing?"❚❚":"▶";
+  if(playing){last=performance.now();requestAnimationFrame(loop);}
+});
+scrub.addEventListener("input",()=>{T=parseFloat(scrub.value);render(T);});
+render(T);
+
+/* ---------- lineup (vertical, attack up) ---------- */
+const F433=[["GK",0.05,0.50,"1","Pablo",""],["LB",0.24,0.12,"7","Lucas","off inf"],["CB_L",0.21,0.37,"5","Mateo","inf"],["CB_R",0.21,0.63,"4","Diego","inf"],["RB",0.24,0.88,"2","Martín","inf"],
+ ["CM_L",0.42,0.30,"10","Marcos","inf"],["DM",0.36,0.50,"6","Sergio","inf"],["CM_R",0.42,0.70,"8","Adrián","inf"],["LW",0.62,0.14,"11","Hugo",""],["ST",0.66,0.50,"9","Álvaro C.",""],["RW",0.62,0.86,"17","Pedro",""]];
+const lu=document.getElementById("lineup");
+el("rect",{x:-3,y:-3,width:74,height:111,fill:css("--grass2")},lu);
+for(let i=0;i<8;i++) el("rect",{x:0,y:i*13.125,width:68,height:6.56,fill:css("--grass1")},lu);
+const ls={fill:"none",stroke:css("--pitchline"),"stroke-width":0.3};
+el("rect",Object.assign({x:0,y:0,width:68,height:105},ls),lu);
+el("line",Object.assign({x1:0,y1:52.5,x2:68,y2:52.5},ls),lu);
+el("circle",Object.assign({cx:34,cy:52.5,r:9.15},ls),lu);
+el("rect",Object.assign({x:13.84,y:0,width:40.32,height:16.5},ls),lu);
+el("rect",Object.assign({x:13.84,y:88.5,width:40.32,height:16.5},ls),lu);
+el("rect",Object.assign({x:24.84,y:99.5,width:18.32,height:5.5},ls),lu);
+el("rect",Object.assign({x:24.84,y:0,width:18.32,height:5.5},ls),lu);
+F433.forEach(([slot,u,v,n,name,flag])=>{
+  const x=v*68, y=(1-u)*105;
+  const g=el("g",{transform:`translate(${x} ${y})`},lu);
+  el("circle",{r:3,fill:css("--own"),stroke:"#fff","stroke-width":0.4,"stroke-dasharray":flag.includes("inf")?"1.2 0.8":"none"},g);
+  const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":2.8,"font-weight":700,fill:"#fff","font-family":"system-ui"},g);t.textContent=n;
+  const nm=el("text",{y:5.6,"text-anchor":"middle","font-size":2.6,fill:"#fff","font-family":"system-ui"},g);nm.textContent=name+(flag.includes("off")?" △":"");
+  el("title",{},g).textContent=`${slot}: ${name}`+(flag.includes("off")?", fuera de posición":"")+(flag.includes("inf")?", ranura inferida":"");
+});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected","false"));
+  b.setAttribute("aria-selected","true");
+  document.querySelectorAll("section.screen").forEach(s=>s.classList.toggle("active",s.id===b.dataset.s));
+}));
+</script>
+</body>
+</html>

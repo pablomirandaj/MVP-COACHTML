@@ -302,7 +302,7 @@ type BallTrack = { segments: { t0: number; t1: number; p0: Pt; c: Pt; p1: Pt; he
 ```
 
 - Jugadores: interpolación lineal en el espacio y *ease‑in‑out* cuadrático en el tiempo por segmento.
-- Balón: **Bézier cuadrática** p0 → p1 con punto de control desplazado perpendicularmente según el efecto: `INSWING` hacia la portería, `OUTSWING` hacia fuera; magnitud `0.18 · |p1 − p0|` (más cerrado: 0.22). Sombra para balón aéreo (escala 1 → 0,7 → 1).
+- Balón: **Bézier cuadrática** p0 → p1 con punto de control desplazado perpendicularmente a la cuerda, magnitud `curve · |p1 − p0|` (`curve` = 0,18 por defecto; "más cerrado" +0,04). El *giro* de la curva va hacia el lado opuesto al punto de control, por lo que: `INSWING` → control en el lado **alejado** de la línea de fondo (el balón entra en el campo y gira hacia la portería); `OUTSWING` → control en el lado de la línea de fondo, **recortado** para que todo el trazo quede ≥ 0,5 m dentro del terreno (regla BALL‑03). Sombra para balón aéreo (escala 1 → 0,7 → 1).
 - Rivales: pistas propias; `FOLLOW` se deriva de la pista del atacante con retraso de 0,15 s y desplazamiento de 1 m goal‑side.
 - Fases: el reproductor marca hitos (`PREP` −2,5 s, `KICK` 0, `ARRIVAL`, `END` = ARRIVAL + 1 s) para "paso a paso".
 
@@ -320,7 +320,7 @@ type BallTrack = { segments: { t0: number; t1: number; p0: Pt; c: Pt; p1: Pt; he
 
 ## 15. Pruebas (detalle en 22)
 
-- **Golden tests**: 35 casos IR → documento esperado (`engine/tests/command-tests.yaml`), comparados por hash canónico y por aserciones legibles.
+- **Golden tests**: 39 casos (texto o acción → IR → documento esperado) (`engine/tests/command-tests.yaml`), comparados por hash canónico y por aserciones legibles.
 - **Propiedades** (fast-check): localidad (G2), reversibilidad (`undo(apply(d,c)) == d`), idempotencia de `normalize`, invariancia de simetría (`mirror(create(LEFT)) == create(RIGHT)`), sin violaciones `error` tras `create` con parámetros válidos.
 - **Revisión táctica**: un asesor con licencia UEFA B/A valida visualmente las 20 jugadas del catálogo antes de cada versión del catálogo.
 
