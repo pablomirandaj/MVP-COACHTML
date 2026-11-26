@@ -51,7 +51,7 @@ ${tracks.subtitle ? `<p class="sub">${esc(tracks.subtitle)}</p>` : '<p class="su
 </div>
 <div class="markers" id="markers"></div>
 <p class="note" id="note" aria-live="polite"></p>
-<div class="legend">${tracks.legend.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
+<div class="legend"><span id="dir"></span>${tracks.legend.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
 </div>
 <footer>Football Coach Studio · motor ${ENGINE_VERSION} · catálogo ${CATALOG_VERSION} · exportador ${EXPORTER_VERSION} · id ${id}</footer>
 </main>
@@ -62,10 +62,10 @@ const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim
 const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
 const svg=document.getElementById("pitch");
 const x0=D.view==="HALF_ATT"?L/2-2:-3,x1=L+3;
-svg.setAttribute("viewBox",x0+" -3 "+(x1-x0)+" "+(W+6));
-const cp=el("clipPath",{id:"vb"},el("defs",{},svg));el("rect",{x:x0,y:-3,width:x1-x0,height:W+6},cp);
-const root=el("g",{"clip-path":"url(#vb)"},svg);
-el("rect",{x:x0,y:-3,width:x1-x0,height:W+6,fill:css("--g2")},root);
+// Capa de pantalla (recorte y fondo) y capa de campo (coordenadas en metros; se gira en vertical).
+const cp=el("clipPath",{id:"vb"},el("defs",{},svg)),cr=el("rect",{},cp);
+const sc=el("g",{"clip-path":"url(#vb)"},svg),bg=el("rect",{fill:css("--g2")},sc),root=el("g",{},sc);
+const labels=[];
 for(let i=0;i<12;i++)if(i%2===0)el("rect",{x:i*L/12,y:0,width:L/12,height:W,fill:css("--g1")},root);
 const s={fill:"none",stroke:css("--pl"),"stroke-width":0.3};
 const line=a=>el("path",Object.assign({d:a},s),root);
@@ -92,19 +92,30 @@ if(p.kind==="screen"){const a=pts[pts.length-2],b=pts[pts.length-1],dx=b[0]-a[0]
 pathEls.push({p,e});}
 const nodes=D.actors.map(a=>{const g=el("g",{},gAct);
 if(a.team==="OWN"){el("circle",{r:1.3,fill:css("--own"),stroke:"#fff","stroke-width":0.25,"stroke-dasharray":a.proposal?"0.6 0.4":"none"},g);
-const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":a.label.length>2?0.95:1.25,"font-weight":700,fill:"#fff","font-family":"system-ui"},g);t.textContent=a.label;}
+const lab=el("g",{},g);labels.push(lab);const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":a.label.length>2?0.95:1.25,"font-weight":700,fill:"#fff","font-family":"system-ui"},lab);t.textContent=a.label;}
 else{el("rect",{x:-1.05,y:-1.05,width:2.1,height:2.1,rx:0.35,fill:css("--opp"),stroke:"#e5e7eb","stroke-width":0.15,opacity:0.92},g);
-if(a.label){const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":0.8,fill:"#fff","font-family":"system-ui"},g);t.textContent=a.label;}}
+if(a.label){const lab=el("g",{},g);labels.push(lab);const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":0.8,fill:"#fff","font-family":"system-ui"},lab);t.textContent=a.label;}}
 el("title",{},g).textContent=a.title+(a.proposal?" (propuesta)":"");return g;});
 const ball=el("circle",{r:0.55,fill:"#fff",stroke:"#111","stroke-width":0.15},root);
 const scrub=document.getElementById("scrub"),noteEl=document.getElementById("note"),dur=D.t1-D.t0;
 function render(t){const i=Math.max(0,Math.min(D.frames.length-1,Math.round((t-D.t0)*D.fps)));const f=D.frames[i];
-nodes.forEach((g,k)=>g.setAttribute("transform","translate("+(f[2*k]*L).toFixed(2)+" "+(f[2*k+1]*W).toFixed(2)+")"));
-const b=f.length-3;ball.setAttribute("cx",f[b]*L);ball.setAttribute("cy",f[b+1]*W);ball.setAttribute("r",(0.55+0.35*f[b+2]).toFixed(2));
+nodes.forEach((g,k)=>g.setAttribute("transform","translate("+(f[2*k]*L).toFixed(2)+" "+(f[2*k+1]*W).toFixed(2)+") scale("+K+")"));
+const b=f.length-3;ball.setAttribute("cx",f[b]*L);ball.setAttribute("cy",f[b+1]*W);ball.setAttribute("r",((0.55+0.35*f[b+2])*K).toFixed(2));
 for(const pe of pathEls)if(pe.p.from!==undefined)pe.e.setAttribute("opacity",t>=pe.p.from?1:0.15);
 const n=D.notes.filter(x=>x.t<=t+1e-6).pop();noteEl.textContent=n?n.text:"";
 scrub.value=((t-D.t0)/dur).toFixed(3);}
+// Vertical (ataque hacia arriba) en pantallas estrechas en vertical; horizontal (ataque a la derecha) en el resto.
+let K=1;
+function layout(){const v=innerWidth<innerHeight&&innerWidth<760;K=v?1.45:1;
+const vb=v?[-3,L-x1,W+6,x1-x0]:[x0,-3,x1-x0,W+6];
+svg.setAttribute("viewBox",vb.join(" "));
+for(const r of [cr,bg]){r.setAttribute("x",vb[0]);r.setAttribute("y",vb[1]);r.setAttribute("width",vb[2]);r.setAttribute("height",vb[3]);}
+root.setAttribute("transform",v?"matrix(0,-1,1,0,0,"+L+")":"");
+for(const l of labels)l.setAttribute("transform",v?"rotate(90)":"");
+document.getElementById("dir").textContent=v?"Atacamos hacia arriba ↑":"Atacamos hacia la derecha →";
+document.body.dataset.orientation=v?"vertical":"horizontal";}
 let T=D.t0,playing=false,last=0;
+layout();addEventListener("resize",()=>{layout();render(T);});
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const btn=document.getElementById("play");
 function loop(ts){if(!playing)return;T+=(ts-last)/1000*parseFloat(document.getElementById("speed").value);last=ts;if(T>D.t1){T=D.t1;playing=false;btn.textContent="▶";}render(T);if(playing)requestAnimationFrame(loop);}

@@ -136,6 +136,6 @@ export function sceneTracks(scene: PhaseScene, title?: string): Tracks {
   const notes = keys.filter((k) => k.note).map((k) => ({ t: segs.find((x) => x.a === keys.indexOf(k) && x.b === keys.indexOf(k))!.from, text: k.note! }));
   return {
     title: title ?? scene.title, view: "FULL", pitch: scene.pitch, t0, t1, fps: FPS, actors, frames, paths, markers, notes,
-    legend: ["● nuestro equipo (ataca hacia la derecha)", "■ rival", "➜ salto de presión", "⇢ cobertura"],
+    legend: ["● nuestro equipo", "■ rival", "➜ salto de presión", "⇢ cobertura"],
   };
 }
