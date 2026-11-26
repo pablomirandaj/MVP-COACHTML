@@ -2,6 +2,7 @@
 // Plantillas deterministas por tipo de evento; una nota del entrenador o del asistente prevalece sobre la generada.
 import { ZONES } from "./catalog/index";
 import type { PhaseScene as SceneDoc } from "./phases/types";
+import { SPACE_LABEL, SPACE_WHY } from "./phases/spaces";
 import type { Actor, Origin, Player, PlayDoc, Pt, ZoneId } from "./types";
 
 export interface Step { t: number; title: string; implies: string; source: Origin }
@@ -132,13 +133,19 @@ export function narrateScene(doc: SceneDoc): Step[] {
     const covers = entries.filter(([, r]) => r === "COVER").map(([k]) => k);
     const markers = entries.filter(([, r]) => r === "REST_MARKER").map(([k]) => k);
     const free = entries.filter(([, r]) => r === "FREE_MAN").map(([k]) => k);
+    const runner = entries.find(([, r]) => r === "RUNNER")?.[0];
+    const sp = doc.target_space;
     const lab = (k: string) => (k.startsWith("opp:") ? oppL(k.slice(4)) : ownL(k));
     const pos = (k: string) => (k.startsWith("opp:") ? f.opp[k.slice(4)] : f.own[k]);
     const rivals = (k: string) => (k.startsWith("opp:") ? f.own : f.opp);
     const rivalL = (k: string, r: string) => (k.startsWith("opp:") ? ownL(r) : oppL(r));
 
     let title: string, implies: string, source: Origin;
-    if (pressers.length) {
+    if (runner && sp) {
+      title = `El ${ownL(runner)} ataca ${SPACE_LABEL[sp.kind]}`;
+      implies = `${SPACE_WHY[sp.kind]} Objetivo: ${SPACE_LABEL[sp.kind]}.`;
+      source = "RULE:NARR-SPACE";
+    } else if (pressers.length) {
       title = pressers.map((p) => `El ${lab(p)} presiona al ${rivalL(p, near(pos(p), rivals(p)))}`).join(" y ");
       implies = covers.length
         ? `${covers.map((c) => `el ${lab(c)}`).join(" y ")} ${covers.length > 1 ? "cierran" : "cierra"} el pase interior; el balón solo puede ir largo o fuera.`
@@ -161,6 +168,7 @@ export function narrateScene(doc: SceneDoc): Step[] {
           : "El bloque bascula hacia el balón y espera el disparador para saltar.";
       source = "RULE:NARR-BALL";
     }
+    if (sp && !implies.includes(SPACE_LABEL[sp.kind])) implies = `${implies} Objetivo: ${SPACE_LABEL[sp.kind]}.`;
     if (f.note) { title = f.note; source = "MANUAL"; }
     return { t: f.t, title, implies, source };
   });

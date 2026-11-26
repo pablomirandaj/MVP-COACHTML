@@ -3,7 +3,8 @@
 import { FORMATIONS } from "../catalog/index";
 import { add, dist, scale, sub, unit } from "../geometry";
 import { slotInfo } from "../lineup";
-import type { Diagnostic, M, Pitch, Pt } from "../types";
+import type { Diagnostic, M, Pitch, Pt, Side } from "../types";
+import { attackShape, findSpaces, type Space, type SpaceKind } from "./spaces";
 import { lexOptimalAssignment } from "../util/assignment";
 import { clamp, r2, r4 } from "../util/num";
 import { buildUpDiagnostics, buildUpFrame } from "./buildup";
@@ -33,6 +34,9 @@ export interface SceneSpec {
     opp_pressers?: 1 | 2 | 3;
     /** BUILD_UP: hacia quién se progresa (informativo para la explicación). */
     progress_to?: "DM" | "FB" | "CM" | "WINGER";
+    /** ATTACK_SPACE: espacio objetivo y lado; si faltan, el mayor de findSpaces. */
+    target?: SpaceKind;
+    target_side?: Side;
   };
   keyframes: SceneKeyframe[];
 }
@@ -41,6 +45,8 @@ export interface SceneDoc {
   schema: "fcs.scene/1"; type: SceneType; title: string; pitch: Pitch;
   own_labels: Record<string, string>; opp_labels: Record<string, string>;
   frames: SceneFrame[]; diagnostics: Diagnostic[];
+  /** ATTACK_SPACE: el espacio que se ataca. */
+  target_space?: Space;
 }
 
 const LINE: Record<string, "GK" | "DEF" | "MID" | "ATT"> = {
@@ -156,13 +162,38 @@ export function computeScene(spec: SceneSpec, pitch: Pitch): SceneDoc {
   const compact = spec.params.compactness_m ?? BLOCK_COMPACT[height];
   const shift = spec.params.lateral_shift ?? 0.55;
   let triggered = false;
+  let target: Space | undefined;
 
   for (const kf of [...spec.keyframes].sort((a, b) => a.t - b.t)) {
     if (kf.event === "TRIGGER") triggered = true;
     let own: Record<string, M>, opp: Record<string, M>, ball: M;
     let roles: Record<string, string> = {};
 
-    if (spec.type === "BUILD_UP") {
+    if (spec.type === "ATTACK_SPACE") {
+      const base = possessionShape(spec.own.formation, pitch, "ATTACK");
+      const holder0 = base[kf.ball.holder] ?? Object.values(base)[0];
+      const block = (b: M) => mapObj(defendingBlock(spec.opp.formation, pitch, height === "HIGH" && !spec.params.block_height ? "MID" : height, compact, shift, mirror(b, pitch)), (m) => mirror(m, pitch));
+      let O = block({ x: holder0.x + 0.8, y: holder0.y });
+      const xDef = Math.max(...Object.entries(O).filter(([k]) => slotInfo(k).pos !== "GK").map(([, m]) => m.x));
+      own = attackShape(slotsOf(spec.own.formation), xDef, pitch);
+      const h = own[kf.ball.holder];
+      if (!h) throw new Error(`Poseedor desconocido: ${kf.ball.holder}`);
+      ball = { x: h.x + 0.8, y: h.y };
+      O = block(ball);
+      if (!target) {
+        const all = findSpaces(mapObj(O, (m) => toPt(m, pitch)), pitch);
+        target = all.find((x) => (!spec.params.target || x.kind === spec.params.target) && (!spec.params.target_side || x.side === spec.params.target_side))
+          ?? all.find((x) => !spec.params.target || x.kind === spec.params.target) ?? all[0];
+      }
+      opp = O;
+      const isLast = kf === [...spec.keyframes].sort((a, b) => a.t - b.t).at(-1);
+      if (target && (triggered || isLast)) {
+        const c = { x: target.center.u * pitch.length_m, y: target.center.v * pitch.width_m };
+        const runner = Object.keys(own).filter((k) => k !== kf.ball.holder && slotInfo(k).pos !== "GK")
+          .sort((a, b) => dist(own[a], c) - dist(own[b], c) || a.localeCompare(b))[0];
+        if (runner) { own[runner] = c; roles[runner] = "RUNNER"; ball = { ...c }; }
+      }
+    } else if (spec.type === "BUILD_UP") {
       const f = buildUpFrame(spec, kf.ball.holder, pitch);
       own = f.own; opp = f.opp; ball = f.ball; roles = f.roles;
     } else if (spec.type === "PRESS_OWN" || spec.type === "RETREAT" || spec.type === "PRESS_OPP") {
@@ -235,12 +266,13 @@ export function computeScene(spec: SceneSpec, pitch: Pitch): SceneDoc {
   }
 
   if (spec.type === "BUILD_UP") diags.push(...buildUpDiagnostics(frames));
+  else if (spec.type === "ATTACK_SPACE") { if (!target) diags.push({ rule_id: "SPACE-01", class: "TACTICAL", severity: "warning", message: "No se ve un espacio claro en su bloque: circula para moverlos." }); }
   else diags.push(...shapeDiagnostics(spec, frames, pitch));
   return {
     schema: "fcs.scene/1", type: spec.type, title: spec.title ?? spec.type, pitch,
     own_labels: { ...defaultLabels(spec.own.formation), ...(spec.own.labels ?? {}) },
     opp_labels: { ...defaultLabels(spec.opp.formation), ...(spec.opp.labels ?? {}) },
-    frames, diagnostics: diags,
+    frames, diagnostics: diags, ...(target ? { target_space: target } : {}),
   };
 }
 

@@ -99,3 +99,16 @@ Parámetros: `structure` (`2+1`, `3+1`, `FB_INSIDE`), `opp_pressers` (1–3) y `
 | `FB_INSIDE` | El lateral del lado débil cierra al carril interior a la altura del pivote. |
 
 El rival se coloca en bloque alto; sus `opp_pressers` jugadores más adelantados presionan (a 2,5 m) a los de nuestra estructura, asignados con el algoritmo húngaro por distancia. **Hombre libre**: el jugador de la estructura sin rival a menos de 5 m, el más cercano al balón (`FREE_MAN`). Si no hay ninguno en toda la secuencia: `BUILD-01` (aviso).
+
+## Ataque a espacios (`ATTACK_SPACE`, Pizarra Studio)
+
+`findSpaces(opp, pitch)` agrupa a los rivales de campo por `x` (umbral 6 m) en líneas y devuelve, ordenados por área:
+
+| Espacio | Rectángulo |
+|---|---|
+| `BETWEEN_LINES` | Entre su línea media y la defensiva (2 m de margen), por carriles (izquierda, centro, derecha) sin rival a menos de 8 m del centro. |
+| `BEHIND_FULLBACK` | Desde el lateral (+1 m) hasta 6 m de la línea de fondo, en los 14 m pegados a la banda. |
+| `HALF_SPACE` | Entre lateral y central de la línea defensiva, si están a más de 10 m. |
+| `WEAK_SIDE` | La banda que la basculación deja libre, si son más de 25 m. |
+
+Nuestra forma se escala al bloque rival: los delanteros quedan 1 m por detrás de su línea defensiva. En el disparador (o el último fotograma), el jugador propio más cercano ataca el centro del espacio (`RUNNER`) y el balón va a él. Sin espacios: `SPACE-01`. Cada paso explica qué espacio se busca y por qué.

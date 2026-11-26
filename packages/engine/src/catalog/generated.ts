@@ -2480,6 +2480,20 @@ export const CONSTRAINTS_YAML = {
       "severity": "warning",
       "check": "build_up_free_man",
       "message": "La presión iguala la salida: no hay hombre libre."
+    },
+    {
+      "id": "SPACE-01",
+      "class": "TACTICAL",
+      "severity": "warning",
+      "check": "attack_space_found",
+      "message": "No se ve un espacio claro en su bloque."
+    },
+    {
+      "id": "NARR-SPACE",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "narration",
+      "message": "{actor} ataca {space}."
     }
   ]
 } as const;
