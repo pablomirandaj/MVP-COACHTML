@@ -2473,6 +2473,13 @@ export const CONSTRAINTS_YAML = {
       "severity": "error",
       "check": "supported_type",
       "message": "Este tipo de balón parado aún no está disponible: {type}."
+    },
+    {
+      "id": "BUILD-01",
+      "class": "TACTICAL",
+      "severity": "warning",
+      "check": "build_up_free_man",
+      "message": "La presión iguala la salida: no hay hombre libre."
     }
   ]
 } as const;

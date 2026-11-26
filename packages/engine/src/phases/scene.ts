@@ -6,8 +6,9 @@ import { slotInfo } from "../lineup";
 import type { Diagnostic, M, Pitch, Pt } from "../types";
 import { lexOptimalAssignment } from "../util/assignment";
 import { clamp, r2, r4 } from "../util/num";
+import { buildUpDiagnostics, buildUpFrame } from "./buildup";
 
-export type SceneType = "PRESS_OWN" | "PRESS_OPP" | "RETREAT" | "REST_DEFENSE";
+export type SceneType = "PRESS_OWN" | "PRESS_OPP" | "RETREAT" | "REST_DEFENSE" | "BUILD_UP" | "ATTACK_SPACE";
 export type BlockHeight = "HIGH" | "MID" | "LOW";
 
 export interface Jump { who: string; to: string; curve?: "SCREEN_GK" }
@@ -26,6 +27,12 @@ export interface SceneSpec {
     opp_staying?: string[];
     /** REST_DEFENSE: número de vigilantes; por defecto rivales arriba + 1 (REST-01). */
     rest_count?: number;
+    /** BUILD_UP: estructura de salida. */
+    structure?: "2+1" | "3+1" | "FB_INSIDE";
+    /** BUILD_UP: jugadores rivales que presionan la salida. */
+    opp_pressers?: 1 | 2 | 3;
+    /** BUILD_UP: hacia quién se progresa (informativo para la explicación). */
+    progress_to?: "DM" | "FB" | "CM" | "WINGER";
   };
   keyframes: SceneKeyframe[];
 }
@@ -47,7 +54,7 @@ const LINE_SHIFT_WEIGHT = { GK: 0.15, DEF: 0.5, MID: 0.6, ATT: 0.4 } as const;
 const BLOCK_DEF_X: Record<BlockHeight, number> = { HIGH: 46, MID: 36, LOW: 22 };
 const BLOCK_COMPACT: Record<BlockHeight, number> = { HIGH: 32, MID: 30, LOW: 25 };
 
-const slotsOf = (f: string) => {
+export const slotsOf = (f: string) => {
   const def = FORMATIONS[f];
   if (!def) throw new Error(`Formación desconocida: ${f}`);
   return def.slots;
@@ -59,11 +66,11 @@ const lineOf = (slot: string, u: number) => {
   return l;
 };
 const defaultLabels = (f: string) => Object.fromEntries(slotsOf(f).map((s) => [s.slot, ABBR[slotInfo(s.slot).pos] ?? s.slot]));
-const mirror = (m: M, p: Pitch): M => ({ x: p.length_m - m.x, y: p.width_m - m.y });
+export const mirror = (m: M, p: Pitch): M => ({ x: p.length_m - m.x, y: p.width_m - m.y });
 const toPt = (m: M, p: Pitch): Pt => ({ u: r4(m.x / p.length_m), v: r4(m.y / p.width_m) });
 
 /** Forma de un equipo con balón, en su propio marco de ataque. phase: BUILD_UP (salida) o ATTACK (en campo rival). */
-function possessionShape(formation: string, pitch: Pitch, phase: "BUILD_UP" | "ATTACK"): Record<string, M> {
+export function possessionShape(formation: string, pitch: Pitch, phase: "BUILD_UP" | "ATTACK"): Record<string, M> {
   const out: Record<string, M> = {};
   for (const s of slotsOf(formation)) {
     const { pos } = slotInfo(s.slot);
@@ -77,7 +84,7 @@ function possessionShape(formation: string, pitch: Pitch, phase: "BUILD_UP" | "A
 }
 
 /** Bloque defensivo (pasos 1–3 de docs/32 §3) en el marco del equipo que defiende. */
-function defendingBlock(formation: string, pitch: Pitch, height: BlockHeight, compact: number, shift: number, ball: M): Record<string, M> {
+export function defendingBlock(formation: string, pitch: Pitch, height: BlockHeight, compact: number, shift: number, ball: M): Record<string, M> {
   const slots = slotsOf(formation);
   const W = pitch.width_m;
   const defU = slots.filter((s) => lineOf(s.slot, s.u) === "DEF").map((s) => s.u);
@@ -155,7 +162,10 @@ export function computeScene(spec: SceneSpec, pitch: Pitch): SceneDoc {
     let own: Record<string, M>, opp: Record<string, M>, ball: M;
     let roles: Record<string, string> = {};
 
-    if (spec.type === "PRESS_OWN" || spec.type === "RETREAT" || spec.type === "PRESS_OPP") {
+    if (spec.type === "BUILD_UP") {
+      const f = buildUpFrame(spec, kf.ball.holder, pitch);
+      own = f.own; opp = f.opp; ball = f.ball; roles = f.roles;
+    } else if (spec.type === "PRESS_OWN" || spec.type === "RETREAT" || spec.type === "PRESS_OPP") {
       // Defiende D y tiene el balón P. En PRESS_OPP defiende el rival: se calcula en su marco y se refleja.
       const defending = spec.type === "PRESS_OPP" ? spec.opp.formation : spec.own.formation;
       const possessing = spec.type === "PRESS_OPP" ? spec.own.formation : spec.opp.formation;
@@ -224,7 +234,8 @@ export function computeScene(spec: SceneSpec, pitch: Pitch): SceneDoc {
     });
   }
 
-  diags.push(...shapeDiagnostics(spec, frames, pitch));
+  if (spec.type === "BUILD_UP") diags.push(...buildUpDiagnostics(frames));
+  else diags.push(...shapeDiagnostics(spec, frames, pitch));
   return {
     schema: "fcs.scene/1", type: spec.type, title: spec.title ?? spec.type, pitch,
     own_labels: { ...defaultLabels(spec.own.formation), ...(spec.own.labels ?? {}) },

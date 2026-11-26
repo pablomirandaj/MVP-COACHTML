@@ -87,3 +87,15 @@ Todo son **recomendaciones**, no reglas del reglamento. La interfaz las etiqueta
 | Exportador HTML autónomo | 4 |
 | 4 plantillas iniciales y pruebas doradas | 3 |
 | **Total** | **25** |
+
+## Salida de balón (`BUILD_UP`, Pizarra Studio)
+
+Parámetros: `structure` (`2+1`, `3+1`, `FB_INSIDE`), `opp_pressers` (1–3) y `progress_to`.
+
+| Estructura | Colocación |
+|---|---|
+| `3+1` | El pivote baja entre los centrales, que se abren a 12 m del eje; los laterales suben a la altura original del pivote; un interior hace de "+1" a 13 m por delante. |
+| `2+1` | Centrales abiertos a la anchura del área (±20,16 m) y pivote 11 m por delante, entre ellos. |
+| `FB_INSIDE` | El lateral del lado débil cierra al carril interior a la altura del pivote. |
+
+El rival se coloca en bloque alto; sus `opp_pressers` jugadores más adelantados presionan (a 2,5 m) a los de nuestra estructura, asignados con el algoritmo húngaro por distancia. **Hombre libre**: el jugador de la estructura sin rival a menos de 5 m, el más cercano al balón (`FREE_MAN`). Si no hay ninguno en toda la secuencia: `BUILD-01` (aviso).
