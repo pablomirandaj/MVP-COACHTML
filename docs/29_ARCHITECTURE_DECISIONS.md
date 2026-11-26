@@ -69,6 +69,16 @@ Formato breve: contexto · decisión · alternativas · consecuencias. Estado: *
 - **Decisión**: se aplazan grabación, transcripción y análisis por audio. La creación de jugadas usa un asistente de formulario que emite comandos IR (`command-ir.schema.json`, `source: MANUAL`) y la edición es directa sobre el campo. Queda en suspenso ADR‑006. ADR‑002/003 (gramática) quedan supeditados a la opción B de 23 §0.
 - **Consecuencias**: el diferencial inicial pasa a ser el motor (propuestas explicables, reglas, animación) y el flujo jornada → charla. El riesgo R01 (cobertura de voz) desaparece del MVP y R02/R11 dejan de aplicar. La voz se reincorpora como otra fuente del mismo IR.
 
+## ADR‑017 — Asistente conversacional con Claude que emite comandos IR (26/11/2026)
+- **Contexto**: el entrenador quiere iterar en lenguaje natural "como con Claude"; la voz está aplazada.
+- **Decisión**: capa de chat en el servidor que llama a la API de Anthropic con herramientas cuyo esquema es `command-ir.schema.json`. El modelo solo propone comandos; el motor determinista los valida y aplica sobre un borrador, y el entrenador acepta o deshace. Se guarda el IR de cada turno.
+- **Alternativas**: gramática FCSG escrita (opción B; queda como futura alternativa sin coste ni conexión), LLM que genere coordenadas o HTML directamente (descartado: no reproducible, puede inventar, no se puede validar).
+- **Consecuencias**: coste variable por turno (31 §5), dependencia de red para el chat, un nuevo subencargado de tratamiento. El editor manual sigue siendo completo, así que el LLM no es requisito para ejecutar jugadas.
+
+## ADR‑018 — Escenas de fases de juego calculadas por parámetros y exportadas como HTML autónomo (26/11/2026)
+- **Decisión**: las fases dinámicas (presión, repliegue, vigilancias) se modelan como fotogramas de estado del balón y parámetros de bloque, con posiciones calculadas por reglas (32 §3); se exportan como un único HTML con el mismo renderer.
+- **Alternativa descartada**: que un LLM genere el HTML de cada escena (sin garantías de coherencia ni del mismo resultado).
+
 ## Revisión de contradicciones entre decisiones (iteración 7)
 
 | Posible contradicción | Resolución |

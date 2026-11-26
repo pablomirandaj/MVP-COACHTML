@@ -27,7 +27,7 @@
   },
   "$defs": {
     "pt": { "type": "object", "required": ["u", "v"], "additionalProperties": false, "properties": { "u": { "type": "number", "minimum": -0.04, "maximum": 1.04 }, "v": { "type": "number", "minimum": -0.04, "maximum": 1.04 } } },
-    "origin": { "type": "string", "pattern": "^(EXPLICIT|TEAM_PREF|MANUAL|RULE:[A-Z0-9_-]+)$" },
+    "origin": { "type": "string", "pattern": "^(EXPLICIT|TEAM_PREF|MANUAL|ASSISTANT|RULE:[A-Z0-9_-]+)$" },
     "provenance": { "type": "object", "additionalProperties": { "$ref": "#/$defs/origin" } },
     "actor": {
       "type": "object",

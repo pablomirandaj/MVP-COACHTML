@@ -9,7 +9,7 @@
   "properties": {
     "ir_version": { "const": "1.0" },
     "utterance_id": { "type": "string", "pattern": "^utt_[0-9A-HJKMNP-TV-Z]{26}$" },
-    "source": { "enum": ["VOICE", "TEXT", "MANUAL", "CLARIFICATION"] },
+    "source": { "enum": ["VOICE", "TEXT", "MANUAL", "CLARIFICATION", "ASSISTANT"] },
     "context": {
       "type": "object",
       "required": ["screen", "team_id"],

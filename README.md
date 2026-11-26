@@ -1,6 +1,6 @@
 # Football Coach Studio — Blueprint de producto
 
-> **26/11/2026 — la voz queda aplazada en el MVP** (edición manual + asistente de jugadas). Ver [23 §0](docs/23_MVP_SCOPE.md) y ADR‑016 en [29](docs/29_ARCHITECTURE_DECISIONS.md).
+> **26/11/2026 — MVP: sénior, sin voz, con asistente conversacional y escenas de fases exportables a HTML.** Ver [23 §0](docs/23_MVP_SCOPE.md), [31](docs/31_CONVERSATIONAL_ASSISTANT.md), [32](docs/32_GAME_PHASES_MODULE.md) y ADR‑016/017/018 en [29](docs/29_ARCHITECTURE_DECISIONS.md).
 
 Paquete de investigación, arquitectura, diseño y especificación de **Football Coach Studio (FCS)**: plataforma de planificación táctica para entrenadores de fútbol 11 (amateur, semiprofesional y formativo) cuyo flujo principal es:
 
@@ -57,6 +57,8 @@ Lectura recomendada: `00` → `30` → `23` → `15` → `16`.
 | 28 | [Riesgos](docs/28_RISK_REGISTER.md) | Registro de riesgos |
 | 29 | [ADRs](docs/29_ARCHITECTURE_DECISIONS.md) | Decisiones de arquitectura |
 | 30 | [Resumen ejecutivo](docs/30_EXECUTIVE_SUMMARY.md) | Síntesis para decisión |
+| 31 | [Asistente conversacional](docs/31_CONVERSATIONAL_ASSISTANT.md) | Chat con Claude que emite comandos validados por el motor; costes |
+| 32 | [Fases de juego](docs/32_GAME_PHASES_MODULE.md) | Presión, repliegue, vigilancias; exportación HTML |
 
 ## Artefactos técnicos
 

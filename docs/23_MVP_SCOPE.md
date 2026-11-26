@@ -11,7 +11,15 @@ La grabación y la transcripción de audio quedan **aplazadas** (ADR‑016). El 
 | Plantilla, calendario CSV, ficha de rival (formulario por categorías) | Extracción automática de análisis a partir de audio |
 | Charla PDF, compartir con jugadores | Coste de STT (0 €) |
 
-**Pendiente de decidir**: si el MVP incluye **órdenes escritas** ("mueve a los dos del segundo palo un metro a la izquierda"), que reutilizan la gramática FCSG sin audio.
+**Decidido (26/11/2026)**: opción A, solo equipos **sénior** (sin flujo de menores ni tutores). Se añaden al MVP:
+
+- **Asistente conversacional** (31): el entrenador itera en un chat; Claude emite comandos IR que el motor valida. Sustituye a la gramática escrita de la opción B. ≈ 15 dp (integración API, herramientas, panel de chat, cuotas, evaluación).
+- **Escenas de fases de juego con exportación HTML** (32): nuestra presión, presión rival, repliegue y vigilancias. ≈ 25 dp.
+
+**Total MVP ≈ 145 − 4 (sin menores: BK‑071) + 15 + 25 ≈ 181 dp ≈ 12 semanas con 3 desarrolladores / 18 con 2.**
+Pendiente: **modelo del asistente** (coste en 31 §5) y precio del plan.
+
+(Histórico) **Pendiente de decidir**: si el MVP incluye **órdenes escritas** ("mueve a los dos del segundo palo un metro a la izquierda"), que reutilizan la gramática FCSG sin audio.
 
 | Opción | Contenido | Esfuerzo (25) |
 |---|---|---|
