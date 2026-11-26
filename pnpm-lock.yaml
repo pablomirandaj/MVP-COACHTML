@@ -24,6 +24,15 @@ importers:
         specifier: 2.6.1
         version: 2.6.1
 
+  packages/assistant:
+    dependencies:
+      '@fcs/engine':
+        specifier: workspace:*
+        version: link:../engine
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
+
   packages/engine: {}
 
   packages/render:
@@ -47,6 +56,9 @@ importers:
       '@fastify/static':
         specifier: 11.0.0
         version: 11.0.0
+      '@fcs/assistant':
+        specifier: workspace:*
+        version: link:../assistant
       '@fcs/engine':
         specifier: workspace:*
         version: link:../engine

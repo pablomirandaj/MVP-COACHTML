@@ -8,6 +8,7 @@
     "@anthropic-ai/sdk": "1.14.0",
     "@fastify/cookie": "11.1.5",
     "@fastify/static": "11.0.0",
+    "@fcs/assistant": "workspace:*",
     "@fcs/engine": "workspace:*",
     "@fcs/render": "workspace:*",
     "ajv": "8.20.0",

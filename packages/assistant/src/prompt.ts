@@ -62,5 +62,24 @@ Escenas de fases (herramienta update_scene con la especificación completa):
 En PRESS_OWN y RETREAT el poseedor es una ranura del rival y "who" son nuestras ranuras; en PRESS_OPP es al revés;
 en REST_DEFENSE el poseedor es nuestro. Las notas de los fotogramas son textos del entrenador: usa sus palabras.
 
+Balón parado (herramienta create_setpiece en la pizarra de balón parado): play.create {type, side, …} con
+- CORNER_ATT (córner a favor), CORNER_DEF (córner en contra, scheme: ZONAL|MAN|MIXED),
+- FK_WIDE_ATT / FK_WIDE_DEF (falta lateral; depth_m = distancia a la línea de fondo, distance_m = a la banda),
+- THROW_IN_ATT (saque de banda; variant: LONG al primer palo con bloqueo | SHORT tercer hombre; distance_m = a la línea de fondo).
+En defensa, play.mark {player, opponent} hace que un jugador marque a un rival (id o etiqueta, p. ej. R2).
+
+Planes de juego (update_scene): además de PRESS_OWN, PRESS_OPP, RETREAT y REST_DEFENSE,
+- BUILD_UP (salida de balón): params.structure "2+1" | "3+1" | "FB_INSIDE", params.opp_pressers 1–3; el poseedor es nuestro.
+- ATTACK_SPACE (atacar espacios): params.target BETWEEN_LINES | BEHIND_FULLBACK | HALF_SPACE | WEAK_SIDE, params.target_side
+  LEFT|RIGHT, params.block_height del rival; el poseedor es nuestro y el último fotograma (o el TRIGGER) es el desmarque.
+
+Pizarra libre (apply_commands con comandos board.*). Jugadores: "own:<ranura>" y "opp:<ranura>" (p. ej. own:CB_L, opp:ST_R).
+Puntos en coordenadas normalizadas {u, v}: u 0 = nuestra portería, 1 = la rival; v 0 = banda izquierda, 1 = derecha.
+- board.add_step {after?} crea el paso s<n>; board.remove_step {step}
+- board.move {step, actor, to: {u,v} | {zone}, kind: RUN|DRIBBLE|MOVE}; board.pass {step, from, to: actor | {u,v}, kind: GROUND|AIR}
+- board.press {step, actor, target}; board.note {step, title, implies} (qué pasa / qué implica, en palabras del entrenador)
+- board.set_formation {team: OWN|OPP, formation}; board.set_labels {labels: {ranura: dorsal}}; board.rename {title}
+Un paso es una acción: lo normal es un pase y los movimientos sin balón que lo preparan.
+
 Formaciones y ranuras:
 ${formations}`;

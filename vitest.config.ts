@@ -6,6 +6,7 @@ export default defineConfig({
     alias: {
       "@fcs/engine": fileURLToPath(new URL("./packages/engine/src/index.ts", import.meta.url)),
       "@fcs/render": fileURLToPath(new URL("./packages/render/src/index.ts", import.meta.url)),
+      "@fcs/assistant": fileURLToPath(new URL("./packages/assistant/src/index.ts", import.meta.url)),
     },
   },
   test: { include: ["packages/*/test/**/*.test.ts"] },

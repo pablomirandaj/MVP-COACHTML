@@ -22,6 +22,9 @@
       ],
       "@fcs/server": [
         "packages/server/src/index.ts"
+      ],
+      "@fcs/assistant": [
+        "packages/assistant/src/index.ts"
       ]
     },
     "jsx": "react-jsx",
