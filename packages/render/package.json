@@ -1,1 +1,1 @@
-{ "name": "@fcs/render", "version": "0.1.0", "private": true, "type": "module", "main": "src/index.ts", "dependencies": { "@fcs/engine": "workspace:*" } }
+{"name":"@fcs/render","version":"0.1.0","private":true,"type":"module","main":"src/index.ts","dependencies":{"@fcs/engine":"workspace:*"},"devDependencies":{"playwright-core":"1.65.1"}}

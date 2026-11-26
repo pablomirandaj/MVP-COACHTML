@@ -2,14 +2,22 @@
 // externas ni conexión. Recibe pistas ya calculadas por @fcs/engine: aquí solo se dibuja e interpola.
 import { CATALOG_VERSION, ENGINE_VERSION, canonicalHash, type Tracks } from "@fcs/engine";
 
-export const EXPORTER_VERSION = "0.1.0";
+export const EXPORTER_VERSION = "0.2.0";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export function renderTracksHtml(tracks: Tracks, opts: { teamColor?: string } = {}): string {
+export interface HtmlOptions {
+  teamColor?: string; teamInk?: string; oppColor?: string;
+  meta?: { team?: string; match?: string; opponent?: string };
+}
+
+export function renderTracksHtml(tracks: Tracks, opts: HtmlOptions = {}): string {
   const id = canonicalHash({ tracks, exporter: EXPORTER_VERSION }).slice(0, 12);
   const data = JSON.stringify(tracks).replace(/</g, "\\u003c");
-  const team = opts.teamColor ?? "#1e5bd8";
+  const team = opts.teamColor ?? "#1e5bd8", ink = opts.teamInk ?? "#ffffff", opp = opts.oppColor ?? "#6b7280";
+  const steps = tracks.steps ?? [];
+  const meta = [opts.meta?.team, opts.meta?.match, opts.meta?.opponent ? `contra ${opts.meta.opponent}` : ""].filter(Boolean).join(" · ");
+  const stepList = steps.map((st, i) => `<li><button data-i="${i}"><b>Paso ${i + 1} de ${steps.length} — ${esc(st.title)}</b><span>${esc(st.implies)}</span></button></li>`).join("");
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -17,11 +25,19 @@ export function renderTracksHtml(tracks: Tracks, opts: { teamColor?: string } = 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(tracks.title)}</title>
 <style>
-:root{--bg:#f4f6f3;--surface:#fff;--text:#14201a;--muted:#5b6b62;--line:#d6ddd7;--g1:#3a7d45;--g2:#357240;--pl:#f2f5f0;--own:${team};--opp:#6b7280;--accent:${team};--press:#ffd54a;--cover:#7fdcff}
+:root{--bg:#f4f6f3;--surface:#fff;--text:#14201a;--muted:#5b6b62;--line:#d6ddd7;--g1:#3a7d45;--g2:#357240;--pl:#f2f5f0;--own:${team};--ink:${ink};--opp:${opp};--accent:${team};--press:#ffd54a;--cover:#7fdcff}
 @media (prefers-color-scheme: dark){:root{--bg:#0f1512;--surface:#18211c;--text:#e8efe9;--muted:#9db0a5;--line:#2c3a32;--g1:#2f6b3a;--g2:#2a6034}}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:1100px;margin:0 auto;padding:16px}
+main{max-width:1180px;margin:0 auto;padding:16px}
+.meta{color:var(--accent);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 4px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:900px){.layout.has-steps{grid-template-columns:minmax(0,1fr) 340px;align-items:start}}
+#steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#steps button{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border-radius:12px;padding:10px 12px;background:var(--surface)}
+#steps b{font-size:14px}#steps span{color:var(--muted);font-size:13px}
+#steps li[aria-current=step] button{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.auto{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
 h1{font-size:20px;margin:0 0 2px}
 .sub{color:var(--muted);margin:0 0 12px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -40,18 +56,24 @@ footer{color:var(--muted);font-size:12px;margin-top:10px}
 </head>
 <body>
 <main>
+${meta ? `<p class="meta">${esc(meta)}</p>` : ""}
 <h1>${esc(tracks.title)}</h1>
 ${tracks.subtitle ? `<p class="sub">${esc(tracks.subtitle)}</p>` : '<p class="sub">Toca ▶ para reproducir. Puedes pausar y avanzar paso a paso.</p>'}
+<div class="layout${steps.length ? " has-steps" : ""}">
 <div class="card">
 <div class="pitchwrap"><svg id="pitch" role="img" aria-label="${esc(tracks.title)}"></svg></div>
 <div class="controls">
+<button id="prev" aria-label="Paso anterior">◀</button>
 <button class="primary" id="play" aria-label="Reproducir">▶</button>
-<select id="speed" aria-label="Velocidad"><option value="0.25">0,25×</option><option value="0.5" selected>0,5×</option><option value="1">1×</option></select>
+<button id="next" aria-label="Paso siguiente">▶▶</button>
+<select id="speed" aria-label="Velocidad"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
 <input type="range" id="scrub" min="0" max="1" step="0.001" value="0" aria-label="Tiempo">
 </div>
-<div class="markers" id="markers"></div>
+${steps.length ? `<label class="auto" style="padding:0 12px 10px"><input type="checkbox" id="autopause" checked> Pausar en cada paso</label>` : '<div class="markers" id="markers"></div>'}
 <p class="note" id="note" aria-live="polite"></p>
 <div class="legend"><span id="dir"></span>${tracks.legend.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
+</div>
+${steps.length ? `<ol id="steps" aria-label="Pasos">${stepList}</ol>` : ""}
 </div>
 <footer>Football Coach Studio · motor ${ENGINE_VERSION} · catálogo ${CATALOG_VERSION} · exportador ${EXPORTER_VERSION} · id ${id}</footer>
 </main>
@@ -91,7 +113,7 @@ else{e=el("path",{d,stroke:"#fff","stroke-width":0.3,fill:"none","stroke-dasharr
 if(p.kind==="screen"){const a=pts[pts.length-2],b=pts[pts.length-1],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*1.2,ny=dx/l*1.2;el("line",{x1:b[0]+nx,y1:b[1]+ny,x2:b[0]-nx,y2:b[1]-ny,stroke:"#fff","stroke-width":0.6},gPaths)}}
 pathEls.push({p,e});}
 const nodes=D.actors.map(a=>{const g=el("g",{},gAct);
-if(a.team==="OWN"){el("circle",{r:1.3,fill:css("--own"),stroke:"#fff","stroke-width":0.25,"stroke-dasharray":a.proposal?"0.6 0.4":"none"},g);
+if(a.team==="OWN"){el("circle",{r:1.3,fill:css("--own"),stroke:css("--ink"),"stroke-width":0.3,"stroke-dasharray":a.proposal?"0.6 0.4":"none"},g);
 const lab=el("g",{},g);labels.push(lab);const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":a.label.length>2?0.95:1.25,"font-weight":700,fill:"#fff","font-family":"system-ui"},lab);t.textContent=a.label;}
 else{el("rect",{x:-1.05,y:-1.05,width:2.1,height:2.1,rx:0.35,fill:css("--opp"),stroke:"#e5e7eb","stroke-width":0.15,opacity:0.92},g);
 if(a.label){const lab=el("g",{},g);labels.push(lab);const t=el("text",{"text-anchor":"middle","dominant-baseline":"central","font-size":0.8,fill:"#fff","font-family":"system-ui"},lab);t.textContent=a.label;}}
@@ -103,6 +125,8 @@ nodes.forEach((g,k)=>g.setAttribute("transform","translate("+(f[2*k]*L).toFixed(
 const b=f.length-3;ball.setAttribute("cx",f[b]*L);ball.setAttribute("cy",f[b+1]*W);ball.setAttribute("r",((0.55+0.35*f[b+2])*K).toFixed(2));
 for(const pe of pathEls)if(pe.p.from!==undefined)pe.e.setAttribute("opacity",t>=pe.p.from?1:0.15);
 const n=D.notes.filter(x=>x.t<=t+1e-6).pop();noteEl.textContent=n?n.text:"";
+if(S.length){const ci=cur(t);if(ci!==CI){CI=ci;stepEls.forEach((li,k)=>{if(k===ci)li.setAttribute("aria-current","step");else li.removeAttribute("aria-current");});
+const st=S[ci];if(st)noteEl.textContent=st.title+" — "+st.implies;}}
 scrub.value=((t-D.t0)/dur).toFixed(3);}
 // Vertical (ataque hacia arriba) en pantallas estrechas en vertical; horizontal (ataque a la derecha) en el resto.
 let K=1;
@@ -114,16 +138,26 @@ root.setAttribute("transform",v?"matrix(0,-1,1,0,0,"+L+")":"");
 for(const l of labels)l.setAttribute("transform",v?"rotate(90)":"");
 document.getElementById("dir").textContent=v?"Atacamos hacia arriba ↑":"Atacamos hacia la derecha →";
 document.body.dataset.orientation=v?"vertical":"horizontal";}
+const S=D.steps||[];let CI=-2;const stepEls=[...document.querySelectorAll("#steps li")];
+const cur=t=>{let k=-1;S.forEach((x,i)=>{if(x.t<=t+1e-6)k=i;});return k<0?0:k;};
 let T=D.t0,playing=false,last=0;
 layout();addEventListener("resize",()=>{layout();render(T);});
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const btn=document.getElementById("play");
-function loop(ts){if(!playing)return;T+=(ts-last)/1000*parseFloat(document.getElementById("speed").value);last=ts;if(T>D.t1){T=D.t1;playing=false;btn.textContent="▶";}render(T);if(playing)requestAnimationFrame(loop);}
+const ap=document.getElementById("autopause");
+const stop=()=>{playing=false;btn.textContent="▶";btn.setAttribute("aria-label","Reproducir");};
+function loop(ts){if(!playing)return;const prev=T;T+=(ts-last)/1000*parseFloat(document.getElementById("speed").value);last=ts;
+if(ap&&ap.checked){const hit=S.find(x=>x.t>prev+1e-6&&x.t<=T);if(hit){T=hit.t;stop();}}
+if(T>D.t1){T=D.t1;stop();}render(T);if(playing)requestAnimationFrame(loop);}
+const go=t=>{stop();T=t;render(T);};
+document.getElementById("next").addEventListener("click",()=>{const n=S.find(x=>x.t>T+1e-3)||D.markers.find(x=>x.t>T+1e-3);go(n?n.t:D.t1);});
+document.getElementById("prev").addEventListener("click",()=>{const p=[...S].reverse().find(x=>x.t<T-1e-3)||[...D.markers].reverse().find(x=>x.t<T-1e-3);go(p?p.t:D.t0);});
+stepEls.forEach((li,i)=>li.querySelector("button").addEventListener("click",()=>go(S[i].t)));
 btn.addEventListener("click",()=>{if(reduce){const m=D.markers.find(x=>x.t>T+1e-3);T=m?m.t:D.t0;render(T);return;}
 if(T>=D.t1)T=D.t0;playing=!playing;btn.textContent=playing?"❚❚":"▶";btn.setAttribute("aria-label",playing?"Pausar":"Reproducir");if(playing){last=performance.now();requestAnimationFrame(loop);}});
 scrub.addEventListener("input",()=>{playing=false;btn.textContent="▶";T=D.t0+parseFloat(scrub.value)*dur;render(T);});
 const mk=document.getElementById("markers");
-D.markers.forEach(m=>{const b=document.createElement("button");b.textContent=m.label;b.addEventListener("click",()=>{playing=false;btn.textContent="▶";T=m.t;render(T);});mk.appendChild(b);});
+if(mk)D.markers.forEach(m=>{const b=document.createElement("button");b.textContent=m.label;b.addEventListener("click",()=>{playing=false;btn.textContent="▶";T=m.t;render(T);});mk.appendChild(b);});
 render(T);
 </script>
 </body>

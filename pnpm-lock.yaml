@@ -31,6 +31,10 @@ importers:
       '@fcs/engine':
         specifier: workspace:*
         version: link:../engine
+    devDependencies:
+      playwright-core:
+        specifier: 1.65.1
+        version: 1.65.1
 
   packages/server:
     dependencies:
