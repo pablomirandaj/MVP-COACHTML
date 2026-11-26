@@ -53,7 +53,7 @@ export interface Actor {
   provenance: Record<string, Origin>;
 }
 
-export interface Anchor { kind: "STARTS_AT" | "ARRIVES_AT"; event: "KICK" | "BALL_ARRIVAL" | "MOVEMENT_START" | "MOVEMENT_END"; ref?: string; offset_s: number }
+export interface Anchor { kind: "STARTS_AT" | "ARRIVES_AT"; event: "KICK" | "BALL_ARRIVAL" | "MOVEMENT_START" | "MOVEMENT_END"; ref?: string; offset_s: number; /** No arrancar antes de este instante (p. ej. 0 = el golpeo, por el fuera de juego). */ not_before_s?: number }
 
 export interface Movement {
   id: string;
@@ -107,6 +107,8 @@ export interface PlayDoc {
   type: string;
   side: Side;
   pitch: Pitch;
+  /** Línea de fuera de juego del rival en el golpeo (u normalizada), si aplica (faltas). */
+  offside_x?: number;
   delivery: Delivery;
   actors: Actor[];
   movements: Movement[];

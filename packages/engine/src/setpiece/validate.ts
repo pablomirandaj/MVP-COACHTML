@@ -50,6 +50,31 @@ export function validatePlay(doc: PlayDoc, ctx: EngineContext): Diagnostic[] {
       out.push({ rule_id: "LAW-CRN-02", class: "LAW", severity: "warning", message: "Reglamento (Regla 17): los rivales deben estar a 9,15 m del área de esquina hasta el saque.", actors: [o.id] });
   }
 
+  if (doc.type.startsWith("FK_")) {
+    const ball = toM(doc.delivery.ball_start, pitch);
+    for (const w of opp.filter((o) => o.role === "WALL"))
+      if (dist(toM(w.start, pitch), ball) < 9.15 - 0.01)
+        out.push({ rule_id: "LAW-FK-01", class: "LAW", severity: "error", message: "Reglamento (Regla 13): la barrera debe estar a 9,15 m del balón.", actors: [w.id] });
+  }
+  if (doc.offside_x !== undefined) {
+    const xOff = doc.offside_x * pitch.length_m;
+    for (const a of own) {
+      if (a.role === "TAKER") continue;
+      const m = mov(a.id);
+      let p = toM(a.start, pitch);
+      if (m && m.path.length > 1 && m.t_start < 0) {
+        const s = Math.min(1, (0 - m.t_start) / Math.max(1e-6, m.t_end - m.t_start));
+        const q = toM(m.path[m.path.length - 1], pitch);
+        p = { x: p.x + (q.x - p.x) * s, y: p.y + (q.y - p.y) * s };
+      }
+      if (p.x > xOff + 0.01)
+        out.push({ rule_id: "LAW-OFF-01", class: "LAW", severity: "error", message: `Reglamento (Regla 11): ${actorName(a.id)} está en fuera de juego en el momento del golpeo.`, actors: [a.id] });
+    }
+  }
+  const empty = own.filter((a) => !a.player_id).length;
+  if (empty && ctx.roster.length)
+    out.push({ rule_id: "ROSTER-01", class: "ROSTER", severity: "warning", message: `Faltan jugadores: ${empty} puesto${empty > 1 ? "s" : ""} sin asignar.` });
+
   // Técnica del golpeo.
   const taker = doc.actors.find((a) => a.id === doc.delivery.taker_actor);
   const tp = ctx.roster.find((x) => x.id === taker?.player_id);

@@ -1084,6 +1084,120 @@ export const TEMPLATES_YAML = {
       ]
     },
     {
+      "template": "FK_WIDE_ATT_STANDARD",
+      "type": "FK_WIDE_ATT",
+      "version": "1.0.0",
+      "description": "Falta lateral a favor. Rematadores salen desde la línea de fuera de juego; nadie arranca antes del golpeo.",
+      "params": {
+        "side": {
+          "enum": [
+            "LEFT",
+            "RIGHT"
+          ],
+          "required": true
+        },
+        "depth_m": {
+          "min": 0,
+          "max": 35,
+          "default": 18
+        },
+        "distance_m": {
+          "min": 2,
+          "max": 25,
+          "default": 8
+        },
+        "swing": {
+          "enum": [
+            "INSWING",
+            "OUTSWING"
+          ],
+          "default": "from_taker_foot"
+        },
+        "target_zone": {
+          "enum": [
+            "Z_NEAR_POST",
+            "Z_FAR_POST",
+            "Z_GA_CENTER",
+            "Z_PEN_SPOT"
+          ],
+          "default": "zone_of_primary_target_else_Z_FAR_POST"
+        }
+      },
+      "offside_line": {
+        "gap_ratio": 0.4,
+        "min_gap_m": 6,
+        "max_gap_m": 12,
+        "max_x_from_goal_m": 7
+      },
+      "wall": {
+        "players": 2,
+        "distance_m": 9.15
+      },
+      "role_defaults": {
+        "TAKER": {
+          "count": 1,
+          "rule": "FK-POS-01"
+        },
+        "PRIMARY_TARGET": {
+          "count": 1,
+          "movement": "ATTACK_TO_TARGET"
+        },
+        "SECONDARY_TARGET": {
+          "count": 3,
+          "movements": [
+            "ATTACK_NEAR_POST",
+            "ATTACK_PEN_SPOT",
+            "ATTACK_GA_CENTER"
+          ]
+        },
+        "DECOY": {
+          "count": 1,
+          "movement": "DECOY_RUN"
+        },
+        "REBOUND": {
+          "count": 1,
+          "start_zone": "Z_REBOUND",
+          "movement": "HOLD"
+        },
+        "REST_DEFENDER": {
+          "count": 2,
+          "start_zone": "Z_REST",
+          "movement": "HOLD",
+          "rule": "CRN-POS-07"
+        }
+      },
+      "fill_order": [
+        "TAKER",
+        "REST_DEFENDER",
+        "PRIMARY_TARGET",
+        "SECONDARY_TARGET",
+        "REBOUND",
+        "DECOY"
+      ],
+      "outfield_total": 10,
+      "opponents_default": "OPP_FK_WIDE_DEF",
+      "constraints": [
+        "LAW-FK-01",
+        "LAW-OFF-01",
+        "GEO-01",
+        "GEO-02",
+        "GEO-03",
+        "GEO-SPACING-01",
+        "TECH-SWING-01",
+        "TACTICAL-FK-01",
+        "SCH-SYNC-01",
+        "ROSTER-01"
+      ]
+    },
+    {
+      "template": "OPP_FK_WIDE_DEF",
+      "type": "FK_WIDE_DEF",
+      "team": "OPP",
+      "version": "1.0.0",
+      "description": "Defensa rival genérica de una falta lateral: portero, barrera de 2, línea a la altura del fuera de juego y un hombre de salida.",
+      "actors": "computed"
+    },
+    {
       "template": "OPP_CORNER_DEF_MIXED",
       "type": "CORNER_DEF",
       "team": "OPP",
@@ -2049,6 +2163,44 @@ export const CONSTRAINTS_YAML = {
       "severity": "info",
       "check": "narration",
       "message": "Balón en {holder}."
+    },
+    {
+      "id": "FK-POS-01",
+      "class": "GEOMETRY",
+      "severity": "info",
+      "check": "fk_ball_position",
+      "message": "Balón a {depth} m de la línea de fondo y {distance} m de la banda."
+    },
+    {
+      "id": "LAW-FK-01",
+      "class": "LAW",
+      "severity": "error",
+      "check": "wall_distance",
+      "params": {
+        "min_m": 9.15
+      },
+      "message": "Reglamento (Regla 13): la barrera debe estar a 9,15 m del balón."
+    },
+    {
+      "id": "LAW-OFF-01",
+      "class": "LAW",
+      "severity": "error",
+      "check": "onside_at_kick",
+      "message": "Reglamento (Regla 11): {actor} está en fuera de juego en el momento del golpeo."
+    },
+    {
+      "id": "TACTICAL-FK-01",
+      "class": "TECHNIQUE",
+      "severity": "warning",
+      "check": "inswing_foot",
+      "message": "El centro cerrado sale más natural con la pierna contraria al lado."
+    },
+    {
+      "id": "ROSTER-01",
+      "class": "ROSTER",
+      "severity": "warning",
+      "check": "roles_without_player",
+      "message": "Faltan jugadores: {count} puestos sin asignar."
     }
   ]
 } as const;

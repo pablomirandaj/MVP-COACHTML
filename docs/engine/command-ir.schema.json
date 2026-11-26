@@ -561,6 +561,18 @@
             },
             "template": {
               "type": "string"
+            },
+            "depth_m": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 35,
+              "description": "Faltas: distancia del balón a la línea de fondo (m)."
+            },
+            "distance_m": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 40,
+              "description": "Faltas: distancia a la línea de banda (m). Saques de banda: distancia a la línea de fondo (m)."
             }
           },
           "required": [

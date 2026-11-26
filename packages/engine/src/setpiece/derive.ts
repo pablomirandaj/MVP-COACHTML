@@ -83,6 +83,7 @@ export function derive(input: PlayDoc): PlayDoc {
       if (a.kind === "STARTS_AT") { s = ref + a.offset_s; e = s + dur; }
       else { e = ref + a.offset_s; s = e - dur; }
       if (s < TIMELINE.prep_start_s) { e += TIMELINE.prep_start_s - s; s = TIMELINE.prep_start_s; }
+      if (a.not_before_s !== undefined && s < a.not_before_s) { e += a.not_before_s - s; s = a.not_before_s; }
     }
     const t = { s: r2(s), e: r2(e) };
     times.set(m.id, t);

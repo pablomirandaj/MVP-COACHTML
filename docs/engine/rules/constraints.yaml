@@ -46,3 +46,9 @@ rules:
   - { id: NARR-REST, class: TACTICAL, severity: info, check: narration, message: "Vigilancias." }
   - { id: NARR-FREE, class: TACTICAL, severity: info, check: narration, message: "Hombre libre: {actor}." }
   - { id: NARR-BALL, class: TACTICAL, severity: info, check: narration, message: "Balón en {holder}." }
+  # Faltas laterales (Pizarra Studio §6.1).
+  - { id: FK-POS-01, class: GEOMETRY, severity: info, check: fk_ball_position, message: "Balón a {depth} m de la línea de fondo y {distance} m de la banda." }
+  - { id: LAW-FK-01, class: LAW, severity: error, check: wall_distance, params: { min_m: 9.15 }, message: "Reglamento (Regla 13): la barrera debe estar a 9,15 m del balón." }
+  - { id: LAW-OFF-01, class: LAW, severity: error, check: onside_at_kick, message: "Reglamento (Regla 11): {actor} está en fuera de juego en el momento del golpeo." }
+  - { id: TACTICAL-FK-01, class: TECHNIQUE, severity: warning, check: inswing_foot, message: "El centro cerrado sale más natural con la pierna contraria al lado." }
+  - { id: ROSTER-01, class: ROSTER, severity: warning, check: roles_without_player, message: "Faltan jugadores: {count} puestos sin asignar." }

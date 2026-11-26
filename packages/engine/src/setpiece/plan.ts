@@ -19,14 +19,68 @@ interface Slot {
 
 export interface PlanResult { doc: PlayDoc | null; clarifications: Clarification[]; diagnostics: Diagnostic[] }
 
-const TEMPLATE_ID = "CRN_ATT_STANDARD";
-const RULE_TPL = `RULE:TPL-${TEMPLATE_ID}`;
+/** Lo que cambia entre tipos de balón parado ofensivo: dónde está el balón, cómo se colocan y quién defiende. */
+export interface SetPieceGeometry {
+  type: string;
+  templateId: string;
+  /** Balón y lanzador en metros. */
+  ball(side: Side, pitch: EngineContext["pitch"], create: Command): M;
+  taker(ball: M, side: Side, pitch: EngineContext["pitch"]): M;
+  takerRule: string;
+  /** Punto de salida de un actor que no es el lanzador. */
+  start(role: Role, movement: MovementType, zone: ZoneId | undefined, side: Side, occ: M[], env: GeoEnv): M;
+  /** Rivales y marcas a partir de las posiciones iniciales propias. */
+  opponents(env: GeoEnv, primary: { id: string; at: M } | undefined, secondaries: { id: string; at: M }[]): { actors: { role: Role; at: M; label: string; marks?: string }[] };
+  /** Línea de fuera de juego (m) o undefined si no aplica. */
+  offside?(env: GeoEnv): number | undefined;
+  /** Las carreras no arrancan antes de este instante (0 = golpeo, por el fuera de juego). */
+  runNotBefore?: number;
+}
+export interface GeoEnv { pitch: EngineContext["pitch"]; side: Side; ball: M; create: Command; xOff?: number }
+
+const CORNER_GEOMETRY: SetPieceGeometry = {
+  type: "CORNER_ATT", templateId: "CRN_ATT_STANDARD", takerRule: "RULE:CRN-POS-01",
+  ball(side, pitch) {
+    const L = pitch.length_m, W = pitch.width_m, inward = side === "LEFT" ? 1 : -1;
+    return { x: L - 0.354, y: (side === "LEFT" ? 0 : W) + inward * 0.354 };
+  },
+  taker(ball, side) {
+    const inward = side === "LEFT" ? 1 : -1;
+    return add(ball, { x: 2 * Math.sin(Math.PI / 6), y: -inward * 2 * Math.cos(Math.PI / 6) });
+  },
+  start(role, movement, zone, side, occ, env) {
+    const z: ZoneId = ATTACKING_ROLES.includes(role) ? (role === "BLOCKER" ? "Z_START_CLUSTER" : startZoneOf(movement)) : (zone ?? "Z_EDGE");
+    return placeAt(resolveZone(z, side, env.pitch), occ, MIN_SPACING_M);
+  },
+  opponents(env, primary, secondaries) {
+    const oppTpl = template("OPP_CORNER_DEF_MIXED");
+    const out: { role: Role; at: M; label: string; marks?: string }[] = [];
+    let zN = 0, mN = 0;
+    for (const o of oppTpl.actors as any[]) {
+      if (o.role === "MAN_MARKER") {
+        const target = o.marks === "PRIMARY_TARGET" ? primary : secondaries[o.index ?? 0];
+        if (!target) continue;
+        out.push({ role: "MAN_MARKER", at: { x: target.at.x + 1, y: target.at.y }, label: `M${++mN}`, marks: target.id });
+      } else {
+        out.push({ role: o.role, at: catalogPoint("Z_GK", o.at[0], o.at[1], env.side, env.pitch), label: o.role === "GOALKEEPER" ? "P" : o.role === "COUNTER_OUTLET" ? "C" : `Z${++zN}` });
+      }
+    }
+    return { actors: out };
+  },
+};
 
 export function createCorner(cmds: Command[], ctx: EngineContext): PlanResult {
-  const tpl = template(TEMPLATE_ID);
-  const clarifications: Clarification[] = [];
   const create = cmds.find((c) => c.op === "play.create");
   if (!create || create.type !== "CORNER_ATT") throw new Error("createCorner necesita play.create {type: CORNER_ATT}");
+  return planSetPiece(cmds, ctx, CORNER_GEOMETRY);
+}
+
+export function planSetPiece(cmds: Command[], ctx: EngineContext, g: SetPieceGeometry): PlanResult {
+  const TEMPLATE_ID = g.templateId;
+  const RULE_TPL = `RULE:TPL-${TEMPLATE_ID}`;
+  const tpl = template(TEMPLATE_ID);
+  const clarifications: Clarification[] = [];
+  const create = cmds.find((c) => c.op === "play.create")!;
   if (!create.side) {
     return { doc: null, diagnostics: [], clarifications: [{
       id: "clar_side", code: "AMB-MISSING-REQUIRED", question: "¿Desde qué lado?",
@@ -192,19 +246,17 @@ export function createCorner(cmds: Command[], ctx: EngineContext): PlanResult {
   ordered.forEach((s, i) => idOf.set(s, `a${i + 1}`));
   const dorsal = (s: Slot) => (s.player ? player(s.player).n ?? 999 : 999);
 
-  const L = pitch.length_m, W = pitch.width_m;
-  const cornerM: M = { x: L, y: side === "LEFT" ? 0 : W };
-  const inward = side === "LEFT" ? 1 : -1;
-  const ballM: M = { x: L - 0.354, y: cornerM.y + inward * 0.354 };
-  const takerM: M = add(ballM, { x: 2 * Math.sin(Math.PI / 6), y: -inward * 2 * Math.cos(Math.PI / 6) });
+  const ballM: M = g.ball(side, pitch, create);
+  const takerM: M = g.taker(ballM, side, pitch);
+  const env: GeoEnv = { pitch, side, ball: ballM, create };
+  env.xOff = g.offside?.(env);
 
   const startOcc: M[] = [];
   const startPos = new Map<Slot, M>();
   const placeOrder = [...slots].filter((s) => s.role !== "TAKER")
     .sort((a, b) => Number(b.explicit) - Number(a.explicit) || (a.explicit ? a.order - b.order : fillIdx(a.role!) - fillIdx(b.role!) || dorsal(a) - dorsal(b)));
   for (const s of placeOrder) {
-    const zone: ZoneId = ATTACKING_ROLES.includes(s.role!) ? (s.role === "BLOCKER" ? "Z_START_CLUSTER" : startZoneOf(s.movement!)) : (s.zone ?? "Z_EDGE");
-    const p = placeAt(resolveZone(zone, side, pitch), startOcc, MIN_SPACING_M);
+    const p = g.start(s.role!, s.movement!, s.zone, side, startOcc, env);
     startOcc.push(p); startPos.set(s, p);
   }
   startPos.set(takerSlot, takerM);
@@ -239,35 +291,27 @@ export function createCorner(cmds: Command[], ctx: EngineContext): PlanResult {
       ...(s.group ? { group: s.group } : {}),
       provenance: {
         role: s.roleOrigin, player_id: s.player && explicitPlayers.has(s.player) ? "EXPLICIT" : "RULE:ASG-01",
-        start: s.role === "TAKER" ? "RULE:CRN-POS-01" : s.role === "REST_DEFENDER" ? "RULE:CRN-POS-07" : "RULE:ZONE-ANCHOR",
+        start: s.role === "TAKER" ? g.takerRule : s.role === "REST_DEFENDER" ? "RULE:CRN-POS-07" : "RULE:ZONE-ANCHOR",
       },
     };
   });
 
   // ---- 8. Rivales (defensa mixta por defecto) ------------------------------------------------
-  const oppTpl = template(tpl.opponents_default);
+  const oppTplId: string = tpl.opponents_default;
   const oppActors: Actor[] = [];
   const marks: Relation[] = [];
   const markOf = new Map<Slot, string>();
   const secondaries = ordered.filter((s) => s.role === "SECONDARY_TARGET");
-  let zN = 0, mN = 0;
-  oppTpl.actors.forEach((o: any, i: number) => {
+  const slotOfId = new Map<string, Slot>([...idOf].map(([k, v]) => [v, k]));
+  const asRef = (s: Slot | undefined) => (s ? { id: idOf.get(s)!, at: startPos.get(s)! } : undefined);
+  const opps = g.opponents(env, asRef(primary), secondaries.map((s) => asRef(s)!));
+  opps.actors.forEach((o, i) => {
     const id = `o${i + 1}`;
-    let m: M;
-    let label: string;
-    if (o.role === "MAN_MARKER") {
-      const target = o.marks === "PRIMARY_TARGET" ? primary : secondaries[o.index ?? 0];
-      if (!target) return;
-      const t = startPos.get(target)!;
-      m = { x: t.x + 1, y: t.y };
-      markOf.set(target, id);
-      marks.push({ type: "MARKS", a: id, b: idOf.get(target)!, origin: `RULE:TPL-${oppTpl.template}` });
-      label = `M${++mN}`;
-    } else {
-      m = catalogPoint("Z_GK", o.at[0], o.at[1], side, pitch);
-      label = o.role === "GOALKEEPER" ? "P" : o.role === "COUNTER_OUTLET" ? "C" : `Z${++zN}`;
+    if (o.marks) {
+      markOf.set(slotOfId.get(o.marks)!, id);
+      marks.push({ type: "MARKS", a: id, b: o.marks, origin: `RULE:TPL-${oppTplId}` });
     }
-    oppActors.push({ id, team: "OPP", label, role: o.role, start: toN(m, pitch), provenance: { start: `RULE:TPL-${oppTpl.template}` } });
+    oppActors.push({ id, team: "OPP", label: o.label, role: o.role, start: toN(o.at, pitch), provenance: { start: `RULE:TPL-${oppTplId}` } });
   });
 
   // ---- 9. Movimientos y relaciones -----------------------------------------------------------
@@ -286,7 +330,7 @@ export function createCorner(cmds: Command[], ctx: EngineContext): PlanResult {
       t_start: 0, t_end: 0,
       provenance: { type: s.movementOrigin === "EXPLICIT" ? "EXPLICIT" : s.explicit ? s.roleOrigin : s.movementOrigin === "RULE:TPL" ? RULE_TPL : s.movementOrigin },
     };
-    if (!isHold && def.anchor) m.anchor = { kind: def.anchor.kind as any, event: def.anchor.event as any, offset_s: def.anchor.offset_s };
+    if (!isHold && def.anchor) m.anchor = { kind: def.anchor.kind as any, event: def.anchor.event as any, offset_s: def.anchor.offset_s, ...(g.runNotBefore !== undefined ? { not_before_s: g.runNotBefore } : {}) };
     movements.push(m);
   }
   for (const o of oppActors) movements.push({ id: `m${o.id}`, actor: o.id, type: o.role === "MAN_MARKER" ? "FOLLOW" : "HOLD", path: [o.start], t_start: 0, t_end: 0, provenance: { type: o.provenance.start } });
@@ -314,14 +358,15 @@ export function createCorner(cmds: Command[], ctx: EngineContext): PlanResult {
 
   let doc: PlayDoc = {
     schema: "fcs.play/1", engine_version: ENGINE_VERSION, catalog_version: CATALOG_VERSION, template: TEMPLATE_ID,
-    type: "CORNER_ATT", side, pitch,
+    type: g.type, side, pitch,
+    ...(env.xOff !== undefined ? { offside_x: Math.round((env.xOff / pitch.length_m) * 10000) / 10000 } : {}),
     delivery: {
       taker_actor: idOf.get(takerSlot)!, ball_start: toN(ballM, pitch), swing,
       trajectory: (delivery.trajectory as any) ?? "DRIVEN", technique: technique as any,
       target_zone: targetZone, target_point: toN(targetPoint, pitch), curve: 0.18, kick_t: 0, arrival_t: 0,
       provenance: {
         swing: delivery.swing ? "EXPLICIT" : "RULE:TECH-SWING-01", trajectory: delivery.trajectory ? "EXPLICIT" : RULE_TPL,
-        target_zone: targetOrigin, ball_start: "RULE:CRN-POS-01",
+        target_zone: targetOrigin, ball_start: g.takerRule,
       },
     },
     actors: [...actors, ...oppActors], movements, relations: rels, constraints: cons, notes, diagnostics: [],
