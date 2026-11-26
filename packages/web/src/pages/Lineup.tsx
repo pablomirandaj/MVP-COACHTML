@@ -18,7 +18,7 @@ function lineupTracks(l: LineupView, players: PlayerDto[]): Tracks {
         proposal: !p || String(l.doc.slot_provenance[s] ?? "").startsWith("RULE:") };
     }),
     frames: [[...slots.flatMap((s) => [l.positions[s].u, l.positions[s].v]), -1, -1, 0]],
-    paths: [], markers: [], notes: [], legend: [],
+    paths: [], markers: [], notes: [], steps: [], legend: [],
   };
 }
 

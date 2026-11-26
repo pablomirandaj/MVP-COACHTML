@@ -6,6 +6,7 @@ import type { PhaseScene } from "./phases/types";
 import { ballCurve } from "./setpiece/derive";
 import type { Movement, Player, PlayDoc, Pt } from "./types";
 import { r4 } from "./util/num";
+import { narratePlay, narrateScene, type Step } from "./narrate";
 
 export interface TrackActor { id: string; team: "OWN" | "OPP"; label: string; title: string; proposal: boolean; role?: string }
 export interface TrackPath { kind: "run" | "ball" | "screen" | "press" | "cover"; pts: [number, number][]; proposal: boolean; from?: number; to?: number }
@@ -18,6 +19,8 @@ export interface Tracks {
   paths: TrackPath[];
   markers: { t: number; label: string }[];
   notes: { t: number; text: string }[];
+  /** Explicación por pasos (title = qué pasa, implies = qué implica), ordenada por t. */
+  steps: Step[];
   legend: string[];
 }
 
@@ -84,6 +87,7 @@ export function playTracks(doc: PlayDoc, roster: Player[], title = "Jugada"): Tr
     title, view: "HALF_ATT", pitch: doc.pitch, t0, t1, fps: FPS, actors, frames, paths,
     markers: [{ t: t0, label: "Preparación" }, { t: 0, label: "Golpeo" }, { t: doc.delivery.arrival_t, label: "Llegada" }],
     notes: doc.notes.map((n) => ({ t: t0, text: n.text })),
+    steps: narratePlay(doc, roster).map((x) => ({ ...x, t: Math.max(t0, x.t) })),
     legend: ["● propio", "■ rival", "── indicado por el entrenador", "- - - propuesta del sistema", "┃ bloqueo"],
   };
 }
@@ -134,8 +138,9 @@ export function sceneTracks(scene: PhaseScene, title?: string): Tracks {
   });
   const markers = keys.map((k, i) => ({ t: segs.find((x) => x.a === i && x.b === i)!.from, label: k.event === "TRIGGER" ? "¡Presión!" : `Paso ${i + 1}` }));
   const notes = keys.filter((k) => k.note).map((k) => ({ t: segs.find((x) => x.a === keys.indexOf(k) && x.b === keys.indexOf(k))!.from, text: k.note! }));
+  const steps = narrateScene(scene).map((x, i) => ({ ...x, t: segs.find((sg) => sg.a === i && sg.b === i)!.from }));
   return {
-    title: title ?? scene.title, view: "FULL", pitch: scene.pitch, t0, t1, fps: FPS, actors, frames, paths, markers, notes,
+    title: title ?? scene.title, view: "FULL", pitch: scene.pitch, t0, t1, fps: FPS, actors, frames, paths, markers, notes, steps,
     legend: ["● nuestro equipo", "■ rival", "➜ salto de presión", "⇢ cobertura"],
   };
 }

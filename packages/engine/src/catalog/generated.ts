@@ -1993,6 +1993,62 @@ export const CONSTRAINTS_YAML = {
         "min_m": 6
       },
       "message": "Las líneas {a} y {b} están a menos de 6 m."
+    },
+    {
+      "id": "NARR-SETUP",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "Colocación inicial."
+    },
+    {
+      "id": "NARR-BLOCK",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "{blocker} bloquea a {defender}."
+    },
+    {
+      "id": "NARR-DELIVERY",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "{taker} golpea hacia {zone}."
+    },
+    {
+      "id": "NARR-RUN",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "{actor} ataca {zone}."
+    },
+    {
+      "id": "NARR-PRESS",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "narration",
+      "message": "{presser} presiona a {target}."
+    },
+    {
+      "id": "NARR-REST",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "narration",
+      "message": "Vigilancias."
+    },
+    {
+      "id": "NARR-FREE",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "narration",
+      "message": "Hombre libre: {actor}."
+    },
+    {
+      "id": "NARR-BALL",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "narration",
+      "message": "Balón en {holder}."
     }
   ]
 } as const;

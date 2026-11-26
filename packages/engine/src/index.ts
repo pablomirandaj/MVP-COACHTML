@@ -11,4 +11,5 @@ export { canonicalHash, canonicalJson, sha256Hex } from "./util/canonical";
 export { diff, applyPatch, touchedPaths } from "./util/patch";
 export { lexOptimalAssignment, maxAssignmentValue } from "./util/assignment";
 export { computeScene, type SceneSpec, type SceneDoc, type SceneType, type Jump } from "./phases/scene";
+export { narratePlay, narrateScene, type Step } from "./narrate";
 export { playTracks, sceneTracks, type Tracks, type TrackActor, type TrackPath } from "./timeline";
