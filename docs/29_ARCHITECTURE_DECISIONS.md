@@ -79,6 +79,16 @@ Formato breve: contexto · decisión · alternativas · consecuencias. Estado: *
 - **Decisión**: las fases dinámicas (presión, repliegue, vigilancias) se modelan como fotogramas de estado del balón y parámetros de bloque, con posiciones calculadas por reglas (32 §3); se exportan como un único HTML con el mismo renderer.
 - **Alternativa descartada**: que un LLM genere el HTML de cada escena (sin garantías de coherencia ni del mismo resultado).
 
+## ADR‑019 — MVP: Fastify y SPA con Vite en lugar de NestJS y Next.js (26/11/2026)
+- **Contexto**: al construir, NestJS exige metadatos de decoradores (`emitDecoratorMetadata`) que el compilador rápido usado en desarrollo y pruebas (esbuild/tsx) no genera. Next.js añade renderizado en servidor que el MVP no necesita: el motor se ejecuta en el navegador.
+- **Decisión**: API en **Fastify 5** (esquemas JSON en cada ruta, mismo TypeScript y el mismo motor que el cliente) y web como **SPA de React con Vite** servida por el propio servidor. Sustituye la elección de ADR‑004 en cuanto a framework (el resto se mantiene: TypeScript de extremo a extremo, motor isomórfico).
+- **Consecuencias**: menos código y un solo proceso en producción. Si más adelante hace falta SEO o renderizado en servidor, se puede migrar la web a Next.js sin tocar la API.
+
+## ADR‑020 — MVP: login propio con email y contraseña (26/11/2026)
+- **Contexto**: Supabase Auth (ADR‑005) obliga a depender de un servicio externo también en desarrollo y pruebas.
+- **Decisión**: contraseñas con scrypt, sesión opaca en cookie `httpOnly` (`SameSite=Lax`, `Secure` en producción) y tabla `user_session` con el hash del token. PostgreSQL puede seguir siendo el de Supabase.
+- **Pendiente antes de abrir al público**: recuperación de contraseña por email, límite de intentos de login y verificación del email.
+
 ## Revisión de contradicciones entre decisiones (iteración 7)
 
 | Posible contradicción | Resolución |

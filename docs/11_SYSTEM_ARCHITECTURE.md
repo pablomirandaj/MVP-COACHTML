@@ -1,5 +1,7 @@
 # 11 — Arquitectura de sistema
 
+> **Implementación del MVP (26/11/2026)**: la API está en **Fastify** y la web es una **SPA de React con Vite** servida por el mismo proceso (ADR‑019). El login es propio, con email y contraseña (ADR‑020). El resto de este documento (motor isomórfico, PostgreSQL, worker, exportación) sigue vigente.
+
 ## 1. Decisión principal
 
 **Monolito modular en TypeScript** con un motor táctico isomórfico (navegador + servidor), PostgreSQL gestionado en la UE y un *worker* para tareas pesadas (transcripción, exportaciones). Justificación completa y alternativas en 29 (ADRs).

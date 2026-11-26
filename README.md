@@ -17,21 +17,37 @@ Principio rector: **el motor táctico es determinista y no depende de IA generat
 | Motor táctico (ontología, gramática, IR, reglas, tests) | **Diseñado** (especificaciones máquina en `docs/engine`) |
 | Esquemas y contratos | **Verificados con herramientas**: JSON Schema (IR y PlayDoc) válidos, la jugada de ejemplo y los 35 comandos IR de los tests validan; `openapi.yaml` válido; `schema.sql` carga en PostgreSQL 16 |
 | Mockups visuales | **Prototipado** (HTML estático, `docs/mockups/index.html`, anima la jugada de ejemplo) |
-| Motor (`packages/engine`): alineaciones, córner ofensivo, edición incremental, deshacer/rehacer, fases de juego | **Implementado y verificado** (37 pruebas en verde) |
-| Exportador HTML autónomo (`packages/render`) | **Implementado**; ejemplos en `examples/html/` comprobados en Chromium sin errores |
-| Aplicación web, API, base de datos desplegada, asistente conversacional | **Pendiente** (siguiente fase) |
-| Casos texto→comandos (NLU) y análisis de rival | **Diseñados, no ejecutados** |
+| Motor (`packages/engine`): alineaciones, córner ofensivo, edición incremental, deshacer/rehacer, fases de juego | **Implementado y verificado** (37 pruebas) |
+| Exportador HTML autónomo (`packages/render`), con vista vertical en móvil | **Implementado**; ejemplos en `examples/html/` comprobados en Chromium |
+| Servidor (`packages/server`): API Fastify, login, PostgreSQL, charla en PDF | **Implementado y verificado** (9 pruebas de integración con PostgreSQL real) |
+| Asistente conversacional (pieza intercambiable de modelo) | **Implementado**; probado con un modelo simulado. **Pendiente**: prueba con la API real (requiere clave) |
+| Aplicación web (`packages/web`) | **Implementada**; prueba de extremo a extremo con Chromium en verde |
+| Voz, compartir con jugadores, recuperación de contraseña | **Pendiente** |
 
 ## Cómo ejecutarlo
 
-Requiere Node 22 y pnpm 10.
+Requiere Node 22, pnpm 10 y PostgreSQL 16 (el script crea uno local).
 
 ```bash
 pnpm install
-pnpm test          # 37 pruebas del motor (vitest)
+pnpm db:dev                     # PostgreSQL local en 127.0.0.1:55432 (bases fcs, fcs_test, fcs_e2e)
+pnpm web:build                  # compila la web (packages/web/dist)
+pnpm server                     # API + web en http://127.0.0.1:8787 (aplica migraciones al arrancar)
+```
+
+Variables del servidor: `DATABASE_URL`, `PORT`, `COOKIE_SECURE=1` (producción), `CHROMIUM_PATH` (para la charla en PDF),
+`ANTHROPIC_API_KEY` y `ASSISTANT_MODEL` (por defecto `claude-opus-5-5`) para el asistente; `ASSISTANT_PROVIDER=none` lo desactiva.
+En desarrollo de la web: `pnpm server` y, en otra terminal, `pnpm web:dev` (http://localhost:5173, con proxy a la API).
+
+Pruebas:
+
+```bash
+pnpm test        # motor + API (la API necesita TEST_DATABASE_URL; si no está, esa parte se omite)
+pnpm test:api    # solo API contra postgres://postgres@127.0.0.1:55432/fcs_test
 pnpm typecheck
-pnpm examples      # regenera examples/html/*.html desde el motor
-pnpm catalog       # regenera el catálogo TS desde docs/engine/rules/*.yaml
+# E2E: con el servidor sirviendo la web compilada en BASE_URL
+BASE_URL=http://127.0.0.1:8787 CHROMIUM_PATH=/ruta/a/chrome pnpm e2e
+pnpm examples    # regenera examples/html/*.html desde el motor
 ```
 
 Ejemplos generados (abrir en cualquier navegador, sin conexión):
