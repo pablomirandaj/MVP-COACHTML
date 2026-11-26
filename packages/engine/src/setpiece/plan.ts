@@ -38,7 +38,7 @@ export interface SetPieceGeometry {
 }
 export interface GeoEnv { pitch: EngineContext["pitch"]; side: Side; ball: M; create: Command; xOff?: number }
 
-const CORNER_GEOMETRY: SetPieceGeometry = {
+export const CORNER_GEOMETRY: SetPieceGeometry = {
   type: "CORNER_ATT", templateId: "CRN_ATT_STANDARD", takerRule: "RULE:CRN-POS-01",
   ball(side, pitch) {
     const L = pitch.length_m, W = pitch.width_m, inward = side === "LEFT" ? 1 : -1;

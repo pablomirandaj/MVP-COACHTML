@@ -9,6 +9,15 @@ import { clamp, r2 } from "../util/num";
 const SCREEN_OFFSET_M = 1.2;
 const SCREEN_LEAD_S = 0.3;
 const FOLLOW_DELAY_S = 0.15;
+const PASS_SPEED_MPS = 14;
+const PASS_GAP_S = 0.3;
+
+/** Posición final (m) de un actor: el final de su movimiento o su inicio. */
+export function endOf(doc: PlayDoc, actorId: string): M {
+  const m = doc.movements.find((x) => x.actor === actorId);
+  const a = doc.actors.find((x) => x.id === actorId)!;
+  return toM(m && m.path.length ? m.path[m.path.length - 1] : a.start, doc.pitch);
+}
 
 export function ballCurve(doc: PlayDoc): { p0: M; c: M; p1: M } {
   const p0 = toM(doc.delivery.ball_start, doc.pitch), p1 = toM(doc.delivery.target_point, doc.pitch);
@@ -102,6 +111,20 @@ export function derive(input: PlayDoc): PlayDoc {
     fm.t_start = r2(Math.min(tm.t_start + FOLLOW_DELAY_S, tm.t_end));
     fm.t_end = tm.t_end;
     fm.depends_on = [tm.id];
+  }
+  // 5. Pases encadenados: cada uno sale 0,3 s después de recibir y llega cuando el receptor termina su carrera.
+  if (doc.passes?.length) {
+    let prev = arrival;
+    for (const ps of doc.passes) {
+      const a0 = endOf(doc, ps.from), b0 = endOf(doc, ps.to);
+      const dur = dist(a0, b0) / PASS_SPEED_MPS;
+      let s = prev + PASS_GAP_S, e = s + dur;
+      const rm = mov(ps.to);
+      if (rm && rm.type !== "HOLD" && rm.t_end > e) { e = rm.t_end; s = Math.max(s, e - dur); }
+      ps.t_start = r2(s); ps.t_end = r2(e); prev = e;
+    }
+    const end = r2(prev + TIMELINE.end_after_arrival_s);
+    for (const m of doc.movements) if (m.type === "HOLD") m.t_end = Math.max(m.t_end, end);
   }
   for (const m of doc.movements) if (actor(m.actor).team === "OPP" && m.type === "HOLD") { m.t_start = TIMELINE.prep_start_s; m.t_end = holdEnd; }
   return doc;

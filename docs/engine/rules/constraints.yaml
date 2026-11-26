@@ -52,3 +52,7 @@ rules:
   - { id: LAW-OFF-01, class: LAW, severity: error, check: onside_at_kick, message: "Reglamento (Regla 11): {actor} está en fuera de juego en el momento del golpeo." }
   - { id: TACTICAL-FK-01, class: TECHNIQUE, severity: warning, check: inswing_foot, message: "El centro cerrado sale más natural con la pierna contraria al lado." }
   - { id: ROSTER-01, class: ROSTER, severity: warning, check: roles_without_player, message: "Faltan jugadores: {count} puestos sin asignar." }
+  # Saques de banda.
+  - { id: THR-POS-01, class: GEOMETRY, severity: info, check: throw_position, message: "Saque a {distance} m de la línea de fondo." }
+  - { id: LAW-THR-01, class: LAW, severity: error, check: thrower_on_touchline, message: "Reglamento (Regla 15): el lanzador debe estar sobre la línea de banda o fuera del campo." }
+  - { id: NARR-PASS, class: SEQUENCE, severity: info, check: narration, message: "{from} pasa a {to}." }

@@ -83,6 +83,8 @@ export interface Delivery {
   provenance: Record<string, Origin>;
 }
 
+export interface Pass { id: string; from: string; to: string; t_start: number; t_end: number; origin: Origin }
+
 export interface Relation {
   type: "SCREENS" | "CROSSES_WITH" | "MARKS";
   blocker?: string; defender?: string; beneficiary?: string; a?: string; b?: string;
@@ -109,6 +111,8 @@ export interface PlayDoc {
   pitch: Pitch;
   /** Línea de fuera de juego del rival en el golpeo (u normalizada), si aplica (faltas). */
   offside_x?: number;
+  /** Pases encadenados tras la entrega (saque de banda corto, tercer hombre). Tiempos calculados en derive. */
+  passes?: Pass[];
   delivery: Delivery;
   actors: Actor[];
   movements: Movement[];

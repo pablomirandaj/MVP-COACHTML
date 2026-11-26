@@ -41,13 +41,32 @@ export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
   }
 
   const taker = actor(doc.delivery.taker_actor);
-  steps.push({
+  if (doc.type.startsWith("THROW_IN")) {
+    const short = doc.delivery.trajectory === "SHORT";
+    const recv = short && doc.passes?.length ? actor(doc.passes[0].from) : undefined;
+    steps.push({
+      t: doc.delivery.kick_t,
+      title: short ? `${cap(who(taker, roster))} saca en corto a ${who(recv, roster)}` : `${cap(who(taker, roster))} saca largo hacia ${zoneLabel(doc.delivery.target_zone)}`,
+      implies: short ? "El apoyo atrae a su extremo; el lanzador entra al campo para recibir la devolución." : "El rematador del primer palo peina el balón hacia el segundo palo.",
+      source: "RULE:NARR-DELIVERY",
+    });
+  } else steps.push({
     t: doc.delivery.kick_t,
     title: `${cap(who(taker, roster))} golpea ${SWING_ES[doc.delivery.swing] ?? ""} hacia ${zoneLabel(doc.delivery.target_zone)}`.replace(/\s+/g, " "),
     implies: `El balón tarda ${doc.delivery.arrival_t.toFixed(1)} s: los rematadores tienen que llegar a la vez, no esperar parados.`,
     source: "RULE:NARR-DELIVERY",
   });
 
+  for (const ps of doc.passes ?? []) {
+    steps.push({
+      t: ps.t_start,
+      title: `${cap(who(actor(ps.from), roster))} pasa a ${who(actor(ps.to), roster)}`,
+      implies: ps === doc.passes![doc.passes!.length - 1]
+        ? "El último pase llega al compañero en carrera, a la espalda de su lateral."
+        : "Pase corto de seguridad: atrae al rival y libera al siguiente.",
+      source: "RULE:NARR-PASS",
+    });
+  }
   const runs = doc.movements.filter((m) => m.type !== "SCREEN" && m.type !== "HOLD" && actor(m.actor)?.team === "OWN")
     .sort((a, b) => a.t_start - b.t_start || a.actor.localeCompare(b.actor));
   for (const m of runs.slice(0, 4)) {

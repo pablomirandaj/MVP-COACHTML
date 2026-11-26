@@ -41,7 +41,9 @@ function movementAt(doc: PlayDoc, m: Movement, t: number): Pt {
 }
 
 export function playTracks(doc: PlayDoc, roster: Player[], title = "Jugada"): Tracks {
-  const t0 = TIMELINE.prep_start_s, t1 = Math.round((doc.delivery.arrival_t + TIMELINE.end_after_arrival_s) * 100) / 100;
+  const passes = doc.passes ?? [];
+  const lastBall = passes.length ? passes[passes.length - 1].t_end : doc.delivery.arrival_t;
+  const t0 = TIMELINE.prep_start_s, t1 = Math.round((lastBall + TIMELINE.end_after_arrival_s) * 100) / 100;
   const name = (pid?: string | null) => roster.find((p) => p.id === pid);
   const actors: TrackActor[] = doc.actors.map((a) => {
     const p = name(a.player_id);
@@ -52,6 +54,26 @@ export function playTracks(doc: PlayDoc, roster: Player[], title = "Jugada"): Tr
     };
   });
   const curve = ballCurve(doc);
+  const posAt = (id: string, t: number): Pt => {
+    const a = doc.actors.find((x) => x.id === id)!;
+    const m = doc.movements.find((x) => x.actor === id);
+    return m ? movementAt(doc, m, t) : a.start;
+  };
+  /** Balón tras la entrega: con el poseedor o viajando en un pase. */
+  const ballAfter = (t: number): Pt => {
+    let holderPt: Pt = doc.delivery.target_point;
+    for (const ps of passes) {
+      if (t < ps.t_start) return holderPt;
+      if (t <= ps.t_end) {
+        const a = posAt(ps.from, ps.t_start), b = toN(endOfActor(ps.to), doc.pitch);
+        const s = (t - ps.t_start) / Math.max(1e-6, ps.t_end - ps.t_start);
+        return { u: a.u + (b.u - a.u) * s, v: a.v + (b.v - a.v) * s };
+      }
+      holderPt = posAt(ps.to, t);
+    }
+    return holderPt;
+  };
+  const endOfActor = (id: string) => toM((doc.movements.find((x) => x.actor === id)?.path.slice(-1)[0]) ?? doc.actors.find((x) => x.id === id)!.start, doc.pitch);
   const frames: number[][] = [];
   const n = Math.round((t1 - t0) * FPS);
   for (let i = 0; i <= n; i++) {
@@ -64,8 +86,8 @@ export function playTracks(doc: PlayDoc, roster: Player[], title = "Jugada"): Tr
     }
     const arr = doc.delivery.arrival_t;
     const s = t <= 0 ? 0 : t >= arr ? 1 : t / arr;
-    const b = toN(quad(curve.p0, curve.c, curve.p1, s), doc.pitch);
-    row.push(b.u, b.v, r4(t > 0 && t < arr && doc.delivery.trajectory !== "LOW" && doc.delivery.trajectory !== "SHORT" ? Math.sin(Math.PI * s) : 0));
+    const b = passes.length && t > arr ? ballAfter(t) : toN(quad(curve.p0, curve.c, curve.p1, s), doc.pitch);
+    row.push(r4(b.u), r4(b.v), r4(t > 0 && t < arr && doc.delivery.trajectory !== "LOW" && doc.delivery.trajectory !== "SHORT" ? Math.sin(Math.PI * s) : 0));
     frames.push(row);
   }
   const paths: TrackPath[] = [];
@@ -83,6 +105,10 @@ export function playTracks(doc: PlayDoc, roster: Player[], title = "Jugada"): Tr
   const bpts: [number, number][] = [];
   for (let i = 0; i <= 24; i++) { const q = toN(quad(curve.p0, curve.c, curve.p1, i / 24), doc.pitch); bpts.push([q.u, q.v]); }
   paths.push({ kind: "ball", pts: bpts, proposal: String(doc.delivery.provenance.target_zone ?? "").startsWith("RULE:") });
+  for (const ps of passes) {
+    const a = posAt(ps.from, ps.t_start), b = toN(endOfActor(ps.to), doc.pitch);
+    paths.push({ kind: "ball", pts: [[a.u, a.v], [b.u, b.v]], proposal: String(ps.origin).startsWith("RULE:"), from: ps.t_start });
+  }
   return {
     title, view: "HALF_ATT", pitch: doc.pitch, t0, t1, fps: FPS, actors, frames, paths,
     markers: [{ t: t0, label: "Preparación" }, { t: 0, label: "Golpeo" }, { t: doc.delivery.arrival_t, label: "Llegada" }],

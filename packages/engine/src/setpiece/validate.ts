@@ -56,6 +56,11 @@ export function validatePlay(doc: PlayDoc, ctx: EngineContext): Diagnostic[] {
       if (dist(toM(w.start, pitch), ball) < 9.15 - 0.01)
         out.push({ rule_id: "LAW-FK-01", class: "LAW", severity: "error", message: "Reglamento (Regla 13): la barrera debe estar a 9,15 m del balón.", actors: [w.id] });
   }
+  if (doc.type.startsWith("THROW_IN")) {
+    const t = doc.actors.find((a) => a.id === doc.delivery.taker_actor);
+    if (t && !(t.start.v <= 0.01 || t.start.v >= 0.99))
+      out.push({ rule_id: "LAW-THR-01", class: "LAW", severity: "error", message: "Reglamento (Regla 15): el lanzador debe estar sobre la línea de banda o fuera del campo.", actors: [t.id] });
+  }
   if (doc.offside_x !== undefined) {
     const xOff = doc.offside_x * pitch.length_m;
     for (const a of own) {

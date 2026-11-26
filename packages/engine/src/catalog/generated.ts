@@ -1198,6 +1198,106 @@ export const TEMPLATES_YAML = {
       "actors": "computed"
     },
     {
+      "template": "THR_ATT_LONG",
+      "type": "THROW_IN_ATT",
+      "version": "1.0.0",
+      "description": "Saque de banda largo al primer palo: el rematador del primer palo peina y un compañero bloquea a su marca.",
+      "params": {
+        "side": {
+          "enum": [
+            "LEFT",
+            "RIGHT"
+          ],
+          "required": true
+        },
+        "distance_m": {
+          "min": 0,
+          "max": 40,
+          "default": 18
+        }
+      },
+      "role_defaults": {
+        "TAKER": {
+          "count": 1,
+          "rule": "THR-POS-01"
+        },
+        "PRIMARY_TARGET": {
+          "count": 1,
+          "movement": "ATTACK_NEAR_POST"
+        },
+        "BLOCKER": {
+          "count": 1
+        },
+        "SECONDARY_TARGET": {
+          "count": 2,
+          "start_zone": "Z_START_CLUSTER",
+          "movements": [
+            "ATTACK_FAR_POST",
+            "ATTACK_PEN_SPOT"
+          ]
+        },
+        "REBOUND": {
+          "count": 2,
+          "start_zone": "Z_REBOUND",
+          "movement": "HOLD"
+        },
+        "REST_DEFENDER": {
+          "count": 2,
+          "start_zone": "Z_REST",
+          "movement": "HOLD",
+          "rule": "CRN-POS-07"
+        }
+      },
+      "fill_order": [
+        "TAKER",
+        "REST_DEFENDER",
+        "PRIMARY_TARGET",
+        "BLOCKER",
+        "SECONDARY_TARGET",
+        "REBOUND"
+      ],
+      "outfield_total": 10,
+      "opponents_default": "OPP_CORNER_DEF_MIXED",
+      "constraints": [
+        "LAW-THR-01",
+        "GEO-01",
+        "GEO-02",
+        "GEO-03",
+        "GEO-SPACING-01",
+        "SEQ-SCREEN-01",
+        "SCH-SYNC-01",
+        "ROSTER-01"
+      ]
+    },
+    {
+      "template": "THR_ATT_SHORT",
+      "type": "THROW_IN_ATT",
+      "version": "1.0.0",
+      "description": "Saque de banda corto con tercer hombre: apoyo corto, devolución al lanzador y pase a la espalda del lateral.",
+      "params": {
+        "side": {
+          "enum": [
+            "LEFT",
+            "RIGHT"
+          ],
+          "required": true
+        },
+        "distance_m": {
+          "min": 10,
+          "max": 70,
+          "default": 32
+        }
+      },
+      "pass_speed_mps": 14,
+      "constraints": [
+        "LAW-THR-01",
+        "GEO-01",
+        "GEO-02",
+        "GEO-03",
+        "ROSTER-01"
+      ]
+    },
+    {
       "template": "OPP_CORNER_DEF_MIXED",
       "type": "CORNER_DEF",
       "team": "OPP",
@@ -2201,6 +2301,27 @@ export const CONSTRAINTS_YAML = {
       "severity": "warning",
       "check": "roles_without_player",
       "message": "Faltan jugadores: {count} puestos sin asignar."
+    },
+    {
+      "id": "THR-POS-01",
+      "class": "GEOMETRY",
+      "severity": "info",
+      "check": "throw_position",
+      "message": "Saque a {distance} m de la línea de fondo."
+    },
+    {
+      "id": "LAW-THR-01",
+      "class": "LAW",
+      "severity": "error",
+      "check": "thrower_on_touchline",
+      "message": "Reglamento (Regla 15): el lanzador debe estar sobre la línea de banda o fuera del campo."
+    },
+    {
+      "id": "NARR-PASS",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "{from} pasa a {to}."
     }
   ]
 } as const;

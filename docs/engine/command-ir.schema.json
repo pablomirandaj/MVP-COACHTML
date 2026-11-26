@@ -573,6 +573,13 @@
               "minimum": 0,
               "maximum": 40,
               "description": "Faltas: distancia a la línea de banda (m). Saques de banda: distancia a la línea de fondo (m)."
+            },
+            "variant": {
+              "enum": [
+                "LONG",
+                "SHORT"
+              ],
+              "description": "Saques de banda: largo al área o corto con tercer hombre."
             }
           },
           "required": [
