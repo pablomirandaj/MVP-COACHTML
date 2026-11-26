@@ -1,6 +1,6 @@
 # Pizarra Studio — diseño
 
-Fecha: 26/11/2026 · Estado: **pendiente de aprobación**
+Fecha: 26/11/2026 · Estado: **aprobado** (26/11/2026)
 
 ## 1. Para qué
 
@@ -177,6 +177,7 @@ Estética de pizarra de vestuario moderna: campo con franjas de césped, fichas 
 
 ## 9. Datos
 
+- **Plantilla:** el entrenador pidió leerla de BeSoccer, pero su web rechaza el acceso automático (403). Las vías posibles son la API oficial de BeSoccer con clave (`api.besoccer.com`, por confirmar si cubre la Autonómica) o la introducción manual en la página o la importación desde texto o CSV, que la página admite.
 - **Página de Claude:** se embebe el instantáneo del 26/11/2026 que ya usa el panel del Periso: clasificación, 34 partidos del Periso, 306 del grupo y goleadores. La plantilla vive en `db` y empieza con los 12 goleadores, sin dorsal ni posición. La primera vez, la página pide completarla.
 - **Rival:** se elige cualquiera de los 17. El sistema del rival no se conoce: por defecto 4‑4‑2, y el entrenador lo cambia.
 - **Servidor:** el script `scripts/seed-periso.ts` carga el mismo instantáneo como equipo, partidos y jugadores mediante la API.
@@ -192,4 +193,4 @@ Estética de pizarra de vestuario moderna: campo con franjas de césped, fichas 
 1. Sistema por defecto del Periso 4‑3‑3; del rival, 4‑4‑2.
 2. Los datos compartidos en la página de Claude los leen y escriben todos los que tengan el enlace con permiso de edición o de uso; en el servidor, el rol de cuerpo técnico.
 3. El asistente de la página usa el nivel de modelo "default" de `sample`, que paga quien lo usa.
-4. Sin colores oficiales del club hasta que se confirmen: verde y blanco provisional para el Periso y rojo para el rival.
+4. Colores del Periso: **verde y negro** (confirmado por el entrenador). Rival: rojo por defecto, editable.
