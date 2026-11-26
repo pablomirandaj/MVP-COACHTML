@@ -151,7 +151,8 @@
     },
     "playerRef": {
       "type": "string",
-      "pattern": "^pl_[A-Za-z0-9]+$"
+      "pattern": "^(pl_[A-Za-z0-9]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+      "description": "Id de jugador: pl_* en fixtures, UUID en la base de datos."
     },
     "zone": {
       "enum": [

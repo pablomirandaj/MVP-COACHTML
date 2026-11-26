@@ -9,12 +9,25 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@fcs/engine": ["packages/engine/src/index.ts"],
-      "@fcs/render": ["packages/render/src/index.ts"]
+      "@fcs/engine": [
+        "packages/engine/src/index.ts"
+      ],
+      "@fcs/render": [
+        "packages/render/src/index.ts"
+      ],
+      "@fcs/server": [
+        "packages/server/src/index.ts"
+      ]
     }
   },
-  "include": ["packages/*/src", "packages/*/test", "packages/*/scripts"]
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "packages/*/scripts"
+  ]
 }

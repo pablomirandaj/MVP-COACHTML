@@ -8,7 +8,10 @@
     "catalog": "tsx packages/engine/scripts/build-catalog.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "examples": "tsx packages/render/scripts/export-examples.ts"
+    "examples": "tsx packages/render/scripts/export-examples.ts",
+    "db:migrate": "tsx packages/server/src/migrate-cli.ts",
+    "server": "tsx packages/server/src/index.ts",
+    "test:api": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres@127.0.0.1:55432/fcs_test} vitest run packages/server"
   },
   "devDependencies": {
     "@types/node": "22.10.2",
