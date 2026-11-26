@@ -19,7 +19,37 @@ function who(a: Actor | undefined, roster: Player[]): string {
 }
 
 /** Pasos de una jugada de balón parado: colocación, golpeo, bloqueos, desmarques y llegada. */
+const SCHEME_ES: Record<string, string> = { CRN_DEF_MIXED: "mixta", CRN_DEF_ZONAL: "zonal", CRN_DEF_MAN: "al hombre", FK_DEF_STANDARD: "mixta con barrera" };
+
+/** Balón parado en contra: organización, golpeo rival, marcas y salida a la contra. */
+function narrateDefense(doc: PlayDoc, roster: Player[]): Step[] {
+  const actor = (id?: string) => doc.actors.find((a) => a.id === id);
+  const own = doc.actors.filter((a) => a.team === "OWN");
+  const nz = own.filter((a) => a.role === "ZONAL_DEFENDER").length, nm = own.filter((a) => a.role === "MAN_MARKER").length;
+  const t0 = doc.movements.length ? Math.min(0, ...doc.movements.map((m) => m.t_start)) : 0;
+  const steps: Step[] = [{
+    t: t0, title: `Defendemos en ${SCHEME_ES[doc.template ?? ""] ?? "mixta"}: ${nz} en zona y ${nm} al hombre`,
+    implies: "El portero manda; cada uno tiene su referencia antes del saque y no la cambia.", source: "RULE:NARR-SETUP",
+  }];
+  steps.push({
+    t: doc.delivery.kick_t, title: `Su lanzador golpea hacia ${zoneLabel(doc.delivery.target_zone)}`,
+    implies: "El de zona más cercano ataca el balón; los marcadores no pierden a su hombre.", source: "RULE:NARR-DELIVERY",
+  });
+  const runs = doc.movements.filter((m) => actor(m.actor)?.team === "OPP" && m.path.length > 1).sort((a, b) => a.t_start - b.t_start);
+  if (nm) steps.push({
+    t: runs[0]?.t_start ?? 0, title: `Los marcadores siguen a su hombre (${nm})`,
+    implies: "Siempre por el lado de la portería: si ganan la posición, que rematen incómodos y hacia fuera.", source: "RULE:NARR-MARK",
+  });
+  const out = own.find((a) => a.role === "COUNTER_OUTLET");
+  if (out) steps.push({
+    t: doc.delivery.arrival_t, title: `${cap(who(out, roster))} se queda arriba para la contra`,
+    implies: "Fija a sus centrales: no pueden subir todos al remate y tenemos salida al despejar.", source: "RULE:NARR-COUNTER",
+  });
+  return sortSteps(steps);
+}
+
 export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
+  if (doc.type.endsWith("_DEF")) return narrateDefense(doc, roster);
   const actor = (id?: string) => doc.actors.find((a) => a.id === id);
   const steps: Step[] = [];
   const own = doc.actors.filter((a) => a.team === "OWN");

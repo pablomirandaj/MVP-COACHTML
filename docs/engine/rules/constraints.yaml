@@ -56,3 +56,8 @@ rules:
   - { id: THR-POS-01, class: GEOMETRY, severity: info, check: throw_position, message: "Saque a {distance} m de la línea de fondo." }
   - { id: LAW-THR-01, class: LAW, severity: error, check: thrower_on_touchline, message: "Reglamento (Regla 15): el lanzador debe estar sobre la línea de banda o fuera del campo." }
   - { id: NARR-PASS, class: SEQUENCE, severity: info, check: narration, message: "{from} pasa a {to}." }
+  # Balón parado en contra.
+  - { id: TACTICAL-DEF-01, class: TACTICAL, severity: warning, check: attackers_covered, message: "{count} rematadores rivales sin marca ni zona." }
+  - { id: TACTICAL-DEF-02, class: TACTICAL, severity: warning, check: near_post_covered, message: "Nadie cubre el primer palo." }
+  - { id: NARR-MARK, class: SEQUENCE, severity: info, check: narration, message: "Los marcadores siguen a su hombre." }
+  - { id: NARR-COUNTER, class: SEQUENCE, severity: info, check: narration, message: "{actor} se queda arriba para la contra." }

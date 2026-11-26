@@ -580,6 +580,14 @@
                 "SHORT"
               ],
               "description": "Saques de banda: largo al área o corto con tercer hombre."
+            },
+            "scheme": {
+              "enum": [
+                "ZONAL",
+                "MAN",
+                "MIXED"
+              ],
+              "description": "Balón parado en contra: defensa zonal, al hombre o mixta."
             }
           },
           "required": [
@@ -1038,6 +1046,25 @@
           "required": [
             "clarification_id",
             "option_index"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "play.mark"
+            },
+            "player": {
+              "$ref": "#/$defs/playerRef"
+            },
+            "opponent": {
+              "type": "string",
+              "description": "Id o etiqueta del rival (p. ej. R2)."
+            }
+          },
+          "required": [
+            "op",
+            "player",
+            "opponent"
           ]
         }
       ]

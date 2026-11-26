@@ -183,6 +183,23 @@ export function applyPlayCommand(input: PlayDoc, cmd: Command, ctx: EngineContex
       doc.constraints = doc.constraints.filter((c) => !ids.has(c.actor));
       return finish();
     }
+    case "play.mark": {
+      // Balón parado en contra: el jugador pasa a marcar al rival indicado; quien lo marcaba queda en zona.
+      const me = doc.actors.find((a) => a.team === "OWN" && a.player_id === cmd.player);
+      const rival = doc.actors.find((a) => a.team === "OPP" && (a.id === cmd.opponent || a.label === cmd.opponent));
+      if (!me || !rival) return ask({ id: "clar_mark", code: "AMB-MISSING-REQUIRED", question: "¿Qué jugador y a qué rival?", options: [{ label: "Cancelar", commands: [] }] });
+      for (const r of doc.relations.filter((x) => x.type === "MARKS" && x.b === rival.id && x.a !== me.id)) {
+        const prev = doc.actors.find((a) => a.id === r.a);
+        if (prev && prev.team === "OWN") { prev.role = "ZONAL_DEFENDER"; prev.provenance.role = "RULE:DEF-FREE"; const pm = doc.movements.find((m) => m.actor === prev.id); if (pm) { pm.type = "HOLD"; pm.path = [prev.start]; } }
+      }
+      doc.relations = doc.relations.filter((x) => !(x.type === "MARKS" && (x.b === rival.id || x.a === me.id)));
+      me.role = "MAN_MARKER"; me.provenance.role = "EXPLICIT";
+      me.start = { u: Math.min(1, rival.start.u + 1 / pitch.length_m), v: rival.start.v };
+      const mm = doc.movements.find((m) => m.actor === me.id);
+      if (mm) { mm.type = "FOLLOW"; mm.path = [me.start]; mm.provenance = { type: "EXPLICIT" }; }
+      doc.relations.push({ type: "MARKS", a: me.id, b: rival.id, origin: "EXPLICIT" });
+      return finish();
+    }
     default:
       throw new Error(`Operación de jugada no soportada: ${cmd.op}`);
   }

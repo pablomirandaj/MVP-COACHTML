@@ -71,7 +71,8 @@ export function derive(input: PlayDoc): PlayDoc {
   const holdEnd = r2(arrival + TIMELINE.end_after_arrival_s);
 
   // 3. Temporización de movimientos propios (orden: los anclados al balón o al golpeo primero).
-  const own = doc.movements.filter((m) => actor(m.actor).team === "OWN");
+  // Rivales con carrera anclada (balón parado en contra) se temporizan igual que los propios.
+  const own = doc.movements.filter((m) => actor(m.actor).team === "OWN" || (m.anchor && m.type !== "FOLLOW"));
   const times = new Map<string, { s: number; e: number }>();
   const solve = (m: Movement): { s: number; e: number } => {
     const hit = times.get(m.id);

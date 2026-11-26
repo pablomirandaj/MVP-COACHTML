@@ -1298,6 +1298,122 @@ export const TEMPLATES_YAML = {
       ]
     },
     {
+      "template": "CRN_DEF_MIXED",
+      "type": "CORNER_DEF",
+      "version": "1.0.0",
+      "description": "Defensa mixta: 3 en zona (primer palo, frontal del área pequeña y centro) y el resto al hombre.",
+      "zonal": [
+        [
+          1,
+          3.2
+        ],
+        [
+          5,
+          2.5
+        ],
+        [
+          4.5,
+          0
+        ]
+      ],
+      "markers": "all_box_attackers",
+      "extra": [
+        "EDGE_GUARD",
+        "COUNTER_OUTLET"
+      ]
+    },
+    {
+      "template": "CRN_DEF_ZONAL",
+      "type": "CORNER_DEF",
+      "version": "1.0.0",
+      "description": "Defensa zonal: 7 en zona escalonada, uno en la frontal, uno para el córner en corto y uno arriba.",
+      "zonal": [
+        [
+          1,
+          3.2
+        ],
+        [
+          5,
+          2.5
+        ],
+        [
+          4.5,
+          0
+        ],
+        [
+          5,
+          -2.5
+        ],
+        [
+          10,
+          3
+        ],
+        [
+          10,
+          -3
+        ],
+        [
+          1.5,
+          -3.4
+        ]
+      ],
+      "markers": "none",
+      "extra": [
+        "EDGE_GUARD",
+        "POST_GUARD",
+        "COUNTER_OUTLET"
+      ]
+    },
+    {
+      "template": "CRN_DEF_MAN",
+      "type": "CORNER_DEF",
+      "version": "1.0.0",
+      "description": "Defensa al hombre: un zonal en el primer palo, marcas individuales y dos coberturas.",
+      "zonal": [
+        [
+          1,
+          3.2
+        ]
+      ],
+      "markers": "all_box_attackers",
+      "extra": [
+        "EDGE_GUARD",
+        "COUNTER_OUTLET",
+        "COVER",
+        "COVER"
+      ]
+    },
+    {
+      "template": "FK_DEF_STANDARD",
+      "type": "FK_WIDE_DEF",
+      "version": "1.0.0",
+      "description": "Falta lateral en contra: barrera de 2, línea a la altura del fuera de juego, marcas a sus rematadores y uno arriba.",
+      "wall": {
+        "players": 2,
+        "distance_m": 9.15
+      },
+      "markers": "all_box_attackers",
+      "extra": [
+        "ZONAL_LINE",
+        "ZONAL_LINE",
+        "COUNTER_OUTLET"
+      ]
+    },
+    {
+      "template": "OPP_SETPIECE_ATT",
+      "type": "CORNER_ATT",
+      "team": "OPP",
+      "version": "1.0.0",
+      "description": "Ataque rival genérico para practicar la defensa: 5 rematadores, uno en la frontal y dos que se quedan atrás. No es una predicción.",
+      "box_runs": [
+        "ATTACK_NEAR_POST",
+        "ATTACK_FAR_POST",
+        "ATTACK_PEN_SPOT",
+        "ATTACK_GA_CENTER",
+        "LATE_ARRIVAL"
+      ]
+    },
+    {
       "template": "OPP_CORNER_DEF_MIXED",
       "type": "CORNER_DEF",
       "team": "OPP",
@@ -2322,6 +2438,34 @@ export const CONSTRAINTS_YAML = {
       "severity": "info",
       "check": "narration",
       "message": "{from} pasa a {to}."
+    },
+    {
+      "id": "TACTICAL-DEF-01",
+      "class": "TACTICAL",
+      "severity": "warning",
+      "check": "attackers_covered",
+      "message": "{count} rematadores rivales sin marca ni zona."
+    },
+    {
+      "id": "TACTICAL-DEF-02",
+      "class": "TACTICAL",
+      "severity": "warning",
+      "check": "near_post_covered",
+      "message": "Nadie cubre el primer palo."
+    },
+    {
+      "id": "NARR-MARK",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "Los marcadores siguen a su hombre."
+    },
+    {
+      "id": "NARR-COUNTER",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "{actor} se queda arriba para la contra."
     }
   ]
 } as const;

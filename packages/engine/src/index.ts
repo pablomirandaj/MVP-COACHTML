@@ -5,6 +5,7 @@ export { applyLineupCommand, emptyLineup, groupSlots, lineupPositions, validateL
 export { createCorner, planSetPiece, suitability, type PlanResult, type SetPieceGeometry } from "./setpiece/plan";
 export { createFreeKickWide, offsideLine } from "./setpiece/freekick";
 export { createThrowIn } from "./setpiece/throwin";
+export { createDefensiveSetPiece } from "./setpiece/defend";
 export { applyPlayCommand, selectActors, type EditResult } from "./setpiece/edit";
 export { derive, ballCurve } from "./setpiece/derive";
 export { validatePlay } from "./setpiece/validate";

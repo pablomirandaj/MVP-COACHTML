@@ -44,15 +44,17 @@ export function validatePlay(doc: PlayDoc, ctx: EngineContext): Diagnostic[] {
     if (p && p.status !== "AVAILABLE") out.push({ rule_id: "AVAIL-01", class: "ROSTER", severity: "warning", message: `${name(p.id)} figura como ${p.status.toLowerCase()}.`, actors: [a.id] });
   }
 
+  const defending = doc.type.endsWith("_DEF");
+  const defenders = defending ? own : opp;
   if (doc.type.startsWith("CORNER")) {
     const corner = { x: pitch.length_m, y: doc.side === "LEFT" ? 0 : pitch.width_m };
-    for (const o of opp) if (dist(toM(o.start, pitch), corner) < 9.15 + 1 - EPS)
+    for (const o of defenders) if (dist(toM(o.start, pitch), corner) < 9.15 + 1 - EPS)
       out.push({ rule_id: "LAW-CRN-02", class: "LAW", severity: "warning", message: "Reglamento (Regla 17): los rivales deben estar a 9,15 m del área de esquina hasta el saque.", actors: [o.id] });
   }
 
   if (doc.type.startsWith("FK_")) {
     const ball = toM(doc.delivery.ball_start, pitch);
-    for (const w of opp.filter((o) => o.role === "WALL"))
+    for (const w of defenders.filter((o) => o.role === "WALL"))
       if (dist(toM(w.start, pitch), ball) < 9.15 - 0.01)
         out.push({ rule_id: "LAW-FK-01", class: "LAW", severity: "error", message: "Reglamento (Regla 13): la barrera debe estar a 9,15 m del balón.", actors: [w.id] });
   }
@@ -79,6 +81,21 @@ export function validatePlay(doc: PlayDoc, ctx: EngineContext): Diagnostic[] {
   const empty = own.filter((a) => !a.player_id).length;
   if (empty && ctx.roster.length)
     out.push({ rule_id: "ROSTER-01", class: "ROSTER", severity: "warning", message: `Faltan jugadores: ${empty} puesto${empty > 1 ? "s" : ""} sin asignar.` });
+
+  if (defending) {
+    const endOf = (id: string) => { const m = mov(id); return toM(m && m.path.length ? m.path[m.path.length - 1] : doc.actors.find((a) => a.id === id)!.start, pitch); };
+    const attackers = opp.filter((a) => a.role === "PRIMARY_TARGET" || a.role === "SECONDARY_TARGET");
+    const zonal = own.filter((a) => a.role === "ZONAL_DEFENDER").map((a) => toM(a.start, pitch));
+    const free = attackers.filter((a) => !doc.relations.some((r) => r.type === "MARKS" && r.b === a.id && own.some((o) => o.id === r.a))
+      && !zonal.some((z) => dist(z, endOf(a.id)) <= 3 + EPS));
+    if (free.length) out.push({ rule_id: "TACTICAL-DEF-01", class: "TACTICAL", severity: "warning", actors: free.map((a) => a.id),
+      message: `Recomendación: ${free.length} rematador${free.length > 1 ? "es" : ""} rival${free.length > 1 ? "es" : ""} sin marca ni zona.` });
+    if (doc.type === "CORNER_DEF" && zonal.length) {
+      const near = { x: pitch.length_m, y: pitch.width_m / 2 + (doc.side === "LEFT" ? -3.66 : 3.66) };
+      if (!zonal.some((z) => dist(z, near) <= 2.5 + EPS))
+        out.push({ rule_id: "TACTICAL-DEF-02", class: "TACTICAL", severity: "warning", message: "Recomendación: nadie cubre el primer palo." });
+    }
+  }
 
   // Técnica del golpeo.
   const taker = doc.actors.find((a) => a.id === doc.delivery.taker_actor);
