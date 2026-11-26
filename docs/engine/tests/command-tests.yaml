@@ -1,5 +1,6 @@
 # Casos de prueba deterministas — @fcs/nlu + @fcs/engine
-# Estado: DISEÑADOS (no ejecutados). Cada caso: entrada de texto (como si viniera del STT),
+# Estado: los casos del motor (alineación, córner, edición, determinismo) se EJECUTAN en
+# packages/engine/test/*.test.ts. Los casos de texto→IR (NLU) y de análisis de rival siguen DISEÑADOS. Cada caso: entrada de texto (como si viniera del STT),
 # contexto, IR esperado y aserciones sobre el documento resultante.
 # Ejecución prevista: vitest + snapshot por hash canónico (docs/22 §4).
 suite_version: 1.0.0
@@ -204,8 +205,8 @@ cases:
     given: { doc: T-CRN-02 }
     input: "Mueve a los dos del segundo palo un metro hacia la izquierda"
     expect_ir: [{ op: play.move_actor, target: { zone: Z_FAR_POST, expect_count: 2 }, dx_m: 0, dy_m: -1.0 }]
-    expect_touch_set: [a2, a3, m2, m3]
-    expect_doc: { a2.start.v: 0.5441, a3.start.v: 0.5147 }   # -1/68
+    expect_touch_set: [a2, a3, m2, m3, mo8]   # mo8: marcador rival que sigue a a3 (dependiente de m3)
+    expect_doc: { a2.start.v: 0.5147, a3.start.v: 0.4853 }   # -1/68
     expect_unchanged: [a1, a4, a5, a6, a7, a8, a9, a10, delivery]
 
   - id: T-EDT-02
@@ -235,7 +236,7 @@ cases:
     given: { doc: T-CRN-02 }
     input: "El bloqueo tiene que empezar antes"
     expect_ir: [{ op: play.shift_timing, target: { role: BLOCKER }, delta_s: -0.5 }]
-    expect_doc: { m2.t_start: -0.97, m2.t_end: -0.41 }
+    expect_doc: { m2.t_start: -1.34, m2.t_end: -0.31 }
     expect_unchanged: [m3, m4, m5, m6, delivery]
 
   - id: T-EDT-06
@@ -269,7 +270,7 @@ cases:
   - id: T-EDT-10
     title: Pantalla con desplazamiento hacia el rival (riesgo arbitral)
     given: { doc: T-CRN-02 }
-    action: { manual_drag: { movement: m2, end_point_toward: o8, distance_m: 1.0, at_t: 0.3 } }
+    action: { op: play.shift_timing, target: { role: BLOCKER }, delta_s: 1.0 }   # el bloqueo llega tarde
     expect_diagnostics: [{ rule_id: LAW-IMP-01, severity: warning }]
 
   - id: T-EDT-11

@@ -17,8 +17,30 @@ Principio rector: **el motor táctico es determinista y no depende de IA generat
 | Motor táctico (ontología, gramática, IR, reglas, tests) | **Diseñado** (especificaciones máquina en `docs/engine`) |
 | Esquemas y contratos | **Verificados con herramientas**: JSON Schema (IR y PlayDoc) válidos, la jugada de ejemplo y los 35 comandos IR de los tests validan; `openapi.yaml` válido; `schema.sql` carga en PostgreSQL 16 |
 | Mockups visuales | **Prototipado** (HTML estático, `docs/mockups/index.html`, anima la jugada de ejemplo) |
-| Código de producción | **No iniciado** (requiere autorización expresa) |
-| Pruebas del motor (39 casos) | **Diseñadas, no ejecutadas** (no hay motor implementado) |
+| Motor (`packages/engine`): alineaciones, córner ofensivo, edición incremental, deshacer/rehacer, fases de juego | **Implementado y verificado** (37 pruebas en verde) |
+| Exportador HTML autónomo (`packages/render`) | **Implementado**; ejemplos en `examples/html/` comprobados en Chromium sin errores |
+| Aplicación web, API, base de datos desplegada, asistente conversacional | **Pendiente** (siguiente fase) |
+| Casos texto→comandos (NLU) y análisis de rival | **Diseñados, no ejecutados** |
+
+## Cómo ejecutarlo
+
+Requiere Node 22 y pnpm 10.
+
+```bash
+pnpm install
+pnpm test          # 37 pruebas del motor (vitest)
+pnpm typecheck
+pnpm examples      # regenera examples/html/*.html desde el motor
+pnpm catalog       # regenera el catálogo TS desde docs/engine/rules/*.yaml
+```
+
+Ejemplos generados (abrir en cualquier navegador, sin conexión):
+
+- `examples/html/corner-izquierda-cerrado.html` — córner del escenario 2.
+- `examples/html/presion-alta-433.html` — nuestra presión alta.
+- `examples/html/presion-rival-433.html` — presión del rival sobre nuestra salida.
+- `examples/html/repliegue-bloque-bajo-442.html` — repliegue y basculación.
+- `examples/html/vigilancias-3.html` — vigilancias 2 + 1 en ataque.
 
 ## Índice
 

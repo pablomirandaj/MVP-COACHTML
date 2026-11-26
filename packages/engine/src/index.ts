@@ -10,3 +10,5 @@ export { startHistory, record, undo, redo, type History } from "./history";
 export { canonicalHash, canonicalJson, sha256Hex } from "./util/canonical";
 export { diff, applyPatch, touchedPaths } from "./util/patch";
 export { lexOptimalAssignment, maxAssignmentValue } from "./util/assignment";
+export { computeScene, type SceneSpec, type SceneDoc, type SceneType, type Jump } from "./phases/scene";
+export { playTracks, sceneTracks, type Tracks, type TrackActor, type TrackPath } from "./timeline";

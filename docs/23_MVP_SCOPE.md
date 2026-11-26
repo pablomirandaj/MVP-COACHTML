@@ -98,11 +98,12 @@ Análisis estadístico, integraciones (vídeo, federaciones si hay acuerdo, cale
 
 | Funcionalidad | Diseñada | Prototipada | Implementada | Verificada |
 |---|---|---|---|---|
-| Ontología, zonas, roles, movimientos | ✔ | — | — | Esquemas YAML/JSON válidos |
+| Ontología, zonas, roles, movimientos | ✔ | — | ✔ (catálogo generado) | Esquemas YAML/JSON válidos |
 | IR y PlayDoc | ✔ | — | — | Validación JSON Schema de ejemplo y 35 IR |
 | Gramática FCSG y lexicón | ✔ | — | — | — |
-| Reglas del motor | ✔ | — | — | — |
+| Reglas del motor (córner, alineación, fases) | ✔ | — | ✔ (`packages/engine`) | 37 pruebas en verde |
 | Modelo de datos | ✔ | — | — | DDL cargado en PostgreSQL 16 |
 | API | ✔ | — | — | OpenAPI validado |
 | Pantallas | ✔ | Mockups estáticos | — | — |
-| Pruebas | ✔ (39 casos) | — | — | — |
+| Pruebas | ✔ (39 casos) | — | ✔ (casos de motor) | Ejecutadas: alineación, córner, edición, determinismo, fases |
+| Exportación HTML de jugadas y escenas | ✔ (32) | — | ✔ (`packages/render`) | 5 ejemplos en Chromium sin errores |

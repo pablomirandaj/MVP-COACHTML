@@ -44,7 +44,7 @@ Para cada fotograma, partiendo de las coordenadas base de la formación (`rules/
 
 | Paso | Regla | Fórmula / criterio |
 |---|---|---|
-| 1 | Altura del bloque | Línea defensiva en `x` = 55 m (HIGH), 40 m (MID), 25 m (LOW) del propio arco; el resto de líneas se reparte en `compactness_m` |
+| 1 | Altura del bloque | Línea defensiva alineada en `x` = 46 m (HIGH), 36 m (MID), 22 m (LOW) desde la propia línea de gol; el resto de líneas se reparte en `compactness_m` (por defecto 32, 30 y 25 m) |
 | 2 | Basculación | `y_jugador += lateral_shift · (y_balón − 34) · peso_línea` (delanteros 0,4, medios 0,6, defensas 0,5); se acota a 2 m de la banda |
 | 3 | Compactación hacia el balón | Las líneas se acercan un 10 % al balón en `x` cuando este está en la mitad propia del rival |
 | 4 | Saltos de presión | En un fotograma con `TRIGGER`, cada `jump` coloca a su jugador a 1,5 m del rival objetivo, del lado que cierra el pase interior (sombra de cobertura) |
