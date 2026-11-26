@@ -18,3 +18,8 @@ export { findSpaces, SPACE_LABEL, SPACE_WHY, type Space, type SpaceKind } from "
 export { computeScene, type SceneSpec, type SceneDoc, type SceneType, type Jump } from "./phases/scene";
 export { narratePlay, narrateScene, type Step } from "./narrate";
 export { playTracks, sceneTracks, type Tracks, type TrackActor, type TrackPath } from "./timeline";
+export { createBoard, applyBoardCommand, type BoardEditResult } from "./board/apply";
+export { boardTracks, narrateBoard, STEP_PAUSE_S, STEP_ACTION_S } from "./board/tracks";
+export { validateBoard } from "./board/validate";
+export { states as boardStates } from "./board/state";
+export type { BoardDoc, BoardStep, BoardMove, BoardPass, BoardPress, BoardState, MoveKind } from "./board/types";

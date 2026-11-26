@@ -2494,6 +2494,45 @@ export const CONSTRAINTS_YAML = {
       "severity": "info",
       "check": "narration",
       "message": "{actor} ataca {space}."
+    },
+    {
+      "id": "BOARD-01",
+      "class": "GEOMETRY",
+      "severity": "error",
+      "check": "board_inside_pitch",
+      "message": "El punto estaba fuera del campo: se ha ajustado a la línea."
+    },
+    {
+      "id": "BOARD-02",
+      "class": "GEOMETRY",
+      "severity": "warning",
+      "check": "board_spacing",
+      "message": "{a} y {b} están a menos de 1 m."
+    },
+    {
+      "id": "BOARD-03",
+      "class": "TACTICAL",
+      "severity": "warning",
+      "check": "board_pass_risk",
+      "params": {
+        "max_m": 45,
+        "lane_m": 1.5
+      },
+      "message": "Riesgo de pérdida."
+    },
+    {
+      "id": "BOARD-04",
+      "class": "LAW",
+      "severity": "warning",
+      "check": "board_offside",
+      "message": "El receptor está en fuera de juego al salir el pase."
+    },
+    {
+      "id": "NARR-BOARD",
+      "class": "SEQUENCE",
+      "severity": "info",
+      "check": "narration",
+      "message": "Paso de la pizarra."
     }
   ]
 } as const;

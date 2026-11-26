@@ -1066,6 +1066,260 @@
             "player",
             "opponent"
           ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.add_step"
+            },
+            "after": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            }
+          },
+          "required": [
+            "op"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.remove_step"
+            },
+            "step": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            }
+          },
+          "required": [
+            "op",
+            "step"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.move"
+            },
+            "step": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            },
+            "actor": {
+              "type": "string",
+              "pattern": "^(own|opp):[A-Z][A-Z0-9_]*$",
+              "description": "Jugador de la pizarra: own:<ranura> u opp:<ranura> (p. ej. own:CB_L)."
+            },
+            "to": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "u",
+                    "v"
+                  ],
+                  "properties": {
+                    "u": {
+                      "type": "number",
+                      "minimum": -0.5,
+                      "maximum": 1.5
+                    },
+                    "v": {
+                      "type": "number",
+                      "minimum": -0.5,
+                      "maximum": 1.5
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "zone"
+                  ],
+                  "properties": {
+                    "zone": {
+                      "$ref": "#/$defs/zone"
+                    }
+                  }
+                }
+              ]
+            },
+            "kind": {
+              "enum": [
+                "RUN",
+                "DRIBBLE",
+                "MOVE"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "step",
+            "actor",
+            "to"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.pass"
+            },
+            "step": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            },
+            "from": {
+              "type": "string",
+              "pattern": "^(own|opp):[A-Z][A-Z0-9_]*$",
+              "description": "Jugador de la pizarra: own:<ranura> u opp:<ranura> (p. ej. own:CB_L)."
+            },
+            "to": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(own|opp):[A-Z][A-Z0-9_]*$",
+                  "description": "Jugador de la pizarra: own:<ranura> u opp:<ranura> (p. ej. own:CB_L)."
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "u",
+                    "v"
+                  ],
+                  "properties": {
+                    "u": {
+                      "type": "number",
+                      "minimum": -0.5,
+                      "maximum": 1.5
+                    },
+                    "v": {
+                      "type": "number",
+                      "minimum": -0.5,
+                      "maximum": 1.5
+                    }
+                  }
+                }
+              ]
+            },
+            "kind": {
+              "enum": [
+                "GROUND",
+                "AIR"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "step",
+            "from",
+            "to"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.press"
+            },
+            "step": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            },
+            "actor": {
+              "type": "string",
+              "pattern": "^(own|opp):[A-Z][A-Z0-9_]*$",
+              "description": "Jugador de la pizarra: own:<ranura> u opp:<ranura> (p. ej. own:CB_L)."
+            },
+            "target": {
+              "type": "string",
+              "pattern": "^(own|opp):[A-Z][A-Z0-9_]*$",
+              "description": "Jugador de la pizarra: own:<ranura> u opp:<ranura> (p. ej. own:CB_L)."
+            }
+          },
+          "required": [
+            "op",
+            "step",
+            "actor",
+            "target"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.note"
+            },
+            "step": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            },
+            "title": {
+              "type": "string",
+              "maxLength": 140
+            },
+            "implies": {
+              "type": "string",
+              "maxLength": 280
+            }
+          },
+          "required": [
+            "op",
+            "step",
+            "title"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.set_formation"
+            },
+            "team": {
+              "enum": [
+                "OWN",
+                "OPP"
+              ]
+            },
+            "formation": {
+              "type": "string",
+              "pattern": "^F_[0-9A-Z_]+$"
+            }
+          },
+          "required": [
+            "op",
+            "team",
+            "formation"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.set_labels"
+            },
+            "labels": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 4
+              }
+            }
+          },
+          "required": [
+            "op",
+            "labels"
+          ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.rename"
+            },
+            "title": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          "required": [
+            "op",
+            "title"
+          ]
         }
       ]
     },
