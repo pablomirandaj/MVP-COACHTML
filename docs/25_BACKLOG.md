@@ -2,6 +2,8 @@
 
 Prioridad: P0 (bloqueante del piloto) · P1 (piloto) · P2 (V1) · P3 (V1.5+). Estimación en días‑persona (dp). Dependencias por id.
 
+> **Actualización 26/11/2026 (ADR‑016, MVP sin voz)**: quedan aplazadas BK‑004, BK‑047, BK‑048 y la parte de audio de BK‑002/BK‑014. Sin órdenes escritas (opción A de 23 §0) también salen BK‑040…046 y BK‑049; BK‑068 pasa a formulario por categorías (4 dp) y se añade **BK‑075 Asistente de creación de jugadas → IR (4 dp)**. Total MVP opción A ≈ **145 dp**; opción B ≈ **178 dp**.
+
 ## Fase 0 — Validación
 
 | Id | Tarea | Prio | dp | Dep. |

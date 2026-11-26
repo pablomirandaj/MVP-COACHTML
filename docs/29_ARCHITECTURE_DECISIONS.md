@@ -26,7 +26,7 @@ Formato breve: contexto · decisión · alternativas · consecuencias. Estado: *
 - **Motivo**: relacional + JSONB, Auth y Storage incluidos, coste bajo, PostgreSQL estándar (salida fácil). La API aplica permisos; RLS limita el daño de un fallo.
 - **Consecuencias**: dependencia moderada de Supabase Auth/Storage, aislada tras interfaces.
 
-## ADR‑006 — STT tras adaptador; Deepgram por defecto, Whisper autohospedado opcional
+## ADR‑006 — STT tras adaptador; Deepgram por defecto, Whisper autohospedado opcional *(en suspenso por ADR‑016)*
 - **Motivo**: *keyterm prompting* con nombres de la plantilla; precio por minuto bajo; alternativa de privacidad total.
 - **Consecuencias**: dos integraciones que mantener; suite de campo para comparar WER periódicamente; precios a confirmar con el proveedor.
 
@@ -63,6 +63,11 @@ Formato breve: contexto · decisión · alternativas · consecuencias. Estado: *
 
 ## ADR‑015 — Piloto acotado antes de V1
 - **Motivo**: 23 §1 — la V1 completa supera las 26 semanas; validar la hipótesis de voz con córners y alineaciones primero.
+
+## ADR‑016 — Aplazar la voz; MVP con edición manual y asistente (26/11/2026)
+- **Contexto**: decisión de producto de lanzar antes y sin coste ni riesgo de STT.
+- **Decisión**: se aplazan grabación, transcripción y análisis por audio. La creación de jugadas usa un asistente de formulario que emite comandos IR (`command-ir.schema.json`, `source: MANUAL`) y la edición es directa sobre el campo. Queda en suspenso ADR‑006. ADR‑002/003 (gramática) quedan supeditados a la opción B de 23 §0.
+- **Consecuencias**: el diferencial inicial pasa a ser el motor (propuestas explicables, reglas, animación) y el flujo jornada → charla. El riesgo R01 (cobertura de voz) desaparece del MVP y R02/R11 dejan de aplicar. La voz se reincorpora como otra fuente del mismo IR.
 
 ## Revisión de contradicciones entre decisiones (iteración 7)
 

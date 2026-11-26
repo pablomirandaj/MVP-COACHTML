@@ -1,5 +1,25 @@
 # 23 — Alcance del MVP
 
+## 0. Decisión vigente (26/11/2026): MVP sin voz
+
+La grabación y la transcripción de audio quedan **aplazadas** (ADR‑016). El MVP se construye con edición manual sobre el campo y un **asistente de creación de jugadas** (formulario: tipo, lado, lanzador, golpeo, destino y nº de jugadores por rol). El asistente genera los mismos comandos IR que habría generado la voz. Motor, reglas, plantillas, propuestas marcadas, deshacer y versiones no cambian, así que la voz podrá añadirse después sin rehacer nada.
+
+| Se mantiene | Sale del MVP |
+|---|---|
+| Motor determinista completo (plantillas, asignación, reglas, animación) | Grabadora, STT, keyterms, purga de audio (BK‑002 parcial, BK‑004, BK‑047, BK‑048) |
+| Editor de alineaciones y de córners (manual) + asistente | Revisión de transcripciones (P10, P11) |
+| Plantilla, calendario CSV, ficha de rival (formulario por categorías) | Extracción automática de análisis a partir de audio |
+| Charla PDF, compartir con jugadores | Coste de STT (0 €) |
+
+**Pendiente de decidir**: si el MVP incluye **órdenes escritas** ("mueve a los dos del segundo palo un metro a la izquierda"), que reutilizan la gramática FCSG sin audio.
+
+| Opción | Contenido | Esfuerzo (25) |
+|---|---|---|
+| **A — Manual + asistente** (recomendada para salir antes) | Sin parser de lenguaje | ≈ 145 dp ≈ 10 semanas con 3 devs / 15 con 2 |
+| B — A + órdenes escritas | Parser FCSG, aclaraciones, revisión de comandos | ≈ 178 dp ≈ 12 semanas con 3 devs |
+
+Las secciones 2–7 describen el plan original con voz y se conservan como referencia para cuando se reincorpore.
+
 ## 1. ¿Es realizable la V1 "imprescindible" del encargo?
 
 La V1 propuesta incluye 14 bloques. Estimación (25/26) con un equipo de 3 desarrolladores full‑stack + diseño y QA a tiempo parcial:

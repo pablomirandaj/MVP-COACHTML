@@ -1,5 +1,7 @@
 # Football Coach Studio — Blueprint de producto
 
+> **26/11/2026 — la voz queda aplazada en el MVP** (edición manual + asistente de jugadas). Ver [23 §0](docs/23_MVP_SCOPE.md) y ADR‑016 en [29](docs/29_ARCHITECTURE_DECISIONS.md).
+
 Paquete de investigación, arquitectura, diseño y especificación de **Football Coach Studio (FCS)**: plataforma de planificación táctica para entrenadores de fútbol 11 (amateur, semiprofesional y formativo) cuyo flujo principal es:
 
 > **Hablar → Revisar → Visualizar → Ajustar → Guardar → Compartir**
