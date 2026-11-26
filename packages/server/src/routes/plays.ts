@@ -3,7 +3,7 @@ import { renderTracksHtml } from "@fcs/render";
 import type { FastifyInstance } from "fastify";
 import { requireStaff, requireUser, teamOf } from "../app";
 import { many, one, tx, type Tx } from "../db";
-import { applyEdits, currentDoc, insertVersion, logCommands, planCorner } from "../plays";
+import { applyEdits, currentDoc, insertVersion, logCommands, planPlay } from "../plays";
 import { teamContext } from "../repo";
 import { HttpError, uuidv7 } from "../util";
 
@@ -43,7 +43,7 @@ export async function playRoutes(app: FastifyInstance) {
         if (m?.team_id !== req.params.id) throw new HttpError(422, "VALIDATION_ERROR", "El partido no es de este equipo.");
       }
       const ctx = await teamContext(c, req.params.id, req.body.match_id);
-      const out = planCorner(req.body.commands, ctx);
+      const out = planPlay(req.body.commands, ctx);
       if (!out.doc || out.clarifications.length) return reply.status(200).send({ created: false, clarifications: out.clarifications, diagnostics: out.diagnostics });
       const id = uuidv7();
       const create = req.body.commands.find((x) => x.op === "play.create")!;

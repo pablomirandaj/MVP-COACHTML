@@ -2466,6 +2466,13 @@ export const CONSTRAINTS_YAML = {
       "severity": "info",
       "check": "narration",
       "message": "{actor} se queda arriba para la contra."
+    },
+    {
+      "id": "UNSUPPORTED-01",
+      "class": "SEQUENCE",
+      "severity": "error",
+      "check": "supported_type",
+      "message": "Este tipo de balón parado aún no está disponible: {type}."
     }
   ]
 } as const;

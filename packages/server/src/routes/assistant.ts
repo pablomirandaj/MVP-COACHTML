@@ -6,7 +6,7 @@ import { requireStaff, requireUser, teamOf } from "../app";
 import type { LlmMessage } from "../assistant/adapter";
 import { commandErrors, commandsTool, runTurn, type ToolOutcome, type Workspace } from "../assistant/run";
 import { many, one, tx, type Tx } from "../db";
-import { applyEdits, currentDoc, insertVersion, logCommands, planCorner, PLAY_CREATE_OPS, PLAY_EDIT_OPS } from "../plays";
+import { applyEdits, currentDoc, insertVersion, logCommands, planPlay, PLAY_CREATE_OPS, PLAY_EDIT_OPS } from "../plays";
 import { formationId, loadPrimaryLineup, teamContext } from "../repo";
 import { HttpError, uuidv7 } from "../util";
 import { buildScene } from "./scenes";
@@ -129,7 +129,7 @@ export async function assistantRoutes(app: FastifyInstance) {
           const bad = commands.find((c) => !PLAY_CREATE_OPS.has(c.op));
           if (bad) return { content: `Operación no válida para crear: ${bad.op}`, is_error: true };
           try {
-            const out = planCorner(commands, ctx);
+            const out = planPlay(commands, ctx);
             if (out.clarifications.length) return { content: clarText(out.clarifications[0]) };
             if (!out.doc) return { content: out.diagnostics.map((d) => d.message).join(" ") || "No se pudo crear.", is_error: true };
             created = { doc: out.doc, commands }; playDoc = out.doc;

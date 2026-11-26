@@ -61,3 +61,4 @@ rules:
   - { id: TACTICAL-DEF-02, class: TACTICAL, severity: warning, check: near_post_covered, message: "Nadie cubre el primer palo." }
   - { id: NARR-MARK, class: SEQUENCE, severity: info, check: narration, message: "Los marcadores siguen a su hombre." }
   - { id: NARR-COUNTER, class: SEQUENCE, severity: info, check: narration, message: "{actor} se queda arriba para la contra." }
+  - { id: UNSUPPORTED-01, class: SEQUENCE, severity: error, check: supported_type, message: "Este tipo de balón parado aún no está disponible: {type}." }

@@ -6,6 +6,7 @@ export { createCorner, planSetPiece, suitability, type PlanResult, type SetPiece
 export { createFreeKickWide, offsideLine } from "./setpiece/freekick";
 export { createThrowIn } from "./setpiece/throwin";
 export { createDefensiveSetPiece } from "./setpiece/defend";
+export { createSetPiece, SETPIECE_TYPES, type SetPieceType } from "./setpiece/index";
 export { applyPlayCommand, selectActors, type EditResult } from "./setpiece/edit";
 export { derive, ballCurve } from "./setpiece/derive";
 export { validatePlay } from "./setpiece/validate";

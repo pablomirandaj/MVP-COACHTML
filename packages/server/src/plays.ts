@@ -1,9 +1,9 @@
 // Persistencia de jugadas: versiones inmutables + proyecciones + registro de comandos (docs/12 §6, docs/15 §11).
-import { applyPlayCommand, canonicalHash, createCorner, ENGINE_VERSION, CATALOG_VERSION, type Clarification, type Command, type Diagnostic, type EngineContext, type PlayDoc } from "@fcs/engine";
+import { applyPlayCommand, canonicalHash, createSetPiece, ENGINE_VERSION, CATALOG_VERSION, type Clarification, type Command, type Diagnostic, type EngineContext, type PlayDoc } from "@fcs/engine";
 import { one, type Tx } from "./db";
 import { HttpError, uuidv7 } from "./util";
 
-export const PLAY_EDIT_OPS = new Set(["play.move_actor", "play.shift_timing", "play.adjust_delivery", "play.set_delivery", "play.set_movement", "play.constraint", "play.assign_player", "play.set_taker", "play.remove_actor"]);
+export const PLAY_EDIT_OPS = new Set(["play.move_actor", "play.shift_timing", "play.adjust_delivery", "play.set_delivery", "play.set_movement", "play.constraint", "play.assign_player", "play.set_taker", "play.remove_actor", "play.mark"]);
 export const PLAY_CREATE_OPS = new Set(["play.create", "play.set_taker", "play.set_delivery", "play.add_roles", "play.set_role", "play.relation", "play.constraint", "assert"]);
 
 export interface ApplyOutcome { doc: PlayDoc | null; clarifications: Clarification[]; diagnostics: Diagnostic[]; applied: Command[] }
@@ -22,12 +22,13 @@ export function applyEdits(doc: PlayDoc, commands: Command[], ctx: EngineContext
   return { doc: cur, clarifications: [], diagnostics: cur.diagnostics, applied };
 }
 
-export function planCorner(commands: Command[], ctx: EngineContext): ApplyOutcome {
+export function planPlay(commands: Command[], ctx: EngineContext): ApplyOutcome {
   for (const c of commands) if (!PLAY_CREATE_OPS.has(c.op)) throw new HttpError(422, "VALIDATION_ERROR", `Operación no válida para crear una jugada: ${c.op}`);
   const create = commands.find((c) => c.op === "play.create");
   if (!create) throw new HttpError(422, "VALIDATION_ERROR", "Falta play.create.");
-  if (create.type !== "CORNER_ATT") throw new HttpError(422, "NOT_SUPPORTED", "En el MVP solo se crean córners ofensivos.");
-  const r = createCorner(commands, ctx);
+  const r = createSetPiece(commands, ctx);
+  const unsupported = r.diagnostics.find((d) => d.rule_id === "UNSUPPORTED-01");
+  if (unsupported) throw new HttpError(422, "NOT_SUPPORTED", unsupported.message);
   return { doc: r.doc, clarifications: r.clarifications, diagnostics: r.diagnostics, applied: r.doc ? commands : [] };
 }
 
