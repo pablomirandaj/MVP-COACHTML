@@ -815,7 +815,8 @@
                 "STAY",
                 "NO_JOIN_ATTACK",
                 "NO_CONTACT",
-                "MUST_REACH_TARGET"
+                "MUST_REACH_TARGET",
+                "NONE"
               ]
             }
           },

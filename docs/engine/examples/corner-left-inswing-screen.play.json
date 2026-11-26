@@ -800,7 +800,7 @@
       "rule_id": "BALL-TGT-01",
       "class": "TACTICAL",
       "severity": "info",
-      "message": "Destino del balón propuesto: Z_FAR_POST (zona del rematador principal)."
+      "message": "Destino del balón propuesto: segundo palo (zona del rematador principal)."
     },
     {
       "rule_id": "LAW-OFF-INFO",

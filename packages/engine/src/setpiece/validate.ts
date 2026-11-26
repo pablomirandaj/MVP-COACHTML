@@ -1,5 +1,5 @@
 // Validador de jugadas (docs/15 §10). Cada regla devuelve diagnósticos con el id del catálogo.
-import { MIN_SPACING_M } from "../catalog/index";
+import { MIN_SPACING_M, ZONES } from "../catalog/index";
 import { dist, resolveZone, toM } from "../geometry";
 import type { Diagnostic, EngineContext, PlayDoc } from "../types";
 import { naturalSwing } from "./common";
@@ -74,7 +74,7 @@ export function validatePlay(doc: PlayDoc, ctx: EngineContext): Diagnostic[] {
       const e = m.path[m.path.length - 1];
       return inZone(e.u, e.v);
     });
-    if (!attacks) out.push({ rule_id: "TAC-CRN-TGT-01", class: "TACTICAL", severity: "warning", message: `Recomendación: nadie ataca la zona donde va el balón (${tz.id}).` });
+    if (!attacks) out.push({ rule_id: "TAC-CRN-TGT-01", class: "TACTICAL", severity: "warning", message: `Recomendación: nadie ataca la zona donde va el balón (${ZONES[tz.id].label.toLowerCase()}).` });
   }
 
   for (const r of doc.relations) {
@@ -103,7 +103,7 @@ export function validatePlay(doc: PlayDoc, ctx: EngineContext): Diagnostic[] {
   }
 
   if (doc.delivery.provenance.target_zone === "RULE:BALL-TGT-01")
-    out.push({ rule_id: "BALL-TGT-01", class: "TACTICAL", severity: "info", message: `Destino del balón propuesto: ${doc.delivery.target_zone} (zona del rematador principal).` });
+    out.push({ rule_id: "BALL-TGT-01", class: "TACTICAL", severity: "info", message: `Destino del balón propuesto: ${ZONES[doc.delivery.target_zone].label.toLowerCase()} (zona del rematador principal).` });
   if (doc.type.startsWith("CORNER"))
     out.push({ rule_id: "LAW-OFF-INFO", class: "LAW", severity: "info", message: "No hay fuera de juego al recibir directamente de córner." });
   return out;
