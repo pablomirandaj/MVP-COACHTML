@@ -2,21 +2,35 @@
 import { states } from "../board/state";
 import { narrateBoard } from "../board/tracks";
 import type { BoardDoc } from "../board/types";
+import { numberSlots } from "../football/vocab";
 import { slotInfo } from "../lineup";
 import type { Pt } from "../types";
 import { cleanFrame, pt, type Line, type SeqActor, type SeqFrame, type Sequence } from "./types";
 
 const ABBR: Record<string, string> = { GK: "POR", RB: "LD", LB: "LI", RWB: "CAD", LWB: "CAI", CB: "DFC", DM: "MCD", CM: "MC", RM: "MD", LM: "MI", AM: "MCO", RW: "ED", LW: "EI", ST: "DC", SS: "SD" };
 
+/** Número de puesto (numeración española) de cada ranura del sistema: el pivote del 4-3-3 es el 6. */
+function positionNumbers(formation: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const n of [1, 2, 3, 4, 5, 6, 8, 10, 7, 11, 9]) {
+    const free = numberSlots(formation, n).filter((s) => !out[s]);
+    if (free.length === 1) out[free[0]] = String(n);
+  }
+  return out;
+}
+
 export function sequenceOfBoard(doc: BoardDoc): Sequence {
   const L = doc.pitch.length_m, W = doc.pitch.width_m;
   const m = (p: Pt) => pt(p.u * L, p.v * W);
   const st = states(doc);
   const ids = [...Object.keys(doc.start.own).map((k) => `own:${k}`), ...Object.keys(doc.start.opp).map((k) => `opp:${k}`)];
+  const nums = positionNumbers(doc.own.formation);
+  // Sin dorsal asignado (la etiqueta sigue siendo la abreviatura del puesto), el número de puesto, como en la J5.
+  const ownLabel = (slot: string) => { const l = doc.own.labels[slot], abbr = ABBR[slotInfo(slot).pos]; return l && l !== abbr ? l : nums[slot] ?? abbr ?? slot; };
   const actors: SeqActor[] = ids.map((id) => {
     const slot = id.slice(4);
     return id.startsWith("own:")
-      ? { id, team: "OWN", label: doc.own.labels[slot] ?? ABBR[slotInfo(slot).pos] ?? slot }
+      ? { id, team: "OWN", label: ownLabel(slot) }
       : { id, team: "OPP", label: ABBR[slotInfo(slot).pos] ?? "" };
   });
   const start = Object.fromEntries(ids.map((id) => [id, m(st[0].pos[id])]));

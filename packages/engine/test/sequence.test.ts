@@ -60,6 +60,12 @@ describe("Secuencia por pasos (fcs.seq/1)", () => {
     expect([x1, y1]).toEqual(s.start["own:GK"].map((v) => Math.round(v * 100) / 100));
   });
 
+  it("pizarra: sin dorsal, cada uno lleva su número de puesto (el pivote es el 6); con dorsal, el dorsal", () => {
+    const b = run(createBoard({ own: "F_433", opp: "F_442" }), [{ op: "board.set_labels", labels: { ST: "19" } }]);
+    const lab = Object.fromEntries(sequenceOfBoard(b).actors.filter((a) => a.team === "OWN").map((a) => [a.id, a.label]));
+    expect(lab).toMatchObject({ "own:GK": "1", "own:RB": "2", "own:LB": "3", "own:CB_R": "4", "own:CB_L": "5", "own:DM": "6", "own:CM_R": "8", "own:CM_L": "10", "own:RW": "7", "own:LW": "11", "own:ST": "19" });
+  });
+
   it("pizarra vacía: solo la colocación, sin flechas", () => {
     const s = sequenceOfBoard(createBoard({ own: "F_433", opp: "F_442" }));
     expect(s.frames).toHaveLength(1);

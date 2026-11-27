@@ -108,3 +108,12 @@ El bucle (`runTurn`), el prompt, la validación IR y los espacios de trabajo viv
 | Deshacer | Un turno = una entrada del historial del editor | Igual (el editor es el mismo) |
 
 Espacios de trabajo: `boardWorkspace` (órdenes `board.*`), `setPieceWorkspace` (`create_setpiece` y edición `play.*`, incluido `play.mark`) y `sceneWorkspace` (`update_scene`). Los resultados de las herramientas ocupan ≤ 1 KB y el contexto ≤ 4 KB.
+
+## Vocabulario del entrenador (27/11/2026)
+
+`@fcs/engine/football/vocab` resuelve de forma determinista cómo nombra el entrenador a sus jugadores, antes de que el modelo decida nada:
+
+- **Numeración española por puesto**: 1 portero, 2 lateral derecho, 3 lateral izquierdo, 4 central derecho, 5 central izquierdo, 6 pivote (la ranura `DM`; en el 4‑2‑3‑1, `DM_L`), 8 interior derecho (en el 4‑2‑3‑1, `DM_R`), 10 interior izquierdo o mediapunta, 7 extremo derecho, 11 extremo izquierdo, 9 delantero centro. Es la convención habitual, no universal: el banco `docs/engine/tests/coach-phrases.yaml` (56 frases) la fija y permite ajustarla.
+- **`resolve_player`** (herramienta en los tres espacios de trabajo): de una frase devuelve las ranuras, cómo se resolvió (`position`, `shirt`, `name`) y si es ambigua. «El 6» puede ser el dorsal 6 o el puesto 6: si no coinciden, `ambiguous` y el asistente **pregunta al entrenador**. «De 6» con verbo («juega de 6») es siempre puesto.
+- El contexto de la pizarra y de las escenas incluye la tabla «quién es quién» (`whoIsWho`) y el prompt trae el glosario de 27 conceptos (`CONCEPTS`) con la orden del motor de cada uno.
+- **`set_sheet`**: el asistente puede escribir la ficha de la jugada (quién hace qué, el hueco, la clave, si sale mal); el entrenador la edita en «Ver».

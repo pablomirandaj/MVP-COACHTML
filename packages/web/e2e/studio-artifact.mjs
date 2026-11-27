@@ -110,6 +110,39 @@ try {
   await shot("03-pizarra");
   await p.getByRole("button", { name: "Deshacer lo último" }).click();
   if ((await stepTabs()) !== 2) fail("Deshacer no quitó el paso del asistente");
+  // Deshacer y rehacer junto al campo, con texto.
+  await p.getByRole("button", { name: "+ Paso" }).click();
+  if ((await stepTabs()) !== 3) fail("«+ Paso» no añadió el paso");
+  await p.getByRole("button", { name: "↶ Deshacer" }).click();
+  if ((await stepTabs()) !== 2) fail("«↶ Deshacer» junto al campo no quitó el paso");
+  await p.getByRole("button", { name: "↷ Rehacer" }).click();
+  if ((await stepTabs()) !== 3) fail("«↷ Rehacer» no lo devolvió");
+  await p.getByRole("button", { name: "↶ Deshacer" }).click();
+  // En «Editar» solo se ven las flechas del paso elegido.
+  await p.getByRole("tab", { name: "Paso 1", exact: true }).click();
+  const pathsStep1 = await p.locator(".st-stage svg path[marker-end]").count();
+  await p.getByRole("tab", { name: "Paso 2", exact: true }).click();
+  const pathsStep2 = await p.locator(".st-stage svg path[marker-end]").count();
+  if (pathsStep1 !== 1 || pathsStep2 !== 1) fail(`Flechas por paso: paso 1 → ${pathsStep1}, paso 2 → ${pathsStep2} (se esperaba 1 y 1)`);
+  // «Ver»: el reproductor de la J5; Siguiente cambia de paso; «Flechas» las oculta todas.
+  await p.getByRole("tab", { name: "Ver", exact: true }).click();
+  const player = p.locator(".st-player");
+  await player.locator(".fcsp-board").waitFor();
+  const beat0 = await player.locator(".fcsp-beat-t").textContent();
+  await player.locator(".fcsp-next").click();
+  await p.waitForTimeout(100);
+  const beat1 = await player.locator(".fcsp-beat-t").textContent();
+  if (beat0 === beat1) fail(`«Siguiente» no cambió de paso (${beat0})`);
+  if (!(await player.locator(".fcsp-ln").count())) fail("En «Ver» no hay flechas del paso");
+  await player.locator(".fcsp-next").click();
+  await p.waitForTimeout(100);
+  if (!(await player.locator(".fcsp-ln.old").count())) fail("En «Ver» las flechas de pasos anteriores no salen tenues");
+  await player.locator(".fcsp-arrows").click();
+  if ((await player.locator(".fcsp-ln").count()) !== 0) fail("«Flechas» no las oculta");
+  await player.locator(".fcsp-arrows").click();
+  await player.locator(".fcsp-prev").click();
+  await shot("03b-ver");
+  await p.getByRole("tab", { name: "Editar", exact: true }).click();
   // Cambiar de sección y volver no pierde lo que no se ha guardado.
   await p.getByRole("link", { name: "Inicio" }).click();
   await p.getByRole("link", { name: "Pizarra" }).click();
@@ -128,6 +161,8 @@ try {
   await p.getByRole("button", { name: "Abierto", exact: true }).click();
   if ((await p.getByRole("button", { name: "Abierto", exact: true }).getAttribute("aria-pressed")) !== "true") fail("El centro no cambió a abierto");
   await shot("04-falta");
+  await p.getByRole("button", { name: "Guardar", exact: true }).click();
+  await p.getByRole("button", { name: "Guardado" }).waitFor();
 
   await p.getByRole("link", { name: "Inicio" }).click();
   await p.getByRole("link", { name: "Balón parado" }).click();
@@ -151,11 +186,27 @@ try {
   // 7. Biblioteca con la pizarra guardada.
   await p.getByRole("link", { name: "Biblioteca" }).click();
   await p.locator(".st-item").first().waitFor();
+  // Carpeta del partido: dos piezas en un HTML con dos pestañas y «Esto no cambia nunca».
+  await p.getByRole("button", { name: "Seleccionar para la carpeta" }).click();
+  const picks = p.getByRole("checkbox", { name: /Incluir en la carpeta/ });
+  if ((await picks.count()) < 2) fail(`Se esperaban 2 piezas en la biblioteca, hay ${await picks.count()}`);
+  await picks.first().check(); await p.getByRole("checkbox", { name: /Incluir en la carpeta/ }).first().check();
+  await p.getByRole("button", { name: "Exportar carpeta del partido (2)" }).click();
+  await p.getByRole("dialog", { name: "Carpeta del partido" }).waitFor();
+  await shot("07-carpeta");
+  const before = await p.evaluate(() => window.__saved.length);
+  await p.getByRole("button", { name: "Exportar carpeta (2)" }).click();
+  await p.waitForFunction((n) => window.__saved.length > n, before);
+  const folder = await p.evaluate(() => window.__saved[window.__saved.length - 1].data);
+  if ((folder.match(/class="fcsd-tab/g) ?? []).length !== 2) fail("La carpeta no tiene 2 pestañas");
+  if (!folder.includes("Esto no cambia nunca")) fail("La carpeta no tiene «Esto no cambia nunca»");
+  await p.getByRole("status").filter({ hasText: "Carpeta exportada con 2 jugadas" }).waitFor();
 
   // 8. Móvil: sin desplazamiento horizontal en ninguna sección.
   await p.setViewportSize({ width: 390, height: 844 });
   for (const name of ["Inicio", "Pizarra", "Balón parado", "Planes", "Biblioteca", "Plantilla"]) {
     await p.getByRole("link", { name }).click();
+    if (name === "Pizarra") await p.getByRole("tab", { name: "Ver", exact: true }).click();
     await p.waitForTimeout(150);
     const w = await p.evaluate(() => document.documentElement.scrollWidth);
     if (w > 390) {

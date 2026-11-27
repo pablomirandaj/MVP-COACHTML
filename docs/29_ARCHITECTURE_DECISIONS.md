@@ -100,6 +100,12 @@ Formato breve: contexto · decisión · alternativas · consecuencias. Estado: *
 - **Decisión**: `AiPort` de la página llama a `sample` con las herramientas del espacio de trabajo (`apply_commands`, `create_setpiece`, `update_scene`, `ask_coach`), cuyo `execute` es el motor en el navegador. Si la vista no ofrece herramientas, plan B: `sample.json` con un único comando validado en local y un reintento.
 - **Consecuencias**: el coste lo asume quien usa la página (no escala como producto: por eso ADR‑021); el modelo nunca coloca jugadores, solo emite comandos que el motor valida, igual que en el servidor (ADR‑017).
 
+## ADR‑023 — Una secuencia y un reproductor para la app y el HTML exportado (27/11/2026)
+- **Contexto**: el entrenador quiere que la app muestre las jugadas como el HTML de la J5 (pasos, «AHORA», solo las flechas del paso actual, ◀ Atrás, ficha) y que pueda producir ese HTML. Antes había un dibujo en la app y otro distinto en la exportación, con todas las flechas a la vez.
+- **Decisión**: todas las piezas (pizarra, balón parado, planes) se convierten en una secuencia `fcs.seq/1` (`sequenceOfBoard`, `sequenceOfPlay`, `sequenceOfScene`) con pasos discretos (`beat`, `txt`, `trig`, `pos`, `runs`, `passes`, `blocks`). Un único reproductor autocontenido (`createPlayer`, `@fcs/render`) la pinta en la pestaña «Ver» y se incrusta tal cual (`playerSource`) en el HTML de la carpeta del partido (`renderDossierHtml`). La ficha la propone el motor (`proposeSheet`) y la edita el entrenador o el asistente (`set_sheet`); se guarda con la pieza. La carpeta se construye en el cliente para los dos anfitriones y el puerto de exportación solo guarda el HTML (`saveHtml`). Las reglas fijas se guardan con el equipo (`studio/settings` en la página; `GET|PUT /teams/:id/studio/settings`, migración 0004).
+- **Alternativas**: mantener el exportador por pistas continuas (descartado: no da pasos discretos ni «AHORA»); generar la carpeta en el servidor (descartado por ahora: duplicaría el código del cliente).
+- **Consecuencias**: lo que ve el entrenador en «Ver» es exactamente lo que reciben los jugadores. El HTML pesa más (escudo y foto embebidos) pero funciona sin conexión. `GET /studio/items/:id/export.html` del servidor sigue con el formato anterior hasta que se migre.
+
 ## Revisión de contradicciones entre decisiones (iteración 7)
 
 | Posible contradicción | Resolución |
