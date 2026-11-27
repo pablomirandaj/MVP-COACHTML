@@ -1,0 +1,65 @@
+# Frases de entrenador → ranuras esperadas (vocabulario español de España). Pruebas en packages/engine/test/vocab.test.ts.
+# formation: sistema propio; labels: dorsales visibles por ranura (opcional); expect: ranuras; ambiguous: si debe preguntar.
+phrases:
+  # 4-3-3
+  - { text: "que el pivote baje entre centrales", formation: F_433, expect: [DM] }
+  - { text: "el 6 se queda de ancla", formation: F_433, expect: [DM] }
+  - { text: "el que juega de 6 da el pase", formation: F_433, expect: [DM] }
+  - { text: "el mediocentro defensivo vigila al 10 rival", formation: F_433, expect: [DM] }
+  - { text: "el medio de la base se ofrece", formation: F_433, expect: [DM] }
+  - { text: "los interiores pisan área", formation: F_433, expect: [CM_L, CM_R] }
+  - { text: "el interior derecho rompe", formation: F_433, expect: [CM_R] }
+  - { text: "el interior izquierdo se ofrece entre líneas", formation: F_433, expect: [CM_L] }
+  - { text: "el 8 llega desde segunda línea", formation: F_433, expect: [CM_R] }
+  - { text: "el 10 recibe entre líneas", formation: F_433, expect: [CM_L] }
+  - { text: "los extremos fijan abiertos", formation: F_433, expect: [LW, RW] }
+  - { text: "el extremo izquierdo ataca la espalda", formation: F_433, expect: [LW] }
+  - { text: "el extremo derecho se mete por dentro", formation: F_433, expect: [RW] }
+  - { text: "el 7 hace el desmarque de ruptura", formation: F_433, expect: [RW] }
+  - { text: "el 11 abre el campo", formation: F_433, expect: [LW] }
+  - { text: "el 9 baja a recibir", formation: F_433, expect: [ST] }
+  - { text: "el delantero centro fija a los centrales", formation: F_433, expect: [ST] }
+  - { text: "el falso 9 cae a la mediapunta", formation: F_433, expect: [ST] }
+  - { text: "la punta presiona al central", formation: F_433, expect: [ST] }
+  - { text: "los centrales se abren", formation: F_433, expect: [CB_L, CB_R] }
+  - { text: "el central izquierdo conduce", formation: F_433, expect: [CB_L] }
+  - { text: "el central derecho sale con balón", formation: F_433, expect: [CB_R] }
+  - { text: "el 4 conduce hasta medio campo", formation: F_433, expect: [CB_R] }
+  - { text: "el 5 cubre la espalda", formation: F_433, expect: [CB_L] }
+  - { text: "el lateral derecho se incorpora", formation: F_433, expect: [RB] }
+  - { text: "el lateral izquierdo por dentro", formation: F_433, expect: [LB] }
+  - { text: "el 2 sube por fuera", formation: F_433, expect: [RB] }
+  - { text: "el 3 cierra", formation: F_433, expect: [LB] }
+  - { text: "los laterales altos", formation: F_433, expect: [LB, RB] }
+  - { text: "el portero juega en corto", formation: F_433, expect: [GK] }
+  - { text: "el 1 saca en largo", formation: F_433, expect: [GK] }
+  - { text: "el guardameta sale de puños", formation: F_433, expect: [GK] }
+  # 4-2-3-1
+  - { text: "el doble pivote escalonado", formation: F_4231, expect: [DM_L, DM_R] }
+  - { text: "los pivotes no suben a la vez", formation: F_4231, expect: [DM_L, DM_R] }
+  - { text: "el pivote izquierdo baja", formation: F_4231, expect: [DM_L] }
+  - { text: "el 6 se queda", formation: F_4231, expect: [DM_L] }
+  - { text: "el 8 llega al área", formation: F_4231, expect: [DM_R] }
+  - { text: "el mediapunta se ofrece", formation: F_4231, expect: [AM] }
+  - { text: "el 10 recibe de espaldas", formation: F_4231, expect: [AM] }
+  - { text: "el enganche gira", formation: F_4231, expect: [AM] }
+  # 4-4-2
+  - { text: "los dos puntas presionan a los centrales", formation: F_442, expect: [ST_L, ST_R] }
+  - { text: "el medio derecho cierra por dentro", formation: F_442, expect: [RM] }
+  - { text: "el medio izquierdo da amplitud", formation: F_442, expect: [LM] }
+  - { text: "los mediocentros juntos", formation: F_442, expect: [CM_L, CM_R] }
+  - { text: "el 9 arrastra", formation: F_442, expect: [ST_L, ST_R], ambiguous: true }
+  # 3-5-2
+  - { text: "los carrileros altos", formation: F_352, expect: [LWB, RWB] }
+  - { text: "el carrilero derecho centra", formation: F_352, expect: [RWB] }
+  - { text: "el central del medio de los tres", formation: F_352, expect: [CB_C] }
+  - { text: "el pivote entre los tres centrales", formation: F_352, expect: [DM] }
+  # 5-3-2 y 4-1-4-1
+  - { text: "el mediocentro del 5-3-2 vigila", formation: F_532, expect: [CM_C] }
+  - { text: "el pivote del 4-1-4-1 tapa la línea de pase", formation: F_4141, expect: [DM] }
+  - { text: "el líbero sale con balón", formation: F_532, expect: [CB_C] }
+  # Dorsales frente a puesto
+  - { text: "el 6 baja", formation: F_433, labels: { DM: "6" }, expect: [DM] }
+  - { text: "el 6 baja", formation: F_433, labels: { CM_L: "6", DM: "4" }, expect: [CM_L, DM], ambiguous: true }
+  - { text: "pon al que juega de 6 entre centrales", formation: F_433, labels: { CM_L: "6", DM: "4" }, expect: [DM] }
+  - { text: "el 14 entra por el segundo palo", formation: F_433, labels: { RW: "14" }, expect: [RW] }

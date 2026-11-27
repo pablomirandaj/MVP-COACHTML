@@ -56,9 +56,9 @@ positions:
   LB:  ["lateral izquierdo", "lateral zurdo", "el tres"]
   RWB: ["carrilero derecho"]
   LWB: ["carrilero izquierdo"]
-  CB:  [central, "defensa central", zaguero]
-  DM:  [pivote, mediocentro defensivo, "el cinco", "medio centro defensivo"]
-  CM:  [interior, mediocentro, "medio centro", "el ocho"]
+  CB:  [central, "defensa central", zaguero, "el cuatro", "el cinco"]
+  DM:  [pivote, mediocentro defensivo, "el seis", "medio centro defensivo", "medio de la base", ancla]
+  CM:  [interior, mediocentro, "medio centro", "el ocho", "el diez"]
   RM:  ["medio derecho", "volante derecho", "interior derecho"]
   LM:  ["medio izquierdo", "volante izquierdo", "interior izquierdo"]
   AM:  [mediapunta, "media punta", "el diez", enganche]
@@ -66,7 +66,9 @@ positions:
   LW:  ["extremo izquierdo", "banda izquierda arriba"]
   ST:  [delantero, "delantero centro", punta, "nueve", ariete]
   SS:  ["segundo delantero", "segunda punta"]
-# Nota: "el cinco", "el ocho", "el dos" son ambiguos con dorsales. Regla: si existe un jugador con ese dorsal
+# Numeración española por puesto: 1 POR, 2 LD, 3 LI, 4 y 5 centrales, 6 pivote, 8 y 10 interiores (10 mediapunta si lo hay), 7 ED, 11 EI, 9 DC.
+# Implementación: packages/engine/src/football/vocab.ts (banco de frases: docs/engine/tests/coach-phrases.yaml).
+# Nota: "el seis", "el ocho", "el dos" son ambiguos con dorsales. Regla: si existe un jugador con ese dorsal
 # en la plantilla y el contexto es de jugador ("que el cinco ataque") -> dorsal; si el contexto es de puesto
 # ("pon a Diego de cinco") -> posición. Si ambos encajan -> AMB-ENTITY.
 
