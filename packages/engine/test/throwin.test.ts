@@ -35,6 +35,7 @@ describe("Saque de banda (THROW_IN_ATT)", () => {
     const tr = playTracks(doc, roster());
     const passSteps = tr.steps.filter((s) => s.source === "RULE:NARR-PASS" || s.source === "RULE:NARR-DELIVERY");
     expect(passSteps).toHaveLength(3);
+    for (const st of passSteps) expect(st.title).not.toMatch(/\ba el\b/);
     // El balón termina en el tercer hombre, por delante del punto de saque.
     const last = tr.frames[tr.frames.length - 1];
     const b = { x: last[last.length - 3] * 105, y: last[last.length - 2] * 68 };

@@ -51,6 +51,8 @@ describe("Pizarra libre (fcs.board/1)", () => {
     const t = boardTracks(d, roster());
     expect(t.steps).toHaveLength(2);
     expect(t.steps[0].source).toBe("RULE:NARR-BOARD");
+    expect(t.steps[0].title).toBe("El POR pasa al DFC");
+    expect(t.actors.find((a) => a.id === "opp:CB_L")?.label).toBe("DFC");
     expect(t.steps[1]).toMatchObject({ title: "El 8 se ofrece entre líneas", source: "MANUAL" });
     expect(t.actors).toHaveLength(22);
   });

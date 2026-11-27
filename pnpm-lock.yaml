@@ -84,6 +84,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@fcs/assistant':
+        specifier: workspace:*
+        version: link:../assistant
       '@fcs/engine':
         specifier: workspace:*
         version: link:../engine

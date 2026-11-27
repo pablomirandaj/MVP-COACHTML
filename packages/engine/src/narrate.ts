@@ -7,7 +7,9 @@ import type { Actor, Origin, Player, PlayDoc, Pt, ZoneId } from "./types";
 
 export interface Step { t: number; title: string; implies: string; source: Origin }
 
-const zoneLabel = (z?: ZoneId) => (z && ZONES[z] ? ZONES[z].label.toLowerCase() : "su zona");
+const ARTICLE: Partial<Record<ZoneId, string>> = { Z_FAR_ZONE: "", Z_GK: "", Z_EDGE: "la ", Z_REBOUND: "la ", Z_SHORT: "la ", Z_REST: "la ", Z_START_CLUSTER: "la " };
+/** Zona con su artículo: «el segundo palo», «la frontal del área», «fuera del segundo palo». */
+const zoneLabel = (z?: ZoneId) => (z && ZONES[z] ? `${ARTICLE[z] ?? "el "}${ZONES[z].label.toLowerCase()}` : "su zona");
 const SWING_ES = { INSWING: "cerrado", OUTSWING: "abierto", NONE: "tenso" } as const;
 
 function who(a: Actor | undefined, roster: Player[]): string {
@@ -57,15 +59,15 @@ export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
   const t0 = doc.movements.length ? Math.min(0, ...doc.movements.map((m) => m.t_start)) : 0;
   const manual = doc.notes.find((n) => !String(n.origin).startsWith("RULE:"));
   steps.push(manual
-    ? { t: t0, title: manual.text, implies: `${own.length} jugadores en la jugada; el balón va a ${zoneLabel(doc.delivery.target_zone)}.`, source: manual.origin }
-    : { t: t0, title: "Colocación inicial", implies: `${own.length} jugadores en la jugada; el balón irá a ${zoneLabel(doc.delivery.target_zone)}.`, source: "RULE:NARR-SETUP" });
+    ? { t: t0, title: manual.text, implies: `${own.length} jugadores en la jugada; el balón va ${toWho(zoneLabel(doc.delivery.target_zone))}.`, source: manual.origin }
+    : { t: t0, title: "Colocación inicial", implies: `${own.length} jugadores en la jugada; el balón irá ${toWho(zoneLabel(doc.delivery.target_zone))}.`, source: "RULE:NARR-SETUP" });
 
   for (const rel of doc.relations.filter((r) => r.type === "SCREENS")) {
     const mv = doc.movements.find((m) => m.actor === rel.blocker);
     const target = actor(rel.beneficiary);
     steps.push({
       t: mv ? mv.t_start : t0,
-      title: `${cap(who(actor(rel.blocker), roster))} bloquea a ${who(actor(rel.defender), roster)}`,
+      title: `${cap(who(actor(rel.blocker), roster))} bloquea ${toWho(who(actor(rel.defender), roster))}`,
       implies: `${cap(who(target, roster))} queda libre de marca para atacar ${zoneLabel(target?.action_zone)}.`,
       source: "RULE:NARR-BLOCK",
     });
@@ -77,7 +79,7 @@ export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
     const recv = short && doc.passes?.length ? actor(doc.passes[0].from) : undefined;
     steps.push({
       t: doc.delivery.kick_t,
-      title: short ? `${cap(who(taker, roster))} saca en corto a ${who(recv, roster)}` : `${cap(who(taker, roster))} saca largo hacia ${zoneLabel(doc.delivery.target_zone)}`,
+      title: short ? `${cap(who(taker, roster))} saca en corto ${toWho(who(recv, roster))}` : `${cap(who(taker, roster))} saca largo hacia ${zoneLabel(doc.delivery.target_zone)}`,
       implies: short ? "El apoyo atrae a su extremo; el lanzador entra al campo para recibir la devolución." : "El rematador del primer palo peina el balón hacia el segundo palo.",
       source: "RULE:NARR-DELIVERY",
     });
@@ -91,7 +93,7 @@ export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
   for (const ps of doc.passes ?? []) {
     steps.push({
       t: ps.t_start,
-      title: `${cap(who(actor(ps.from), roster))} pasa a ${who(actor(ps.to), roster)}`,
+      title: `${cap(who(actor(ps.from), roster))} pasa ${toWho(who(actor(ps.to), roster))}`,
       implies: ps === doc.passes![doc.passes!.length - 1]
         ? "El último pase llega al compañero en carrera, a la espalda de su lateral."
         : "Pase corto de seguridad: atrae al rival y libera al siguiente.",
@@ -176,4 +178,6 @@ export function narrateScene(doc: SceneDoc): Step[] {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** «a» + «el X» → «al X» (contracción obligatoria en español). */
+export const toWho = (s: string) => (s.startsWith("el ") ? `al ${s.slice(3)}` : `a ${s}`);
 const sortSteps = (s: Step[]) => s.map((x, i) => [x, i] as const).sort((a, b) => a[0].t - b[0].t || a[1] - b[1]).map(([x]) => ({ ...x, t: Math.round(x.t * 100) / 100 }));

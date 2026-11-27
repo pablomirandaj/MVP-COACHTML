@@ -15,7 +15,9 @@
     "db:dev": "scripts/dev-db.sh",
     "web:dev": "pnpm --filter @fcs/web dev",
     "web:build": "pnpm --filter @fcs/web build",
-    "e2e": "node packages/web/e2e/smoke.mjs"
+    "e2e": "node packages/web/e2e/smoke.mjs",
+    "studio:artifact": "pnpm --filter @fcs/web build:artifact",
+    "e2e:studio": "node packages/web/e2e/studio-artifact.mjs"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

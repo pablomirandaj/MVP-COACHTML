@@ -144,3 +144,4 @@
 .st-modal { position: fixed; inset: 0; z-index: 40; background: rgba(5, 10, 7, .55); display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px; overflow-y: auto; }
 .st-modal > .st-card { width: 100%; max-width: 560px; }
 @media (prefers-reduced-motion: no-preference) { .st-card, .st-action, .st-item { transition: border-color .15s ease, transform .15s ease; } .st-action:hover, .st-item:hover { transform: translateY(-1px); } }
+.st-chat .st-chip, .st-ticket .st-chip { white-space: normal; text-align: left; max-width: 100%; }

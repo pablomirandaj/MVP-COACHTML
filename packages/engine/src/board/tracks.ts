@@ -1,6 +1,7 @@
 // Pistas de la pizarra: 0,5 s de pausa al empezar cada paso y 1,2 s de acción. El pase sale cuando el pasador
 // termina su movimiento y llega con el receptor.
-import type { Step } from "../narrate";
+import { toWho, type Step } from "../narrate";
+import { slotInfo } from "../lineup";
 import type { TrackActor, TrackPath, Tracks } from "../timeline";
 import type { Player, Pt } from "../types";
 import { states } from "./state";
@@ -11,7 +12,8 @@ const FPS = 20;
 const r4 = (x: number) => Math.round(x * 10000) / 10000;
 const ease = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
 
-const label = (doc: BoardDoc, id: string) => (id.startsWith("own:") ? doc.own.labels[id.slice(4)] ?? id.slice(4) : id.slice(4));
+const ABBR: Record<string, string> = { GK: "POR", RB: "LD", LB: "LI", RWB: "CAD", LWB: "CAI", CB: "DFC", DM: "MCD", CM: "MC", RM: "MD", LM: "MI", AM: "MCO", RW: "ED", LW: "EI", ST: "DC", SS: "SD" };
+const label = (doc: BoardDoc, id: string) => (id.startsWith("own:") ? doc.own.labels[id.slice(4)] ?? id.slice(4) : ABBR[slotInfo(id.slice(4)).pos] ?? id.slice(4));
 
 /** Explicación automática de cada paso de la pizarra (se respeta la nota del entrenador o del asistente). */
 export function narrateBoard(doc: BoardDoc): Step[] {
@@ -25,7 +27,7 @@ export function narrateBoard(doc: BoardDoc): Step[] {
     let title: string, implies: string;
     if (s.pass && typeof s.pass.to === "string") {
       const ran = s.moves.some((m) => m.actor === (s.pass!.to as string));
-      title = `${cap(who(s.pass.from))} pasa a ${who(s.pass.to)}`;
+      title = `${cap(who(s.pass.from))} pasa ${toWho(who(s.pass.to))}`;
       implies = ran ? "Pase al desmarque: el compañero recibe en carrera, por delante de su marca." : "Pase al pie: asegura la posesión y obliga al rival a moverse.";
     } else if (s.pass) {
       title = `${cap(who(s.pass.from))} pasa al espacio`;
@@ -35,7 +37,7 @@ export function narrateBoard(doc: BoardDoc): Step[] {
       title = `${cap(who(d.actor))} conduce`;
       implies = "Conducir hacia un rival lo fija y libera a un compañero.";
     } else if (s.press?.length) {
-      title = s.press.map((p) => `${cap(who(p.actor))} presiona a ${who(p.target)}`).join(" y ");
+      title = s.press.map((p) => `${cap(who(p.actor))} presiona ${toWho(who(p.target))}`).join(" y ");
       implies = "Cerramos el pase interior y le orientamos hacia la banda.";
     } else if (s.moves.length) {
       title = `Movimientos sin balón: ${s.moves.map((m) => label(doc, m.actor)).join(", ")}`;
