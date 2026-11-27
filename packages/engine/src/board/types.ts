@@ -11,6 +11,10 @@ export interface BoardStep {
   pass?: BoardPass;
   press?: BoardPress[];
   note?: { title: string; implies: string; origin: Origin };
+  /** Jugadores protagonistas del paso (borde dorado en el reproductor). */
+  key?: string[];
+  /** Paso clave: «AHORA». */
+  trig?: boolean;
 }
 export interface BoardDoc {
   schema: "fcs.board/1";

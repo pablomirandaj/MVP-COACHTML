@@ -1320,6 +1320,31 @@
             "op",
             "title"
           ]
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "board.mark_step"
+            },
+            "step": {
+              "type": "string",
+              "pattern": "^s[0-9]+$"
+            },
+            "key": {
+              "type": "array",
+              "maxItems": 11,
+              "items": {
+                "type": "string"
+              }
+            },
+            "trig": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "op",
+            "step"
+          ]
         }
       ]
     },

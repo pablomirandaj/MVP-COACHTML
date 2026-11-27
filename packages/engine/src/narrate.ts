@@ -14,7 +14,7 @@ const SWING_ES = { INSWING: "cerrado", OUTSWING: "abierto", NONE: "tenso" } as c
 
 function who(a: Actor | undefined, roster: Player[]): string {
   if (!a) return "un compañero";
-  if (a.team === "OPP") return `su ${a.label || "defensor"}`.trim();
+  if (a.team === "OPP") return a.role === "MAN_MARKER" ? "su marcador" : a.role === "ZONAL_DEFENDER" ? "su zonal" : a.role === "GOALKEEPER" ? "el portero" : a.role === "WALL" ? "su barrera" : "un rival";
   const p = a.player_id ? roster.find((x) => x.id === a.player_id) : undefined;
   if (!p) return `el ${a.label}`;
   const name = p.surname || p.name;
@@ -86,7 +86,7 @@ export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
   } else steps.push({
     t: doc.delivery.kick_t,
     title: `${cap(who(taker, roster))} golpea ${SWING_ES[doc.delivery.swing] ?? ""} hacia ${zoneLabel(doc.delivery.target_zone)}`.replace(/\s+/g, " "),
-    implies: `El balón tarda ${doc.delivery.arrival_t.toFixed(1)} s: los rematadores tienen que llegar a la vez, no esperar parados.`,
+    implies: `El balón tarda ${doc.delivery.arrival_t.toFixed(1).replace(".", ",")} s: los rematadores tienen que llegar a la vez, no esperar parados.`,
     source: "RULE:NARR-DELIVERY",
   });
 
@@ -107,7 +107,7 @@ export function narratePlay(doc: PlayDoc, roster: Player[]): Step[] {
     const decoy = a?.role === "DECOY";
     steps.push({
       t: m.t_start,
-      title: `${cap(who(a, roster))} ${decoy ? "arrastra" : "ataca"} ${zoneLabel(a?.action_zone)}`,
+      title: decoy ? `${cap(who(a, roster))} arrastra ${toWho(zoneLabel(a?.action_zone)).replace(/^a /, "hacia ").replace(/^al /, "hacia el ")}` : `${cap(who(a, roster))} ataca ${zoneLabel(a?.action_zone)}`,
       implies: decoy ? "Se lleva a su marca y abre hueco para el rematador principal." : "Llega en carrera para ganar el primer contacto.",
       source: "RULE:NARR-RUN",
     });
@@ -148,9 +148,9 @@ export function narrateScene(doc: SceneDoc): Step[] {
       implies = `${SPACE_WHY[sp.kind]} Objetivo: ${SPACE_LABEL[sp.kind]}.`;
       source = "RULE:NARR-SPACE";
     } else if (pressers.length) {
-      title = pressers.map((p) => `El ${lab(p)} presiona al ${rivalL(p, near(pos(p), rivals(p)))}`).join(" y ");
+      title = pressers.map((p, i) => `${i ? "el" : "El"} ${lab(p)} presiona a su ${rivalL(p, near(pos(p), rivals(p)))}`).join(" y ");
       implies = covers.length
-        ? `${covers.map((c) => `el ${lab(c)}`).join(" y ")} ${covers.length > 1 ? "cierran" : "cierra"} el pase interior; el balón solo puede ir largo o fuera.`
+        ? `${cap(listOf(covers.map(lab)))} ${covers.length > 1 ? "cierran" : "cierra"} el pase interior; el balón solo puede ir largo o fuera.`
         : "Sin coberturas detrás: si superan al presionador, hay que replegar rápido.";
       source = "RULE:NARR-PRESS";
     } else if (markers.length) {
@@ -180,6 +180,12 @@ export function narrateScene(doc: SceneDoc): Step[] {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** «el MC y el MCD»; etiquetas repetidas se agrupan: «los dos MC». */
+const listOf = (labels: string[]) => {
+  const count = new Map<string, number>(); for (const l of labels) count.set(l, (count.get(l) ?? 0) + 1);
+  const parts = [...count].map(([l, n]) => (n === 1 ? `el ${l}` : `los ${n === 2 ? "dos" : n} ${l}`));
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} y ${parts[parts.length - 1]}` : parts[0];
+};
 /** «a» + «el X» → «al X» (contracción obligatoria en español). */
 export const toWho = (s: string) => (s.startsWith("el ") ? `al ${s.slice(3)}` : `a ${s}`);
 const sortSteps = (s: Step[]) => s.map((x, i) => [x, i] as const).sort((a, b) => a[0].t - b[0].t || a[1] - b[1]).map(([x]) => ({ ...x, t: Math.round(x.t * 100) / 100 }));

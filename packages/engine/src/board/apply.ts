@@ -98,6 +98,12 @@ export function applyBoardCommand(input: BoardDoc, cmd: Command, origin = "EXPLI
       }
       break;
     }
+    case "board.mark_step": {
+      const st = step(cmd.step);
+      if (cmd.key !== undefined) st.key = (cmd.key as string[]).map(String);
+      if (cmd.trig !== undefined) { if (cmd.trig) st.trig = true; else delete st.trig; }
+      break;
+    }
     case "board.set_labels": doc.own.labels = { ...doc.own.labels, ...(cmd.labels ?? {}) }; break;
     case "board.rename": doc.title = String(cmd.title ?? doc.title); break;
     default: throw new Error(`Operación de pizarra no soportada: ${cmd.op}`);

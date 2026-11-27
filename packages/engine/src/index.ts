@@ -24,3 +24,4 @@ export { validateBoard } from "./board/validate";
 export { states as boardStates } from "./board/state";
 export type { BoardDoc, BoardStep, BoardMove, BoardPass, BoardPress, BoardState, MoveKind } from "./board/types";
 export { CONCEPTS, numberSlots, resolvePlayerRef, ROLE_NUMBER_ES, slotAliases, whoIsWho, type Concept, type PlayerRef } from "./football/vocab";
+export * from "./sequence/index";
