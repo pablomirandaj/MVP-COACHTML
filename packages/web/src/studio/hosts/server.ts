@@ -1,5 +1,6 @@
 // Anfitrión "servidor propio": la misma interfaz contra la API Fastify (docs/13). El asistente se ejecuta en el
 // servidor con el mismo bucle y los mismos espacios de trabajo (@fcs/assistant); la clave nunca llega al navegador.
+import { DEFAULT_RULES } from "../lib/rules";
 import type { Player } from "@fcs/engine";
 import { api, get, post } from "../../lib/api";
 import { slug, StoreError, type AiPort, type ExportPort, type Host, type ItemMeta, type StorePort, type StudioItem, type TeamPort } from "../ports";
@@ -53,6 +54,11 @@ export function createServerHost(teamId: string): Host {
       } catch (e: any) { if (e?.status === 409) throw new StoreError("conflict", "Otra persona ha guardado esta jugada."); throw e; }
     },
     remove: async (id) => { await api("DELETE", `/studio/items/${id}`); },
+    settings: async () => {
+      const r = await get<{ rules: string[] | null }>(`/teams/${teamId}/studio/settings`).catch(() => ({ rules: null }));
+      return { rules: r.rules ?? [...DEFAULT_RULES] };
+    },
+    saveSettings: async (s) => { await api("PUT", `/teams/${teamId}/studio/settings`, { rules: s.rules.map((r) => r.trim()).filter(Boolean).slice(0, 20) }); },
   };
   const ai: AiPort = {
     available: async () => (await get<{ available: boolean }>("/studio/assistant").catch(() => ({ available: false }))).available,

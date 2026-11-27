@@ -1,5 +1,6 @@
 // Anfitrión "página de Claude": datos compartidos con db, el asistente con sample (lo paga quien lo usa) y la
 // exportación con downloads. Todo lo demás (motor, explicación, HTML) se ejecuta en el navegador.
+import { DEFAULT_RULES } from "../lib/rules";
 import { ASK_COACH, contextSummary, execTool, SYSTEM_PROMPT, type Workspace } from "@fcs/assistant";
 import type { Player } from "@fcs/engine";
 import { slug, StoreError, type AiPort, type AiTurnRequest, type ExportPort, type Host, type ItemMeta, type StorePort, type StudioItem, type TeamPort } from "../ports";
@@ -7,7 +8,7 @@ import { seedRoster, SNAPSHOT, TEAM } from "./common";
 
 type Use = (name: string) => Promise<any>;
 const use: Use = (name) => (globalThis as any).window?.claude?.use?.(name) ?? Promise.resolve(null);
-export const ITEMS = "studio_items", ROSTER_DOC = "studio/roster";
+export const ITEMS = "studio_items", ROSTER_DOC = "studio/roster", SETTINGS_DOC = "studio/settings";
 const tabId = `tab_${Math.random().toString(36).slice(2, 10)}`;
 
 function teamPort(db: any): TeamPort {
@@ -26,6 +27,7 @@ function teamPort(db: any): TeamPort {
 
 function storePort(db: any): StorePort {
   const mem = new Map<string, StudioItem>();
+  let memSettings: { rules: string[] } | null = null;
   const ref = (id: string) => db.collection(ITEMS).doc(id);
   return {
     async list() {
@@ -57,6 +59,15 @@ function storePort(db: any): StorePort {
       return { id: item.id, revision, updated_at };
     },
     async remove(id) { if (db) await ref(id).delete(); else mem.delete(id); },
+    async settings() {
+      const s = db ? await db.doc(SETTINGS_DOC).get().catch(() => null) : null;
+      const rules = s?.exists ? s.data()?.rules : memSettings?.rules;
+      return { rules: Array.isArray(rules) ? rules.map(String) : [...DEFAULT_RULES] };
+    },
+    async saveSettings(st) {
+      const rules = st.rules.map((r) => r.trim()).filter(Boolean).slice(0, 20);
+      if (db) await db.doc(SETTINGS_DOC).set({ rules, updated_at: new Date().toISOString() }); else memSettings = { rules };
+    },
   };
 }
 

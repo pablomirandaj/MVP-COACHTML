@@ -87,4 +87,20 @@ describe.skipIf(!URL_)("Pizarra Studio en el servidor", () => {
     expect((await call("DELETE", "/api/studio/items/board_t1", coach)).status).toBe(204);
     expect((await call("GET", "/api/studio/items/board_t1", coach)).status).toBe(404);
   });
+
+  it("las reglas fijas del equipo: por defecto ninguna guardada, PUT y GET; quien no es del equipo recibe 404", async () => {
+    expect((await call("GET", `/api/teams/${teamId}/studio/settings`, coach)).body).toEqual({ rules: null });
+    const put = await call("PUT", `/api/teams/${teamId}/studio/settings`, coach, { rules: ["Primero se bloquea", "Diez en el campo"] });
+    expect(put.status).toBe(200);
+    expect((await call("GET", `/api/teams/${teamId}/studio/settings`, coach)).body).toEqual({ rules: ["Primero se bloquea", "Diez en el campo"] });
+    expect((await call("GET", `/api/teams/${teamId}/studio/settings`, other)).status).toBe(404);
+    expect((await call("PUT", `/api/teams/${teamId}/studio/settings`, other, { rules: [] })).status).toBe(404);
+  });
+
+  it("la ficha de la jugada se guarda con la pieza", async () => {
+    const sheet = { subtitle: "Salida por fuera", table: [["4", "Abre a la banda"]], hueco: "La espalda del extremo", clave: "Pase tenso", riesgo: "Si cierran, por dentro" };
+    const c = await call("POST", `/api/teams/${teamId}/studio/items`, coach, { id: "board_sheet", kind: "BOARD", title: "Con ficha", doc: board(), sheet });
+    expect(c.status).toBe(201);
+    expect((await call("GET", "/api/studio/items/board_sheet", coach)).body.sheet).toEqual(sheet);
+  });
 });

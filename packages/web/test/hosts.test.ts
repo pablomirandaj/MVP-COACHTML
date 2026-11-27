@@ -87,4 +87,29 @@ describe("Anfitrión de la página de Claude", () => {
     expect(f.saved[0].filename).toMatch(/\.html$/);
     for (const t of ["Sporting Hortaleza", "Esto no cambia nunca", "data:image/png"]) expect(String(f.saved[0].data)).toContain(t);
   });
+
+  it("las reglas fijas: 5 por defecto y se guardan", async () => {
+    fakeClaude();
+    const host = await createArtifactHost();
+    expect((await host.store.settings()).rules).toHaveLength(5);
+    await host.store.saveSettings({ rules: ["Uno", "Dos"] });
+    const again = await createArtifactHost();
+    expect((await again.store.settings()).rules).toEqual(["Uno", "Dos"]);
+  });
+
+  it("la carpeta del partido con 2 piezas lleva 2 pestañas; una borrada se omite y se avisa", async () => {
+    const f = fakeClaude();
+    const host = await createArtifactHost();
+    const { exportFolder, DEFAULT_RULES } = await import("../src/studio/lib/dossier");
+    const mk = (id: string, title: string): StudioItem => ({ id, kind: "BOARD", title, revision: 0, updated_at: "", history: [],
+      doc: { ...createBoard({ own: "F_433", opp: "F_442" }), steps: [{ id: "s1", moves: [], pass: { from: "own:GK", to: "own:CB_L", kind: "GROUND", origin: "EXPLICIT" } }] } as any });
+    await host.store.save(mk("b1", "Salida corta"));
+    await host.store.save(mk("b2", "Salida larga"));
+    const r = await exportFolder(host, ["b2", "b1", "borrada"], { roster: [], rules: DEFAULT_RULES, title: "Jornada 12", match: "Jornada 12", opponent: "Canillas" });
+    expect(r.skipped).toBe(1);
+    const html = String(f.saved[0].data);
+    expect(html.match(/class="fcsd-tab/g)).toHaveLength(2);
+    expect(html.indexOf("Salida larga")).toBeLessThan(html.indexOf("Salida corta"));
+    expect(f.saved[0].filename).toMatch(/\.html$/);
+  });
 });

@@ -36,12 +36,18 @@ export type ItemMeta = Omit<StudioItem, "doc" | "history"> & { doc?: StudioItem[
 export interface Saved { id: string; revision: number; updated_at: string }
 export class StoreError extends Error { constructor(public code: "conflict" | "unavailable" | "quota", message: string) { super(message); } }
 
+/** Ajustes del cuerpo técnico que se guardan con el equipo. */
+export interface Settings { rules: string[] }
+
 export interface StorePort {
   list(): Promise<ItemMeta[]>;
   load(id: string): Promise<StudioItem | null>;
   /** Rechaza con StoreError("conflict") si `baseRevision` no coincide con la guardada. */
   save(item: StudioItem, baseRevision?: number): Promise<Saved>;
   remove(id: string): Promise<void>;
+  /** Reglas fijas de la carpeta del partido; si no hay guardadas, las de la J5. */
+  settings(): Promise<Settings>;
+  saveSettings(s: Settings): Promise<void>;
 }
 
 export interface ChatTurn { role: "user" | "assistant"; content: string }

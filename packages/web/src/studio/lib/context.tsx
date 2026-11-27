@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Player } from "@fcs/engine";
 import type { Fixture, Host, StudioItem, StudioKind } from "../ports";
-import { DEFAULT_RULES } from "./dossier";
+import { DEFAULT_RULES } from "./rules";
 
 export type Route = "home" | "board" | "setpieces" | "plans" | "library" | "roster";
 export const ROUTES: Route[] = ["home", "board", "setpieces", "plans", "library", "roster"];
@@ -34,7 +34,10 @@ export function StudioProvider({ host, children, hashPrefix = "" }: { host: Host
   const [rosterReady, setReady] = useState(false);
   const [libraryVersion, setLib] = useState(0);
   const drafts = useRef(new Map<string, unknown>()).current;
-  const [rules, setRules] = useState<string[]>(DEFAULT_RULES);
+  const [rules, setRulesState] = useState<string[]>(DEFAULT_RULES);
+  useEffect(() => { host.store.settings().then((st) => setRulesState(st.rules)).catch(() => {}); }, [host]);
+  /** Cambia las reglas fijas y las guarda con el equipo (si falla, se quedan en esta sesión). */
+  const setRules = (r: string[]) => { setRulesState(r); host.store.saveSettings({ rules: r }).catch(() => {}); };
   useEffect(() => { const on = () => setRoute(fromHash(hashPrefix)); addEventListener("hashchange", on); return () => removeEventListener("hashchange", on); }, [hashPrefix]);
   const [loaded, setLoaded] = useState(!host.team.load);
   const [loadError, setLoadError] = useState<string | null>(null);
