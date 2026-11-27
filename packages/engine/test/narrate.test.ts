@@ -41,6 +41,12 @@ describe("Explicación por pasos", () => {
     expect(steps[1].source).toBe("MANUAL");
   });
 
+  it("la frase de lo que implica también se puede escribir a mano", () => {
+    const spec: SceneSpec = { ...press, keyframes: press.keyframes.map((k, i) => (i === 2 ? { ...k, note: "¡Ahora!", implies: "Saltan los tres a la vez." } : k)) };
+    const steps = narrateScene(computeScene(spec, DEFAULT_PITCH));
+    expect(steps[2]).toMatchObject({ title: "¡Ahora!", implies: "Saltan los tres a la vez.", source: "MANUAL" });
+  });
+
   it("es determinista y las pistas llevan los pasos", () => {
     const scene = computeScene(press, DEFAULT_PITCH);
     expect(canonicalHash(narrateScene(scene))).toBe(canonicalHash(narrateScene(scene)));

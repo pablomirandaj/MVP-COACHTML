@@ -13,7 +13,7 @@ export type SceneType = "PRESS_OWN" | "PRESS_OPP" | "RETREAT" | "REST_DEFENSE" |
 export type BlockHeight = "HIGH" | "MID" | "LOW";
 
 export interface Jump { who: string; to: string; curve?: "SCREEN_GK" }
-export interface SceneKeyframe { t: number; ball: { holder: string }; event?: "TRIGGER"; note?: string }
+export interface SceneKeyframe { t: number; ball: { holder: string }; event?: "TRIGGER"; note?: string; /** Qué implica, escrito por el entrenador o el asistente. */ implies?: string }
 export interface SceneSpec {
   type: SceneType;
   title?: string;
@@ -40,7 +40,7 @@ export interface SceneSpec {
   };
   keyframes: SceneKeyframe[];
 }
-export interface SceneFrame { t: number; event?: string; note?: string; ball: Pt; own: Record<string, Pt>; opp: Record<string, Pt>; roles: Record<string, string> }
+export interface SceneFrame { t: number; event?: string; note?: string; implies?: string; ball: Pt; own: Record<string, Pt>; opp: Record<string, Pt>; roles: Record<string, string> }
 export interface SceneDoc {
   schema: "fcs.scene/1"; type: SceneType; title: string; pitch: Pitch;
   own_labels: Record<string, string>; opp_labels: Record<string, string>;
@@ -260,7 +260,7 @@ export function computeScene(spec: SceneSpec, pitch: Pitch): SceneDoc {
     }
 
     frames.push({
-      t: r2(kf.t), ...(kf.event ? { event: kf.event } : {}), ...(kf.note ? { note: kf.note } : {}),
+      t: r2(kf.t), ...(kf.event ? { event: kf.event } : {}), ...(kf.note ? { note: kf.note } : {}), ...(kf.implies ? { implies: kf.implies } : {}),
       ball: toPt(ball, pitch), own: mapObj(own, (m) => toPt(m, pitch)), opp: mapObj(opp, (m) => toPt(m, pitch)), roles,
     });
   }

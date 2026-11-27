@@ -1,5 +1,5 @@
 export * from "./types";
-export { CATALOG_VERSION, ENGINE_VERSION, FORMATIONS } from "./catalog/index";
+export { CATALOG_VERSION, ENGINE_VERSION, FORMATIONS, ZONES } from "./catalog/index";
 export { DEFAULT_PITCH, toM, toN, resolveZone } from "./geometry";
 export { applyLineupCommand, emptyLineup, groupSlots, lineupPositions, validateLineup, slotInfo, type LineupDoc } from "./lineup";
 export { createCorner, planSetPiece, suitability, type PlanResult, type SetPieceGeometry } from "./setpiece/plan";

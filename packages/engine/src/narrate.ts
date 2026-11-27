@@ -170,6 +170,7 @@ export function narrateScene(doc: SceneDoc): Step[] {
     }
     if (sp && !implies.includes(SPACE_LABEL[sp.kind])) implies = `${implies} Objetivo: ${SPACE_LABEL[sp.kind]}.`;
     if (f.note) { title = f.note; source = "MANUAL"; }
+    if (f.implies) { implies = f.implies; source = "MANUAL"; }
     return { t: f.t, title, implies, source };
   });
 }
