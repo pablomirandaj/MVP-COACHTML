@@ -6,3 +6,4 @@ dist/
 packages/web/dist/
 .superpowers/
 packages/web/dist-artifact/
+e2e-shots/
