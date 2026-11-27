@@ -12,7 +12,7 @@ export function Roster() {
   const fromRffm = draft.some((p) => p.tags?.includes("rffm"));
   const save = async () => {
     setState("saving");
-    try { await host.team.saveRoster(draft); setRoster(draft); setState("saved"); }
+    try { const saved = await host.team.saveRoster(draft); setRoster(saved); setDraft(saved); setState("saved"); }
     catch { setState("error"); }
   };
   return (

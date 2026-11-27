@@ -8,13 +8,17 @@ import { editorReducer, initEditor, tracksOf, type AnyDoc } from "./editor";
 
 const newId = (k: StudioKind) => `${k.toLowerCase()}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
-export function useStudioEditor(kind: StudioKind, initial: { item?: StudioItem; doc: AnyDoc | null; title: string; opponent?: string; match?: number }) {
-  const { host, roster, bumpLibrary } = useStudio();
-  const [s, dispatch] = useReducer(editorReducer, undefined, () => initEditor(kind, initial.item?.doc ?? initial.doc, roster));
-  const [title, setTitle] = useState(initial.item?.title ?? initial.title);
-  const [meta, setMeta] = useState({ id: initial.item?.id ?? newId(kind), revision: initial.item?.revision ?? 0, opponent: initial.item?.opponent ?? initial.opponent, match: initial.item?.match ?? initial.match });
+interface Draft { s: ReturnType<typeof initEditor>; title: string; meta: { id: string; revision: number; opponent?: string; match?: number }; savedHash: string | null }
+
+export function useStudioEditor(kind: StudioKind, initial: { item?: StudioItem; doc: AnyDoc | null; title: string; opponent?: string; match?: number }, draftKey?: string) {
+  const { host, roster, bumpLibrary, drafts } = useStudio();
+  const draft = draftKey ? (drafts.get(draftKey) as Draft | undefined) : undefined;
+  const [s, dispatch] = useReducer(editorReducer, undefined, () => draft?.s ?? initEditor(kind, initial.item?.doc ?? initial.doc, roster));
+  const [title, setTitle] = useState(draft?.title ?? initial.item?.title ?? initial.title);
+  const [meta, setMeta] = useState(draft?.meta ?? { id: initial.item?.id ?? newId(kind), revision: initial.item?.revision ?? 0, opponent: initial.item?.opponent ?? initial.opponent, match: initial.item?.match ?? initial.match });
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "conflict" | "error">("idle");
-  const [savedHash, setSavedHash] = useState<string | null>(initial.item ? JSON.stringify(initial.item.doc) : null);
+  const [savedHash, setSavedHash] = useState<string | null>(draft ? draft.savedHash : initial.item ? JSON.stringify(initial.item.doc) : null);
+  useEffect(() => { if (draftKey) drafts.set(draftKey, { s, title, meta, savedHash } satisfies Draft); }, [draftKey, s, title, meta, savedHash]);
   useEffect(() => { dispatch({ type: "roster", roster }); }, [roster]);
   const tracks = useMemo(() => { try { return tracksOf(kind, s.doc, roster, title); } catch { return null; } }, [kind, s.doc, roster, title]);
   const dirty = s.doc !== null && JSON.stringify(s.doc) !== savedHash;

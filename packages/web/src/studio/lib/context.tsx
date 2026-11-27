@@ -1,5 +1,5 @@
 // Estado compartido de Pizarra Studio: anfitrión, plantilla, sección actual y pieza abierta.
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Player } from "@fcs/engine";
 import type { Fixture, Host, StudioItem, StudioKind } from "../ports";
 
@@ -18,6 +18,8 @@ interface Ctx {
   host: Host; route: Route; go: (r: Route, open?: Omit<Open, "nonce">) => void; open: Open | null;
   roster: Player[]; setRoster: (p: Player[]) => void; rosterReady: boolean;
   next: Fixture | undefined; opponent: string | undefined; libraryVersion: number; bumpLibrary: () => void;
+  /** Borradores en memoria: lo que está a medias en cada sección sobrevive al cambiar de sección. */
+  drafts: Map<string, unknown>;
 }
 const StudioCtx = createContext<Ctx | null>(null);
 export const useStudio = () => { const c = useContext(StudioCtx); if (!c) throw new Error("Fuera de Pizarra Studio"); return c; };
@@ -28,15 +30,29 @@ export function StudioProvider({ host, children, hashPrefix = "" }: { host: Host
   const [roster, setRoster] = useState<Player[]>([]);
   const [rosterReady, setReady] = useState(false);
   const [libraryVersion, setLib] = useState(0);
+  const drafts = useRef(new Map<string, unknown>()).current;
   useEffect(() => { const on = () => setRoute(fromHash(hashPrefix)); addEventListener("hashchange", on); return () => removeEventListener("hashchange", on); }, [hashPrefix]);
+  const [loaded, setLoaded] = useState(!host.team.load);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  useEffect(() => { if (host.team.load) host.team.load().then(() => setLoaded(true)).catch((e) => setLoadError(String(e?.message ?? e))); }, [host]);
   useEffect(() => { host.team.roster().then((r) => { setRoster(r); setReady(true); }).catch(() => setReady(true)); }, [host]);
-  const next = useMemo(() => host.team.fixtures().filter((f) => !f.resultado).sort((a, b) => a.jornada - b.jornada)[0], [host]);
+  const next = useMemo(() => host.team.fixtures().filter((f) => !f.resultado).sort((a, b) => a.jornada - b.jornada)[0], [host, loaded]);
   const go = useCallback((r: Route, o?: Omit<Open, "nonce">) => {
     if (o) setOpen({ ...o, nonce: Date.now() });
     if (location.hash !== `#${hashPrefix}${r}`) location.hash = `${hashPrefix}${r}`;
     setRoute(r);
     window.scrollTo?.({ top: 0 });
   }, []);
-  const value: Ctx = { host, route, go, hashPrefix, open, roster, setRoster, rosterReady, next, opponent: next?.rival, libraryVersion, bumpLibrary: () => setLib((v) => v + 1) };
+  const value: Ctx = { host, route, go, hashPrefix, open, roster, setRoster, rosterReady, next, opponent: next?.rival, libraryVersion, bumpLibrary: () => setLib((v) => v + 1), drafts };
+  if (loadError) return <p style={{ padding: 24 }}>No se ha podido cargar el equipo: {loadError}</p>;
+  if (!loaded) return <p style={{ padding: 24 }}>Cargando el equipo…</p>;
   return <StudioCtx.Provider value={value}>{children}</StudioCtx.Provider>;
+}
+
+/** Estado que sobrevive a cambiar de sección (vive en el proveedor mientras la página está abierta). */
+export function useDraftState<T>(key: string, initial: T | (() => T)): [T, (v: T) => void] {
+  const { drafts } = useStudio();
+  const [v, setV] = useState<T>(() => (drafts.has(key) ? (drafts.get(key) as T) : typeof initial === "function" ? (initial as () => T)() : initial));
+  const set = (n: T) => { drafts.set(key, n); setV(n); };
+  return [v, set];
 }

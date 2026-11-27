@@ -6,7 +6,7 @@ import { ChatPanel } from "../components/ChatPanel";
 import { Diagnostics, EditorBar } from "../components/EditorBar";
 import { currentStep, PitchBoard, useTimeline } from "../components/PitchBoard";
 import { StepList } from "../components/StepList";
-import { useStudio } from "../lib/context";
+import { useDraftState, useStudio } from "../lib/context";
 import { playerName, posEs, teamShort } from "../lib/format";
 import { useStudioEditor } from "../lib/useEditor";
 import type { StudioItem } from "../ports";
@@ -33,13 +33,14 @@ const createCmd = (f: Form): Command => {
 export function SetPieces() {
   const { open, opponent } = useStudio();
   const init = open?.kind === "SETPIECE" ? open : undefined;
-  return <SetPieceEditor key={init?.nonce ?? 0} item={init?.item} startType={(init?.preset?.type as SetPieceType | undefined) ?? "CORNER_ATT"} opponent={(init?.preset?.opponent as string | undefined) ?? opponent} />;
+  const key = `setpiece:${init?.nonce ?? 0}`;
+  return <SetPieceEditor key={key} draftKey={key} item={init?.item} startType={(init?.preset?.type as SetPieceType | undefined) ?? "CORNER_ATT"} opponent={(init?.preset?.opponent as string | undefined) ?? opponent} />;
 }
 
-function SetPieceEditor({ item, startType, opponent }: { item?: StudioItem; startType: SetPieceType; opponent?: string }) {
+function SetPieceEditor({ item, startType, opponent, draftKey }: { item?: StudioItem; startType: SetPieceType; opponent?: string; draftKey: string }) {
   const { roster, next } = useStudio();
-  const [form, setForm] = useState<Form>({ type: (item?.doc as PlayDoc | undefined)?.type as SetPieceType ?? startType, side: "LEFT", depth: 18, distance: 8, variant: "LONG", scheme: "MIXED" });
-  const ed = useStudioEditor("SETPIECE", { item, doc: null, title: `${SP_LABEL[form.type]}${opponent ? ` · ${teamShort(opponent)}` : ""}`, opponent, match: next?.jornada });
+  const [form, setForm] = useDraftState<Form>(`${draftKey}:form`, { type: (item?.doc as PlayDoc | undefined)?.type as SetPieceType ?? startType, side: "LEFT", depth: 18, distance: 8, variant: "LONG", scheme: "MIXED" });
+  const ed = useStudioEditor("SETPIECE", { item, doc: null, title: `${SP_LABEL[form.type]}${opponent ? ` · ${teamShort(opponent)}` : ""}`, opponent, match: next?.jornada }, draftKey);
   const doc = ed.s.doc as PlayDoc | null;
   const tracks = ed.tracks;
   const tl = useTimeline(tracks);

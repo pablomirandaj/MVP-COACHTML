@@ -110,6 +110,10 @@ try {
   await shot("03-pizarra");
   await p.getByRole("button", { name: "Deshacer lo último" }).click();
   if ((await stepTabs()) !== 2) fail("Deshacer no quitó el paso del asistente");
+  // Cambiar de sección y volver no pierde lo que no se ha guardado.
+  await p.getByRole("link", { name: "Inicio" }).click();
+  await p.getByRole("link", { name: "Pizarra" }).click();
+  if ((await stepTabs()) !== 2) fail(`Al volver a la pizarra se perdieron los pasos (${await stepTabs()})`);
   await p.getByRole("button", { name: "Guardar", exact: true }).click();
   await p.getByRole("button", { name: "Guardado" }).waitFor();
 
@@ -121,6 +125,10 @@ try {
   await p.getByRole("button", { name: "Abierto", exact: true }).click();
   if ((await p.getByRole("button", { name: "Abierto", exact: true }).getAttribute("aria-pressed")) !== "true") fail("El centro no cambió a abierto");
   await shot("04-falta");
+
+  await p.getByRole("link", { name: "Inicio" }).click();
+  await p.getByRole("link", { name: "Balón parado" }).click();
+  if ((await p.getByRole("button", { name: "Abierto", exact: true }).getAttribute("aria-pressed")) !== "true") fail("Al volver al balón parado se perdió la jugada");
 
   // 5. Planes: salida de balón 3+1 contra 2.
   await p.getByRole("link", { name: "Planes" }).click();

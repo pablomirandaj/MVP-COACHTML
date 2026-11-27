@@ -23,13 +23,14 @@ const DUR = STEP_PAUSE_S + STEP_ACTION_S;
 export function Board() {
   const { open, opponent } = useStudio();
   const init = open?.kind === "BOARD" ? open : undefined;
-  return <BoardEditor key={init?.nonce ?? 0} item={init?.item} opponent={(init?.preset?.opponent as string | undefined) ?? opponent} />;
+  const key = `board:${init?.nonce ?? 0}`;
+  return <BoardEditor key={key} draftKey={key} item={init?.item} opponent={(init?.preset?.opponent as string | undefined) ?? opponent} />;
 }
 
-function BoardEditor({ item, opponent }: { item?: StudioItem; opponent?: string }) {
+function BoardEditor({ item, opponent, draftKey }: { item?: StudioItem; opponent?: string; draftKey: string }) {
   const { roster, next } = useStudio();
   const fresh = useMemo(() => createBoard({ own: "F_433", opp: "F_442", title: "Nueva jugada" }), []);
-  const ed = useStudioEditor("BOARD", { item, doc: fresh, title: opponent ? `Jugada contra ${teamShort(opponent)}` : "Nueva jugada", opponent, match: next?.jornada });
+  const ed = useStudioEditor("BOARD", { item, doc: fresh, title: opponent ? `Jugada contra ${teamShort(opponent)}` : "Nueva jugada", opponent, match: next?.jornada }, draftKey);
   const doc = ed.s.doc as BoardDoc;
   const tracks = ed.tracks!;
   const tl = useTimeline(tracks);

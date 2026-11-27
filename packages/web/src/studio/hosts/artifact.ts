@@ -19,7 +19,7 @@ function teamPort(db: any): TeamPort {
       const players = s.exists ? (s.data()?.players as Player[] | undefined) : undefined;
       return players?.length ? players.map((p) => ({ ...p })) : seedRoster();
     },
-    async saveRoster(players) { if (db) await db.doc(ROSTER_DOC).set({ players, updated_at: new Date().toISOString() }); },
+    async saveRoster(players) { if (db) await db.doc(ROSTER_DOC).set({ players, updated_at: new Date().toISOString() }); return players; },
     fixtures: () => SNAPSHOT.fixtures, standings: () => SNAPSHOT.standings, results: () => SNAPSHOT.results, scorers: () => SNAPSHOT.scorers,
   };
 }

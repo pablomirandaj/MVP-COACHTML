@@ -1,11 +1,10 @@
 // Planes de juego: salida de balón, presión, ataque a espacios, repliegue y vigilancias, calculados por el motor.
-import { useState } from "react";
 import { FORMATIONS, type SceneSpec, type SpaceKind } from "@fcs/engine";
 import { ChatPanel } from "../components/ChatPanel";
 import { Diagnostics, EditorBar } from "../components/EditorBar";
 import { currentStep, PitchBoard, useTimeline } from "../components/PitchBoard";
 import { StepList } from "../components/StepList";
-import { useStudio } from "../lib/context";
+import { useDraftState, useStudio } from "../lib/context";
 import { teamShort } from "../lib/format";
 import { planOf, PLANS, presetScene, withFormations, type PlanId } from "../lib/scenes";
 import { useStudioEditor } from "../lib/useEditor";
@@ -19,7 +18,7 @@ export function Plans() {
   const { open, opponent } = useStudio();
   const init = open?.kind === "SCENE" ? open : undefined;
   const start = init?.item ? planOf(init.item.doc as SceneSpec) : typeToPlan(init?.preset?.type as string | undefined);
-  const [plan, setPlan] = useState<PlanId | null>(start ?? null);
+  const [plan, setPlan] = useDraftState<PlanId | null>(`plans:${init?.nonce ?? 0}`, start ?? null);
   const opp = (init?.preset?.opponent as string | undefined) ?? opponent;
   if (!plan) return (
     <div className="st-stack" style={{ gap: 14 }}>
@@ -27,13 +26,13 @@ export function Plans() {
       <div className="st-actions">{PLANS.map((p) => <button key={p.id} className="st-action" onClick={() => setPlan(p.id)}><b>{p.label}</b><span>{p.desc}</span></button>)}</div>
     </div>
   );
-  return <PlanEditor key={`${plan}-${init?.nonce ?? 0}`} plan={plan} item={init?.item && planOf(init.item.doc as SceneSpec) === plan ? init.item : undefined} opponent={opp} onBack={() => setPlan(null)} />;
+  return <PlanEditor key={`${plan}-${init?.nonce ?? 0}`} draftKey={`plan:${plan}:${init?.nonce ?? 0}`} plan={plan} item={init?.item && planOf(init.item.doc as SceneSpec) === plan ? init.item : undefined} opponent={opp} onBack={() => setPlan(null)} />;
 }
 
-function PlanEditor({ plan, item, opponent, onBack }: { plan: PlanId; item?: StudioItem; opponent?: string; onBack: () => void }) {
+function PlanEditor({ plan, item, opponent, onBack, draftKey }: { plan: PlanId; item?: StudioItem; opponent?: string; onBack: () => void; draftKey: string }) {
   const { next } = useStudio();
   const label = PLANS.find((p) => p.id === plan)!.label;
-  const ed = useStudioEditor("SCENE", { item, doc: presetScene(plan), title: `${label}${opponent ? ` · ${teamShort(opponent)}` : ""}`, opponent, match: next?.jornada });
+  const ed = useStudioEditor("SCENE", { item, doc: presetScene(plan), title: `${label}${opponent ? ` · ${teamShort(opponent)}` : ""}`, opponent, match: next?.jornada }, draftKey);
   const spec = ed.s.doc as SceneSpec;
   const tracks = ed.tracks!;
   const tl = useTimeline(tracks);

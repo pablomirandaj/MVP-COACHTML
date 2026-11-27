@@ -10,9 +10,12 @@ export interface Result { jornada: number; fecha: string; hora: string; local: s
 export interface Scorer { jugador: string; equipo: string; partidos: number; goles: number; penalti: number }
 
 export interface TeamPort {
+  /** Carga previa (anfitrión servidor): equipo y calendario. La interfaz espera a que termine. */
+  load?(): Promise<void>;
   team(): TeamInfo;
   roster(): Promise<Player[]>;
-  saveRoster(players: Player[]): Promise<void>;
+  /** Guarda y devuelve la plantilla tal como queda (con los identificadores definitivos). */
+  saveRoster(players: Player[]): Promise<Player[]>;
   fixtures(): Fixture[];
   standings(): Standing[];
   results(): Result[];

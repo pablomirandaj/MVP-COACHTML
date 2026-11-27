@@ -3,7 +3,16 @@
 import type { Player } from "@fcs/engine";
 import { api, get, post } from "../../lib/api";
 import { slug, StoreError, type AiPort, type ExportPort, type Host, type ItemMeta, type StorePort, type StudioItem, type TeamPort } from "../ports";
-import { exportDocument, SNAPSHOT, TEAM } from "./common";
+import type { Fixture, TeamInfo } from "../ports";
+import { exportDocument, TEAM } from "./common";
+
+const MADRID = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+/** Fecha (AAAA-MM-DD) y hora (HH:MM) de Madrid a partir de un instante UTC. */
+function madrid(iso: string | null): { fecha: string; hora: string } {
+  if (!iso) return { fecha: "", hora: "" };
+  const parts = Object.fromEntries(MADRID.formatToParts(new Date(iso)).map((p) => [p.type, p.value]));
+  return { fecha: `${parts.year}-${parts.month}-${parts.day}`, hora: `${parts.hour}:${parts.minute}` };
+}
 
 const POS_FROM_API = (p: any): Player => ({
   id: p.id, n: p.shirt_number ?? undefined, name: p.nickname || p.first_name, surname: p.last_name, pos: p.primary_position,
@@ -12,16 +21,28 @@ const POS_FROM_API = (p: any): Player => ({
 } as Player);
 
 export function createServerHost(teamId: string): Host {
+  // El equipo y su calendario salen de la API; clasificación, resultados del grupo y goleadores aún no están en el servidor.
+  let info: TeamInfo = { ...TEAM, name: "", short: "Equipo", competition: "", source: "este servidor" };
+  let fixtures: Fixture[] = [];
   const team: TeamPort = {
-    team: () => TEAM,
+    async load() {
+      const [t, matches] = await Promise.all([get<any>(`/teams/${teamId}`), get<any[]>(`/teams/${teamId}/matches`)]);
+      info = { ...info, name: t.name, short: t.name, competition: t.category ?? "", season: t.season_label ?? "", snapshot_at: new Date().toISOString().slice(0, 10) };
+      fixtures = matches.filter((m) => m.status !== "BYE" && m.opponent).map((m) => ({
+        jornada: m.matchday ?? 0, ...madrid(m.kickoff_at), condicion: m.is_home ? "Casa" : "Fuera", rival: m.opponent,
+        goles_favor: null, goles_contra: null, resultado: m.status === "PLAYED" ? "E" : "", campo: m.venue ?? "",
+      } as Fixture)).sort((a, b) => a.jornada - b.jornada);
+    },
+    team: () => info,
     roster: async () => (await get<any[]>(`/teams/${teamId}/players`)).map(POS_FROM_API),
     async saveRoster(players) {
       for (const p of players) {
         const body = { first_name: p.name, last_name: p.surname ?? "", shirt_number: p.n ?? null, primary_position: p.pos || "CM", dominant_foot: p.foot, height_cm: p.height ?? null };
         if (p.id.startsWith("pl_")) await post(`/teams/${teamId}/players`, body); else await api("PATCH", `/players/${p.id}`, body);
       }
+      return (await get<any[]>(`/teams/${teamId}/players`)).map(POS_FROM_API);
     },
-    fixtures: () => SNAPSHOT.fixtures, standings: () => SNAPSHOT.standings, results: () => SNAPSHOT.results, scorers: () => SNAPSHOT.scorers,
+    fixtures: () => fixtures, standings: () => [], results: () => [], scorers: () => [],
   };
   const store: StorePort = {
     list: () => get<ItemMeta[]>(`/teams/${teamId}/studio/items`),

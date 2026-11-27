@@ -79,7 +79,7 @@ export function Home() {
           </>}
         </section>
       </div>
-      <p className="st-small st-muted">Datos de la {team.source}, a {longDate(team.snapshot_at)}.</p>
+      <p className="st-small st-muted">Fuente: {team.source} · {longDate(team.snapshot_at)}.</p>
     </div>
   );
 }
