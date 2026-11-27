@@ -1,5 +1,7 @@
 # Football Coach Studio — Blueprint de producto
 
+> **27/11/2026 — Pizarra Studio**: pizarra por pasos con asistente, balón parado completo (córner y falta lateral a favor y en contra, saque de banda), planes de juego (salida de balón, presión, ataque a espacios, repliegue, vigilancias) y HTML por pasos para los jugadores. Funciona como página de Claude y dentro de la web con servidor. Ver el [diseño](docs/superpowers/specs/2026-11-26-pizarra-studio-design.md) y ADR‑021/022.
+>
 > **26/11/2026 — MVP: sénior, sin voz, con asistente conversacional y escenas de fases exportables a HTML.** Ver [23 §0](docs/23_MVP_SCOPE.md), [31](docs/31_CONVERSATIONAL_ASSISTANT.md), [32](docs/32_GAME_PHASES_MODULE.md) y ADR‑016/017/018 en [29](docs/29_ARCHITECTURE_DECISIONS.md).
 
 Paquete de investigación, arquitectura, diseño y especificación de **Football Coach Studio (FCS)**: plataforma de planificación táctica para entrenadores de fútbol 11 (amateur, semiprofesional y formativo) cuyo flujo principal es:
@@ -22,7 +24,9 @@ Principio rector: **el motor táctico es determinista y no depende de IA generat
 | Servidor (`packages/server`): API Fastify, login, PostgreSQL, charla en PDF | **Implementado y verificado** (9 pruebas de integración con PostgreSQL real) |
 | Asistente conversacional (pieza intercambiable de modelo) | **Implementado**; probado con un modelo simulado. **Pendiente**: prueba con la API real (requiere clave) |
 | Aplicación web (`packages/web`) | **Implementada**; prueba de extremo a extremo con Chromium en verde |
-| Voz, compartir con jugadores, recuperación de contraseña | **Pendiente** |
+| Pizarra Studio (`packages/web/src/studio`, `@fcs/assistant`) | **Implementada**; publicada como página de Claude y enganchada al servidor (`#/studio/<equipo>/home`); E2E en verde en los dos modos |
+| Motor: falta lateral, saque de banda, balón parado en contra, salida de balón, ataque a espacios, pizarra libre y explicación por pasos | **Implementado y verificado** (80 pruebas del motor) |
+| Voz, recuperación de contraseña, plantilla automática (la RFFM no permite leer fichas; BeSoccer bloquea el acceso automático) | **Pendiente** |
 
 ## Cómo ejecutarlo
 
@@ -38,6 +42,16 @@ pnpm server                     # API + web en http://127.0.0.1:8787 (aplica mig
 Variables del servidor: `DATABASE_URL`, `PORT`, `COOKIE_SECURE=1` (producción), `CHROMIUM_PATH` (para la charla en PDF),
 `ANTHROPIC_API_KEY` y `ASSISTANT_MODEL` (por defecto `claude-opus-5-5`) para el asistente; `ASSISTANT_PROVIDER=none` lo desactiva.
 En desarrollo de la web: `pnpm server` y, en otra terminal, `pnpm web:dev` (http://localhost:5173, con proxy a la API).
+
+Pizarra Studio como página de Claude (un solo archivo):
+
+```bash
+pnpm studio:artifact             # packages/web/dist-artifact/pizarra.html
+pnpm e2e:studio                  # prueba E2E con window.claude simulado (CHROMIUM_PATH opcional)
+```
+
+Pizarra Studio con servidor: `pnpm server` y abrir `#/studio/<id del equipo>/home` (enlace «Abrir Pizarra Studio» en el equipo).
+Cargar los datos del Periso en un servidor: `BASE_URL=… FCS_EMAIL=… FCS_PASSWORD=… npx tsx scripts/seed-periso.ts [--team <id>]`.
 
 Pruebas:
 

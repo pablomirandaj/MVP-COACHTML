@@ -89,6 +89,17 @@ Formato breve: contexto · decisión · alternativas · consecuencias. Estado: *
 - **Decisión**: contraseñas con scrypt, sesión opaca en cookie `httpOnly` (`SameSite=Lax`, `Secure` en producción) y tabla `user_session` con el hash del token. PostgreSQL puede seguir siendo el de Supabase.
 - **Pendiente antes de abrir al público**: recuperación de contraseña por email, límite de intentos de login y verificación del email.
 
+## ADR‑021 — Una interfaz, dos anfitriones: página de Claude y servidor propio (27/11/2026)
+- **Contexto**: el entrenador quiere afinar la herramienta ya, sin servidor, pero el producto debe poder venderse y escalar ("que solo haya que engancharlo").
+- **Decisión**: Pizarra Studio (`packages/web/src/studio`) solo habla con cuatro puertos (`TeamPort`, `StorePort`, `AiPort`, `ExportPort`). `hosts/artifact.ts` los implementa con las capacidades de la página de Claude (`db`, `sample`, `downloads`); `hosts/server.ts` con la API (`/api/teams/:id/studio/*`). El bucle del asistente y sus espacios de trabajo están en `@fcs/assistant`, compartido por el navegador y el servidor; la validación IR usa un validador precompilado sin `eval`.
+- **Alternativas**: dos aplicaciones (descartado: se separan con el tiempo); solo servidor (retrasa el uso real hasta contratar el alojamiento).
+- **Consecuencias**: el mismo código se prueba en los dos modos; conectar el servidor es cambiar el anfitrión. En la página de Claude los datos de la RFFM van embebidos (instantáneo con fecha) y la plantilla se guarda en `db`.
+
+## ADR‑022 — El asistente en la página de Claude usa `sample` con herramientas (27/11/2026)
+- **Contexto**: sin servidor no hay clave de la API; la página puede preguntar a Claude con la cuenta de quien la usa.
+- **Decisión**: `AiPort` de la página llama a `sample` con las herramientas del espacio de trabajo (`apply_commands`, `create_setpiece`, `update_scene`, `ask_coach`), cuyo `execute` es el motor en el navegador. Si la vista no ofrece herramientas, plan B: `sample.json` con un único comando validado en local y un reintento.
+- **Consecuencias**: el coste lo asume quien usa la página (no escala como producto: por eso ADR‑021); el modelo nunca coloca jugadores, solo emite comandos que el motor valida, igual que en el servidor (ADR‑017).
+
 ## Revisión de contradicciones entre decisiones (iteración 7)
 
 | Posible contradicción | Resolución |

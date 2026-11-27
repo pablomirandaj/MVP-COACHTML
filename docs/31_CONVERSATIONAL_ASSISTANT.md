@@ -94,3 +94,17 @@ Elegir el modelo es una decisión de producto pendiente (23 §0).
 - Los 39 casos de `engine/tests/command-tests.yaml` se reutilizan como **evaluación del asistente**: frase → ¿el IR generado coincide con el esperado (o con uno equivalente) y produce el mismo documento?
 - Métricas: % de turnos que se resuelven sin corrección, % de preguntas pertinentes y **0 cambios aplicados fuera del diff mostrado** (garantizado por la arquitectura).
 - Ejecutar la evaluación tiene coste, así que se lanza con presupuesto acordado y en cada cambio de *prompt* o de modelo.
+
+
+## Anfitriones (Pizarra Studio, 27/11/2026)
+
+El bucle (`runTurn`), el prompt, la validación IR y los espacios de trabajo viven en `packages/assistant` y se usan igual en los dos anfitriones (ADR‑021):
+
+| | Página de Claude | Servidor propio |
+|---|---|---|
+| Modelo | `sample` de la página (cuenta de quien la usa), con herramientas; plan B `sample.json` | `LlmAdapter` (Anthropic por defecto, `ASSISTANT_MODEL`) |
+| Dónde se ejecuta el motor | En el navegador (`execute` de cada herramienta) | En el servidor (`POST /api/teams/:id/studio/assistant`) |
+| Qué se devuelve | Los cambios llegan por el espacio de trabajo | `{reply, clarification, state}` |
+| Deshacer | Un turno = una entrada del historial del editor | Igual (el editor es el mismo) |
+
+Espacios de trabajo: `boardWorkspace` (órdenes `board.*`), `setPieceWorkspace` (`create_setpiece` y edición `play.*`, incluido `play.mark`) y `sceneWorkspace` (`update_scene`). Los resultados de las herramientas ocupan ≤ 1 KB y el contexto ≤ 4 KB.
