@@ -1,7 +1,7 @@
 // Espacios de trabajo en memoria para la pizarra, el balón parado y las escenas. Los usa la página de Claude
 // (todo en el navegador) y pueden usarse en el servidor antes de guardar. Resultados cortos (≤ 1 KB) para el modelo.
 import {
-  applyBoardCommand, applyPlayCommand, computeScene, createSetPiece, DEFAULT_PITCH,
+  applyBoardCommand, applyPlayCommand, computeScene, createSetPiece, DEFAULT_PITCH, resolvePlayerRef, whoIsWho,
   type BoardDoc, type Command, type Diagnostic, type EngineContext, type Player, type PlayDoc, type SceneSpec,
 } from "@fcs/engine";
 import type { LlmToolDef } from "./adapter";
@@ -29,6 +29,18 @@ const result = (o: Record<string, unknown>, is_error = false): ToolOutcome => {
 
 export function contextSummary(ws: Workspace): string { return byteClip(ws.context(), MAX_CONTEXT); }
 
+// ---- Resolver nombres de entrenador ("el pivote", "el 6", "Raúl") ----------------------------
+const RESOLVE_TOOL: LlmToolDef = {
+  name: "resolve_player",
+  description: "Traduce cómo llama el entrenador a un jugador (\"el pivote\", \"el que juega de 6\", \"los interiores\", un dorsal o un nombre) a las ranuras y actores de esta pieza. Úsala ante cualquier duda; si devuelve ambiguous, pregunta con ask_coach.",
+  input_schema: { type: "object", additionalProperties: false, required: ["text"], properties: { text: { type: "string" } } },
+};
+const AMBIGUOUS_NOTE = "Ambiguo: el dorsal y el puesto apuntan a jugadores distintos; pregunta al entrenador con ask_coach antes de mover a nadie.";
+function resolveIn(text: string, formation: string, labels: Record<string, string>, roster: Player[], prefix: string) {
+  const r = resolvePlayerRef(String(text ?? ""), { formation, labels, roster });
+  return result({ ...r, actors: r.slots.map((x) => `${prefix}${x}`), ...(r.ambiguous ? { note: AMBIGUOUS_NOTE } : r.via === "none" ? { note: "No reconozco a quién se refiere: pregunta al entrenador." } : {}) });
+}
+
 // ---- Pizarra ------------------------------------------------------------------------------
 export function boardWorkspace(state: { doc: BoardDoc; roster: Player[]; opponent?: string }, onChange: (doc: BoardDoc) => void): Workspace {
   return {
@@ -43,15 +55,16 @@ export function boardWorkspace(state: { doc: BoardDoc; roster: Player[]; opponen
       ].join("; ") || "vacío"}`).join("\n");
       return [
         `PIZARRA "${d.title}" · nosotros ${d.own.formation} · rival ${d.opp.formation}${state.opponent ? ` (${state.opponent})` : ""}`,
-        `Etiquetas propias: ${Object.entries(d.own.labels).map(([k, v]) => `${k}=${v}`).join(" ")}`,
+        `Quién es quién (actor own:<ranura>; etiqueta en el campo entre corchetes):\n${whoIsWho(d.own.formation, d.own.labels, state.roster).split("\n").map((l) => { const slot = l.split(" ")[0]; return `own:${l} [${d.own.labels[slot] ?? slot}]`; }).join("\n")}`,
         `Ranuras rivales: ${Object.keys(d.start.opp).join(" ")}`,
         `Pasos:\n${steps || "(ninguno)"}`,
         `Avisos: ${diagLine(d.diagnostics).map((x) => `${x.rule_id} ${x.message}`).join(" | ") || "ninguno"}`,
         `Plantilla:\n${rosterLines(state.roster)}`,
       ].join("\n");
     },
-    tools: (): LlmToolDef[] => [commandsTool("apply_commands", "Aplica comandos board.* a la pizarra (add_step, move, pass, press, note, set_formation, set_labels, rename, remove_step).")],
+    tools: (): LlmToolDef[] => [commandsTool("apply_commands", "Aplica comandos board.* a la pizarra (add_step, move, pass, press, note, mark_step, set_formation, set_labels, rename, remove_step)."), RESOLVE_TOOL],
     async exec(name, input) {
+      if (name === "resolve_player") return resolveIn(input?.text, state.doc.own.formation, state.doc.own.labels, state.roster, "own:");
       if (name !== "apply_commands") return result({ error: `Herramienta desconocida: ${name}` }, true);
       const cmds = input?.commands as Command[];
       const err = commandErrors(cmds);
@@ -90,8 +103,20 @@ export function setPieceWorkspace(state: { doc: PlayDoc | null; type: string; ro
     tools: () => [
       commandsTool("create_setpiece", "Crea o rehace la jugada: play.create {type, side, depth_m?, distance_m?, variant?, scheme?} y comandos de creación."),
       commandsTool("apply_commands", "Edita la jugada actual con comandos play.* de edición (incluido play.mark en defensa)."),
+      RESOLVE_TOOL,
     ],
     async exec(name, input) {
+      if (name === "resolve_player") {
+        const t = String(input?.text ?? "");
+        const own = state.doc?.actors.filter((a) => a.team === "OWN") ?? [];
+        const num = /\b(\d{1,2})\b/.exec(t)?.[1];
+        const byLabel = num ? own.filter((a) => a.label === num) : [];
+        const lower = t.toLowerCase();
+        const byName = own.filter((a) => { const p = state.roster.find((r) => r.id === a.player_id); return !!p && [p.name, p.surname].some((w) => w && lower.includes(w.toLowerCase())); });
+        const actors = [...new Set([...byLabel, ...byName].map((a) => a.id))];
+        return result({ actors, via: byLabel.length ? "label" : byName.length ? "name" : "none", ambiguous: actors.length > 1,
+          ...(actors.length !== 1 ? { note: actors.length ? AMBIGUOUS_NOTE : "No reconozco a quién se refiere: pregunta al entrenador." } : {}) });
+      }
       const cmds = input?.commands as Command[];
       const err = commandErrors(cmds);
       if (err) return result({ error: err }, true);
@@ -130,9 +155,12 @@ const SCENE_TOOL: LlmToolDef = {
 export function sceneWorkspace(state: { spec: SceneSpec; roster: Player[]; opponent?: string }, onChange: (spec: SceneSpec) => void): Workspace {
   return {
     kind: "SCENE",
-    context: () => [`ESCENA${state.opponent ? ` contra ${state.opponent}` : ""} (especificación actual):`, JSON.stringify(state.spec), `Plantilla:\n${rosterLines(state.roster)}`].join("\n"),
-    tools: () => [SCENE_TOOL],
+    context: () => [`ESCENA${state.opponent ? ` contra ${state.opponent}` : ""} (especificación actual):`, JSON.stringify(state.spec),
+      `Quién es quién en nuestro ${state.spec.own.formation} (ranuras para "who"/"holder"):\n${whoIsWho(state.spec.own.formation, state.spec.own.labels ?? {}, state.roster)}`,
+      `Plantilla:\n${rosterLines(state.roster)}`].join("\n"),
+    tools: () => [SCENE_TOOL, RESOLVE_TOOL],
     async exec(name, input) {
+      if (name === "resolve_player") return resolveIn(input?.text, state.spec.own.formation, state.spec.own.labels ?? {}, state.roster, "");
       if (name !== "update_scene") return result({ error: `Herramienta desconocida: ${name}` }, true);
       const spec = input?.spec as SceneSpec;
       try {

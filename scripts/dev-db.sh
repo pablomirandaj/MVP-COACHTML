@@ -11,8 +11,9 @@ if [ "$(id -u)" = "0" ]; then
   # initdb no puede ejecutarse como root: se usa un usuario sin privilegios.
   id fcspg >/dev/null 2>&1 || useradd -m fcspg
   RUN_AS="fcspg"
-  mkdir -p "$DATA" && chown -R fcspg "$DATA"
-  d="$DATA"; while [ "$d" != "/" ]; do chmod o+x "$d" 2>/dev/null || true; d="$(dirname "$d")"; done
+  mkdir -p "$DATA" && chown -R fcspg "$DATA" && chmod 700 "$DATA"
+  # El usuario sin privilegios tiene que poder atravesar las carpetas padre (no la de datos, que exige 0700).
+  d="$(dirname "$DATA")"; while [ "$d" != "/" ]; do chmod o+x "$d" 2>/dev/null || true; d="$(dirname "$d")"; done
 fi
 run() { if [ -n "$RUN_AS" ]; then su "$RUN_AS" -c "$*"; else bash -c "$*"; fi; }
 if [ ! -f "$DATA/PG_VERSION" ]; then run "$PGBIN/initdb -D '$DATA' -U postgres -A trust >/dev/null"; fi
