@@ -112,3 +112,10 @@ El rival se coloca en bloque alto; sus `opp_pressers` jugadores más adelantados
 | `WEAK_SIDE` | La banda que la basculación deja libre, si son más de 25 m. |
 
 Nuestra forma se escala al bloque rival: los delanteros quedan 1 m por detrás de su línea defensiva. En el disparador (o el último fotograma), el jugador propio más cercano ataca el centro del espacio (`RUNNER`) y el balón va a él. Sin espacios: `SPACE-01`. Cada paso explica qué espacio se busca y por qué.
+
+## Colocación con criterio (27/11/2026)
+
+- **SHAPE-03**: ningún atacante rival queda a la espalda de nuestra línea defensiva (estaría en fuera de juego): se coloca 1 m por delante.
+- **SHAPE-04**: el bloque se estrecha hacia el centro de su línea defensiva hasta medir como mucho 38 m de lateral a lateral.
+- **PRESS-02**: cada cobertura se coloca en la línea de pase entre el rival presionado y su compañero de dentro más cercano (entre el 30 % y el 70 % del segmento).
+- **PRESS-03**: un mediocentro rival sin nadie a menos de 8 m lo vigila nuestro medio libre más cercano, 2,5 m por el lado de nuestra portería (rol `MARK`, narrado en el paso).

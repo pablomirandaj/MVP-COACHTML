@@ -57,6 +57,8 @@ const ABBR: Record<string, string> = {
   GK: "POR", RB: "LD", LB: "LI", RWB: "CAD", LWB: "CAI", CB: "DFC", DM: "MCD", CM: "MC", RM: "MD", LM: "MI", AM: "MCO", RW: "ED", LW: "EI", ST: "DC", SS: "SD",
 };
 const LINE_SHIFT_WEIGHT = { GK: 0.15, DEF: 0.5, MID: 0.6, ATT: 0.4 } as const;
+const MAX_BLOCK_WIDTH_M = 38;
+const MARK_RADIUS_M = 8;
 const BLOCK_DEF_X: Record<BlockHeight, number> = { HIGH: 46, MID: 36, LOW: 22 };
 const BLOCK_COMPACT: Record<BlockHeight, number> = { HIGH: 32, MID: 30, LOW: 25 };
 
@@ -111,6 +113,13 @@ export function defendingBlock(formation: string, pitch: Pitch, height: BlockHei
   const center = mean(xs);
   const dx = clamp(0.1 * (ball.x - center), -5, 5);
   for (const s of slots) if (lineOf(s.slot, s.u) !== "GK") out[s.slot] = { x: out[s.slot].x + dx, y: out[s.slot].y };
+  // SHAPE-04: un bloque compacto no mide más de 38 m de lateral a lateral; se estrecha hacia el centro de su línea.
+  const defYs = slots.filter((s) => lineOf(s.slot, s.u) === "DEF").map((s) => out[s.slot].y);
+  const width = defYs.length > 1 ? Math.max(...defYs) - Math.min(...defYs) : 0;
+  if (width > MAX_BLOCK_WIDTH_M) {
+    const c = (Math.max(...defYs) + Math.min(...defYs)) / 2, k = MAX_BLOCK_WIDTH_M / width;
+    for (const s of slots) if (lineOf(s.slot, s.u) !== "GK") out[s.slot] = { x: out[s.slot].x, y: clamp(c + (out[s.slot].y - c) * k, 2, W - 2) };
+  }
   return out;
 }
 
@@ -148,7 +157,16 @@ function applyJumps(formation: string, own: Record<string, M>, opp: Record<strin
     active.forEach((c, i) => {
       const p = pool[cols[i]];
       if (!c.candidates.includes(p)) return;
-      own[p] = add(before[p], scale(sub(before[c.jumper], before[p]), 0.5));
+      // PRESS-02: la cobertura se pone en la línea de pase entre el rival presionado y su compañero de dentro más cercano.
+      const to = jumps.find((j) => j.who === c.jumper)?.to;
+      const t = to ? opp[to] : undefined;
+      const inside = t ? Object.entries(opp).filter(([k, m]) => k !== to && k !== oppGk && Math.abs(m.y - 34) < Math.abs(t.y - 34))
+        .sort(([ka, a], [kb, b2]) => dist(a, t) - dist(b2, t) || ka.localeCompare(kb))[0]?.[1] : undefined;
+      if (t && inside) {
+        const seg = sub(inside, t), l2 = seg.x ** 2 + seg.y ** 2 || 1;
+        const s01 = clamp(((before[p].x - t.x) * seg.x + (before[p].y - t.y) * seg.y) / l2, 0.3, 0.7);
+        own[p] = add(t, scale(seg, s01));
+      } else own[p] = add(before[p], scale(sub(before[c.jumper], before[p]), 0.5));
       roles[p] = "COVER";
     });
   }
@@ -207,10 +225,14 @@ export function computeScene(spec: SceneSpec, pitch: Pitch): SceneDoc {
       if (!holder) throw new Error(`Poseedor desconocido: ${kf.ball.holder}`);
       const b = { x: holder.x - 0.8, y: holder.y };
       const D = defendingBlock(defending, pitch, height, compact, shift, b);
+      // SHAPE-03: el poseedor no puede tener a nadie a la espalda de nuestra línea (estaría en fuera de juego).
+      const lineX = Math.min(...slotsOf(defending).filter((x) => lineOf(x.slot, x.u) === "DEF").map((x) => D[x.slot].x));
+      for (const [k, m] of Object.entries(P)) if (slotInfo(k).pos !== "GK" && m.x < lineX + 1) P[k] = { x: lineX + 1, y: m.y };
       if (triggered && spec.params.jumps?.length) {
         const gk = Object.keys(P).find((k) => slotInfo(k).pos === "GK");
         roles = applyJumps(defending, D, P, spec.params.jumps, gk);
       }
+      markFreeMidfielders(defending, D, P, roles);
       if (spec.type === "PRESS_OPP") {
         own = mapObj(P, (m) => mirror(m, pitch)); opp = mapObj(D, (m) => mirror(m, pitch)); ball = mirror(b, pitch);
         roles = Object.fromEntries(Object.entries(roles).map(([k, v]) => [`opp:${k}`, v]));
@@ -318,4 +340,19 @@ function mapObj<T, U>(o: Record<string, T>, f: (v: T) => U): Record<string, U> {
   const out: Record<string, U> = {};
   for (const k of Object.keys(o).sort()) out[k] = f(o[k]);
   return out;
+}
+
+/** PRESS-03: un mediocentro rival sin nadie a menos de 8 m lo vigila nuestro medio libre más cercano (por el lado de nuestra portería). */
+function markFreeMidfielders(formation: string, own: Record<string, M>, opp: Record<string, M>, roles: Record<string, string>) {
+  const slots = slotsOf(formation);
+  const mids = Object.keys(opp).filter((k) => ["CM", "DM", "AM"].includes(slotInfo(k).pos)).sort();
+  for (const k of mids) {
+    const o = opp[k];
+    if (Object.values(own).some((m) => dist(m, o) <= MARK_RADIUS_M)) continue;
+    const free = slots.filter((s) => !roles[s.slot] && lineOf(s.slot, s.u) !== "GK" && lineOf(s.slot, s.u) !== "DEF")
+      .sort((a, b) => (lineOf(a.slot, a.u) === "MID" ? 0 : 1) - (lineOf(b.slot, b.u) === "MID" ? 0 : 1) || dist(own[a.slot], o) - dist(own[b.slot], o) || a.slot.localeCompare(b.slot))[0];
+    if (!free) continue;
+    own[free.slot] = { x: Math.max(1, o.x - 2.5), y: o.y };
+    roles[free.slot] = "MARK";
+  }
 }

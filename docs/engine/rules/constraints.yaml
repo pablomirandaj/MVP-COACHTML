@@ -71,3 +71,8 @@ rules:
   - { id: BOARD-03, class: TACTICAL, severity: warning, check: board_pass_risk, params: { max_m: 45, lane_m: 1.5 }, message: "Riesgo de pérdida." }
   - { id: BOARD-04, class: LAW, severity: warning, check: board_offside, message: "El receptor está en fuera de juego al salir el pase." }
   - { id: NARR-BOARD, class: SEQUENCE, severity: info, check: narration, message: "Paso de la pizarra." }
+  # Colocación con criterio (diseño del reproductor de la J5, §5.6).
+  - { id: SHAPE-03, class: GEOMETRY, severity: info, check: attackers_onside, message: "Los atacantes rivales se colocan por delante de nuestra línea (no a su espalda)." }
+  - { id: SHAPE-04, class: GEOMETRY, severity: info, check: block_width, params: { max_m: 38 }, message: "El bloque mide como mucho 38 m de lateral a lateral." }
+  - { id: PRESS-02, class: TACTICAL, severity: info, check: cover_on_lane, message: "La cobertura tapa el pase interior del rival presionado." }
+  - { id: PRESS-03, class: TACTICAL, severity: info, check: free_midfielder_marked, params: { radius_m: 8 }, message: "Ningún mediocentro rival queda solo: le vigila nuestro medio libre más cercano." }

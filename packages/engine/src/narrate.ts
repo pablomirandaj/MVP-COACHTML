@@ -170,6 +170,8 @@ export function narrateScene(doc: SceneDoc): Step[] {
           : "El bloque bascula hacia el balón y espera el disparador para saltar.";
       source = "RULE:NARR-BALL";
     }
+    const marks = entries.filter(([, r]) => r === "MARK").map(([k]) => k);
+    if (marks.length) implies = `${implies} ${marks.map((m) => `${cap(`el ${lab(m)}`)} vigila a su ${rivalL(m, near(pos(m), rivals(m)))}`).join("; ")}.`;
     if (sp && !implies.includes(SPACE_LABEL[sp.kind])) implies = `${implies} Objetivo: ${SPACE_LABEL[sp.kind]}.`;
     if (f.note) { title = f.note; source = "MANUAL"; }
     if (f.implies) { implies = f.implies; source = "MANUAL"; }

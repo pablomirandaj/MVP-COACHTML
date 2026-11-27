@@ -2533,6 +2533,40 @@ export const CONSTRAINTS_YAML = {
       "severity": "info",
       "check": "narration",
       "message": "Paso de la pizarra."
+    },
+    {
+      "id": "SHAPE-03",
+      "class": "GEOMETRY",
+      "severity": "info",
+      "check": "attackers_onside",
+      "message": "Los atacantes rivales se colocan por delante de nuestra línea (no a su espalda)."
+    },
+    {
+      "id": "SHAPE-04",
+      "class": "GEOMETRY",
+      "severity": "info",
+      "check": "block_width",
+      "params": {
+        "max_m": 38
+      },
+      "message": "El bloque mide como mucho 38 m de lateral a lateral."
+    },
+    {
+      "id": "PRESS-02",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "cover_on_lane",
+      "message": "La cobertura tapa el pase interior del rival presionado."
+    },
+    {
+      "id": "PRESS-03",
+      "class": "TACTICAL",
+      "severity": "info",
+      "check": "free_midfielder_marked",
+      "params": {
+        "radius_m": 8
+      },
+      "message": "Ningún mediocentro rival queda solo: le vigila nuestro medio libre más cercano."
     }
   ]
 } as const;

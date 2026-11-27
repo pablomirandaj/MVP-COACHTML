@@ -19,7 +19,7 @@ export const SPACE_WHY: Record<SpaceKind, string> = {
   WEAK_SIDE: "Su bloque ha basculado: un cambio de orientación encuentra al extremo solo.",
 };
 
-const LINE_GAP_M = 6, LANE_FREE_M = 8, ORDER: SpaceKind[] = ["BETWEEN_LINES", "BEHIND_FULLBACK", "HALF_SPACE", "WEAK_SIDE"];
+const LINE_GAP_M = 6, LANE_FREE_M = 6, ORDER: SpaceKind[] = ["BETWEEN_LINES", "BEHIND_FULLBACK", "HALF_SPACE", "WEAK_SIDE"];
 const SIDE_ORDER = { LEFT: 0, CENTER: 1, RIGHT: 2 } as const;
 const r4 = (x: number) => Math.round(x * 10000) / 10000;
 
