@@ -22,6 +22,6 @@ function Router() {
   }
 }
 
-export function Studio({ host }: { host: Host }) {
-  return <StudioProvider host={host}><Shell><Router /></Shell></StudioProvider>;
+export function Studio({ host, hashPrefix }: { host: Host; hashPrefix?: string }) {
+  return <StudioProvider host={host} hashPrefix={hashPrefix}><Shell><Router /></Shell></StudioProvider>;
 }

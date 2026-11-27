@@ -14,6 +14,7 @@ import { playRoutes } from "./routes/plays";
 import { sceneRoutes } from "./routes/scenes";
 import { presentationRoutes } from "./routes/presentation";
 import { assistantRoutes } from "./routes/assistant";
+import { studioRoutes } from "./routes/studio";
 
 export interface AppOptions {
   db: Db;
@@ -71,6 +72,7 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
     await sceneRoutes(api);
     await presentationRoutes(api);
     await assistantRoutes(api);
+    await studioRoutes(api);
   }, { prefix: "/api" });
 
   if (opts.webDist && existsSync(opts.webDist)) {

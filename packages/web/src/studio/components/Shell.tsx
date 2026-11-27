@@ -9,14 +9,14 @@ const NAV: { r: Route; label: string; icon: () => ReactElement }[] = [
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { route, go, host } = useStudio();
+  const { route, go, host, hashPrefix } = useStudio();
   const team = host.team.team();
   return (
     <div className="st-app">
       <nav className="st-nav" aria-label="Secciones">
         <div className="st-brand"><span className="st-crest">P</span><span>{team.short}</span></div>
         {NAV.map((n) => (
-          <a key={n.r} href={`#${n.r}`} aria-current={route === n.r ? "page" : undefined} onClick={(e) => { e.preventDefault(); go(n.r); }}>
+          <a key={n.r} href={`#${hashPrefix}${n.r}`} aria-current={route === n.r ? "page" : undefined} onClick={(e) => { e.preventDefault(); go(n.r); }}>
             <n.icon /><span>{n.label}</span>
           </a>
         ))}

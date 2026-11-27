@@ -11,7 +11,7 @@
     "examples": "tsx packages/render/scripts/export-examples.ts",
     "db:migrate": "tsx packages/server/src/migrate-cli.ts",
     "server": "tsx packages/server/src/index.ts",
-    "test:api": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres@127.0.0.1:55432/fcs_test} vitest run packages/server",
+    "test:api": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres@127.0.0.1:55432/fcs_test} vitest run packages/server --no-file-parallelism",
     "db:dev": "scripts/dev-db.sh",
     "web:dev": "pnpm --filter @fcs/web dev",
     "web:build": "pnpm --filter @fcs/web build",

@@ -14,6 +14,7 @@ export function TeamHome({ teamId, tab }: { teamId: string; tab: string }) {
     <main className="page">
       <a className="back" href="#/">← Equipos</a>
       <h1>{team?.name ?? "…"} <span className="muted small">{team && `${team.category} · ${team.season}`}</span></h1>
+      <a className="button primary" style={{ margin: "8px 0" }} href={`#/studio/${teamId}/home`}>Abrir Pizarra Studio</a>
       <nav className="tabs" aria-label="Secciones del equipo">
         {TABS.map(([k, v]) => <a key={k} href={`#/team/${teamId}/${k}`} aria-current={tab === k ? "page" : undefined}>{v}</a>)}
       </nav>

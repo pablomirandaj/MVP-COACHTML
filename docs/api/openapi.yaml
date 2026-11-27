@@ -410,6 +410,58 @@ paths:
                 evidence: { type: string }
       responses: { '201': { description: OK } }
 
+  # ---- Pizarra Studio (anfitrión "servidor"; diseño docs/superpowers/specs/2026-11-26-pizarra-studio-design.md) ----
+  /teams/{teamId}/studio/items:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    get:
+      tags: [studio]
+      summary: Piezas de Pizarra Studio del equipo (pizarra, balón parado, plan de juego), más recientes primero
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/StudioItem' } } } } } }
+    post:
+      tags: [studio]
+      summary: Crear una pieza (el cliente propone el identificador)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudioItem' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/StudioSaved' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /studio/items/{itemId}:
+    parameters: [{ name: itemId, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9_]{3,64}$' } }]
+    get: { tags: [studio], responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudioItem' } } } } } }
+    put:
+      tags: [studio]
+      summary: Guardar una versión nueva; `revision` debe ser la última leída (si no, 409 conflict)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudioItem' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudioSaved' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+    delete: { tags: [studio], responses: { '204': { description: Borrada } } }
+  /studio/items/{itemId}/export.html:
+    parameters: [{ name: itemId, in: path, required: true, schema: { type: string } }]
+    get: { tags: [studio], summary: HTML autónomo por pasos para los jugadores, responses: { '200': { description: OK, content: { text/html: { schema: { type: string } } } } } }
+  /studio/assistant:
+    get: { tags: [studio], summary: Si el asistente está configurado, responses: { '200': { description: OK, content: { application/json: { schema: { type: object, properties: { available: { type: boolean } } } } } } } }
+  /teams/{teamId}/studio/assistant:
+    parameters: [{ $ref: '#/components/parameters/teamId' }]
+    post:
+      tags: [studio]
+      summary: Un turno del asistente sobre el estado enviado; devuelve la respuesta y el estado nuevo (sin guardar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, state, message]
+              properties:
+                kind: { type: string, enum: [BOARD, SETPIECE, SCENE] }
+                state: { type: object, nullable: true }
+                message: { type: string, maxLength: 2000 }
+                history: { type: array, maxItems: 40, items: { type: object, properties: { role: { type: string, enum: [user, assistant] }, content: { type: string } } } }
+                context: { type: object, properties: { opponent: { type: string } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { reply: { type: string }, clarification: { type: object, nullable: true }, state: { type: object } } } } } }
+        '503': { $ref: '#/components/responses/Problem' }
+
 components:
   securitySchemes:
     bearer: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -424,6 +476,22 @@ components:
       description: Error (RFC 9457)
       content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
   schemas:
+    StudioItem:
+      type: object
+      required: [id, kind, title, doc]
+      properties:
+        id: { type: string, pattern: '^[a-z0-9_]{3,64}$' }
+        kind: { type: string, enum: [BOARD, SETPIECE, SCENE] }
+        title: { type: string, maxLength: 120 }
+        doc: { type: object, description: 'fcs.board/1, fcs.play/1 o especificación de escena' }
+        history: { type: array, items: { type: array, items: { type: object } } }
+        match: { type: integer, description: Jornada }
+        opponent: { type: string }
+        revision: { type: integer }
+        updated_at: { type: string, format: date-time }
+    StudioSaved:
+      type: object
+      properties: { id: { type: string }, revision: { type: integer }, updated_at: { type: string, format: date-time } }
     Problem:
       type: object
       properties:
