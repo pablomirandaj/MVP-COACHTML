@@ -6,6 +6,9 @@ import { ChatPanel } from "../components/ChatPanel";
 import { Diagnostics, EditorBar } from "../components/EditorBar";
 import { currentStep, PitchBoard, useTimeline } from "../components/PitchBoard";
 import { StepList } from "../components/StepList";
+import { PlayerView } from "../components/PlayerView";
+import { SheetEditor } from "../components/SheetEditor";
+import { LabelsToggle, UndoBar, ViewTabs } from "../components/ViewTabs";
 import { useDraftState, useStudio } from "../lib/context";
 import { playerName, posEs, teamShort } from "../lib/format";
 import { useStudioEditor } from "../lib/useEditor";
@@ -45,6 +48,7 @@ function SetPieceEditor({ item, startType, opponent, draftKey }: { item?: Studio
   const tracks = ed.tracks;
   const tl = useTimeline(tracks);
   const [selected, setSelected] = useState<string | null>(null);
+  const [view, setView] = useDraftState<"edit" | "view">(`${draftKey}:view`, "view");
   const apply = (cmds: Command[]) => ed.dispatch({ type: "apply", cmds, origin: "MANUAL" });
   const create = (f = form) => { apply([createCmd(f)]); if (!item) ed.setTitle(`${SP_LABEL[f.type]}${opponent ? ` · ${teamShort(opponent)}` : ""}`); };
   const actor = doc?.actors.find((a) => a.id === selected && a.team === "OWN");
@@ -71,9 +75,25 @@ function SetPieceEditor({ item, startType, opponent, draftKey }: { item?: Studio
       {!doc && <div className="st-hint">Elige el tipo y el lado y pulsa «Crear la jugada». El motor coloca a todos, asigna a tus jugadores por posición y pierna y explica cada paso. También puedes pedírselo al asistente.</div>}
       {doc && tracks && <>
         <EditorBar ed={ed} />
+        <div className="st-row"><ViewTabs view={view} onChange={setView} />{view === "view" && <LabelsToggle value={ed.labels} onChange={ed.setLabels} />}</div>
+        {view === "view" ? (
+          <div className="st-editor">
+            <PlayerView seq={ed.seq} />
+            <aside className="st-side st-stack">
+              <div className="st-card st-stack"><h3>Ficha de la jugada</h3><SheetEditor sheet={ed.sheet} proposed={ed.proposed} onChange={ed.setSheet} /></div>
+              <div className="st-card st-stack"><h3>Asistente</h3>
+                <ChatPanel ask={ed.ask} onUndo={() => ed.dispatch({ type: "undo" })} canUndo={ed.s.canUndo}
+                  examples={defending ? ["Que el más alto marque a su rematador principal", "Escribe la ficha de la jugada"] : ["Centro abierto al segundo palo", "Que el 4 bloquee al marcador del 9"]} />
+              </div>
+            </aside>
+          </div>
+        ) : (
         <div className="st-editor">
+          <div className="st-stage">
           <PitchBoard tracks={tracks} tl={tl} selected={selected} onSelect={setSelected} canDrag={(id) => !!doc.actors.find((a) => a.id === id && a.team === "OWN")}
             onDragEnd={(id, dx, dy) => apply([{ op: "play.move_actor", target: { actor: id }, dx_m: dx, dy_m: dy }])} />
+          <UndoBar canUndo={ed.s.canUndo} canRedo={ed.s.canRedo} onUndo={() => ed.dispatch({ type: "undo" })} onRedo={() => ed.dispatch({ type: "redo" })} />
+          </div>
           <aside className="st-side st-stack">
             {!defending && <div className="st-card st-stack" style={{ gap: 8 }}>
               <h3>Golpeo</h3>
@@ -102,6 +122,7 @@ function SetPieceEditor({ item, startType, opponent, draftKey }: { item?: Studio
             </div>
           </aside>
         </div>
+        )}
       </>}
       {ed.s.clarification && <div className="st-card st-stack"><b>{ed.s.clarification.question}</b><div className="st-row">{ed.s.clarification.options.map((o, i) => <button key={i} className="st-chip" onClick={() => o.commands.length ? apply(o.commands) : ed.dispatch({ type: "dismiss" })}>{o.label}</button>)}</div></div>}
     </div>

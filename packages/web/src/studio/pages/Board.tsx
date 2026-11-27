@@ -5,7 +5,10 @@ import { ChatPanel } from "../components/ChatPanel";
 import { Diagnostics, EditorBar } from "../components/EditorBar";
 import { currentStep, PitchBoard, useTimeline } from "../components/PitchBoard";
 import { StepList } from "../components/StepList";
-import { useStudio } from "../lib/context";
+import { PlayerView } from "../components/PlayerView";
+import { SheetEditor } from "../components/SheetEditor";
+import { UndoBar, ViewTabs } from "../components/ViewTabs";
+import { useDraftState, useStudio } from "../lib/context";
 import { playerLabel, playerName, posEs, teamShort } from "../lib/format";
 import { useStudioEditor } from "../lib/useEditor";
 import type { StudioItem } from "../ports";
@@ -34,6 +37,7 @@ function BoardEditor({ item, opponent, draftKey }: { item?: StudioItem; opponent
   const doc = ed.s.doc as BoardDoc;
   const tracks = ed.tracks!;
   const tl = useTimeline(tracks);
+  const [view, setView] = useDraftState<"edit" | "view">(`${draftKey}:view`, "edit");
   const [tool, setTool] = useState<Tool>("move");
   const [pending, setPending] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -78,9 +82,30 @@ function BoardEditor({ item, opponent, draftKey }: { item?: StudioItem; opponent
   const ci = currentStep(tracks, tl.t);
   const selSlot = selected?.startsWith("own:") ? selected.slice(4) : null;
 
+  const chat = (
+    <div className="st-card st-stack">
+      <h3>Asistente</h3>
+      <ChatPanel ask={ed.ask} onUndo={() => ed.dispatch({ type: "undo" })} canUndo={ed.s.canUndo}
+        examples={["Que el pivote baje entre los centrales y salgamos por el lateral", "Añade un paso: el 8 rompe a la espalda y el 6 le filtra", "Escribe la ficha de la jugada"]} />
+    </div>
+  );
+  if (view === "view") return (
+    <div className="st-stack" style={{ gap: 14 }}>
+      <EditorBar ed={ed} />
+      <div className="st-row"><ViewTabs view={view} onChange={setView} /></div>
+      <div className="st-editor">
+        <PlayerView seq={ed.seq} />
+        <aside className="st-side st-stack">
+          <div className="st-card st-stack"><h3>Ficha de la jugada</h3><SheetEditor sheet={ed.sheet} proposed={ed.proposed} onChange={ed.setSheet} /></div>
+          {chat}
+        </aside>
+      </div>
+    </div>
+  );
   return (
     <div className="st-stack" style={{ gap: 14 }}>
       <EditorBar ed={ed} />
+      <div className="st-row"><ViewTabs view={view} onChange={setView} /></div>
       <div className="st-editor">
         <div className="st-stage">
           <div className="st-toolbar" role="toolbar" aria-label="Herramientas">
@@ -90,7 +115,7 @@ function BoardEditor({ item, opponent, draftKey }: { item?: StudioItem; opponent
             <label className="st-small st-muted">Rival <select aria-label="Sistema del rival" value={doc.opp.formation} onChange={(e) => apply([{ op: "board.set_formation", team: "OPP", formation: e.target.value }])}>{Object.entries(FORMATIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}</select></label>
           </div>
           <p className="st-small st-muted" style={{ margin: 0 }}>{pending ? `Elegido ${pending.startsWith("own:") ? doc.own.labels[pending.slice(4)] : pending}: ${tool === "pass" ? "toca al receptor o un punto del césped." : "toca al rival."}` : TOOLS.find((x) => x.t === tool)!.hint}</p>
-          <PitchBoard tracks={tracks} tl={tl} selected={selected} highlight={pending ? [pending] : []}
+          <PitchBoard tracks={tracks} tl={tl} selected={selected} highlight={pending ? [pending] : []} pathWindow={doc.steps.length ? [si * DUR, (si + 1) * DUR] : undefined}
             canDrag={(id) => (tool === "move" || tool === "dribble") && (tool === "move" || id.startsWith("own:"))}
             onDragEnd={onDragEnd} onSelect={onSelect} onPitchClick={onPitchClick} />
           <div className="st-stepbar" role="tablist" aria-label="Pasos de la jugada">
@@ -98,6 +123,10 @@ function BoardEditor({ item, opponent, draftKey }: { item?: StudioItem; opponent
             <button className="st-chip" onClick={() => { apply([{ op: "board.add_step", ...(stepId ? { after: stepId } : {}) }]); setTimeout(() => showStep(si + (doc.steps.length ? 1 : 0)), 0); }}>+ Paso</button>
             {stepId && <button className="st-chip" onClick={() => apply([{ op: "board.remove_step", step: stepId }])}>Quitar paso {si + 1}</button>}
           </div>
+          <UndoBar canUndo={ed.s.canUndo} canRedo={ed.s.canRedo} onUndo={() => ed.dispatch({ type: "undo" })} onRedo={() => ed.dispatch({ type: "redo" })}>
+            <button className="st-btn" onClick={() => showStep(Math.max(0, si - 1))} disabled={si <= 0}>◀ Paso anterior</button>
+            <button className="st-btn" onClick={() => showStep(Math.min(doc.steps.length - 1, si + 1))} disabled={si >= doc.steps.length - 1}>Paso siguiente ▶</button>
+          </UndoBar>
         </div>
         <aside className="st-side st-stack">
           {tool === "select" && selSlot && (
@@ -111,14 +140,11 @@ function BoardEditor({ item, opponent, draftKey }: { item?: StudioItem; opponent
           )}
           <div className="st-card st-stack">
             <h3>Pasos</h3>
-            <StepList steps={steps} current={ci} onGo={showStep} onEdit={(i, title, implies) => apply([{ op: "board.note", step: doc.steps[i].id, title, implies }])} />
+            <StepList steps={steps} current={ci} onGo={showStep} onEdit={(i, title, implies) => apply([{ op: "board.note", step: doc.steps[i].id, title, implies }])}
+              trig={doc.steps.map((x) => !!x.trig)} onTrig={(i, v) => apply([{ op: "board.mark_step", step: doc.steps[i].id, trig: v }])} />
           </div>
           <div className="st-card st-stack"><h3>Avisos del motor</h3><Diagnostics items={doc.diagnostics} /></div>
-          <div className="st-card st-stack">
-            <h3>Asistente</h3>
-            <ChatPanel ask={ed.ask} onUndo={() => ed.dispatch({ type: "undo" })} canUndo={ed.s.canUndo}
-              examples={["Sacamos por el lateral derecho y el extremo ataca la espalda", "Añade un paso: el 6 baja entre centrales", "Explica cada paso con frases cortas"]} />
-          </div>
+          {chat}
         </aside>
       </div>
     </div>

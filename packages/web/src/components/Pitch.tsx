@@ -29,9 +29,11 @@ export interface PitchProps {
   ownColor?: string; ownInk?: string; oppColor?: string;
   /** Jugadores resaltados (p. ej. el que tiene el balón o el pasador elegido). */
   highlight?: string[];
+  /** Solo se dibujan las flechas cuyo inicio cae en esta ventana de tiempo [desde, hasta). */
+  pathWindow?: [number, number];
 }
 
-export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag, onSelect, onDragEnd, onPitchClick, ownColor, ownInk, oppColor, highlight }: PitchProps) {
+export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag, onSelect, onDragEnd, onPitchClick, ownColor, ownInk, oppColor, highlight, pathWindow }: PitchProps) {
   const vertical = useVertical();
   const L = tracks.pitch.length_m, W = tracks.pitch.width_m;
   const x0 = tracks.view === "HALF_ATT" ? L / 2 - 2 : -3, x1 = L + 3;
@@ -90,7 +92,8 @@ export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag
               <rect x={g ? L : -1.6} y={W / 2 - 3.66} width={1.6} height={7.32} {...s} />
             </g>); })}
           {showPaths && tracks.paths.map((p, k) => {
-            if (p.from !== undefined && t < p.from - 1e-6) return null;
+            if (pathWindow) { if (p.from === undefined || p.from < pathWindow[0] - 1e-6 || p.from >= pathWindow[1] - 1e-6) return null; }
+            else if (p.from !== undefined && t < p.from - 1e-6) return null;
             const d = "M" + p.pts.map((q) => `${(q[0] * L).toFixed(2)} ${(q[1] * W).toFixed(2)}`).join(" L");
             if (p.kind === "ball") return <path key={k} d={d} stroke="#fff" strokeWidth={0.2} fill="none" strokeDasharray="0.5 0.6" opacity={0.85} />;
             if (p.kind === "press") return <path key={k} d={d} stroke={C.press} strokeWidth={0.45} fill="none" markerEnd="url(#ahp)" />;

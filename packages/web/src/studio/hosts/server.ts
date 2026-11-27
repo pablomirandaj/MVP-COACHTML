@@ -4,7 +4,7 @@ import type { Player } from "@fcs/engine";
 import { api, get, post } from "../../lib/api";
 import { slug, StoreError, type AiPort, type ExportPort, type Host, type ItemMeta, type StorePort, type StudioItem, type TeamPort } from "../ports";
 import type { Fixture, TeamInfo } from "../ports";
-import { exportDocument, TEAM } from "./common";
+import { TEAM } from "./common";
 
 const MADRID = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 /** Fecha (AAAA-MM-DD) y hora (HH:MM) de Madrid a partir de un instante UTC. */
@@ -66,10 +66,10 @@ export function createServerHost(teamId: string): Host {
     },
   };
   const exporter: ExportPort = {
-    async exportHtml(tracks, meta) {
-      const blob = new Blob([exportDocument(tracks, meta)], { type: "text/html" });
+    async saveHtml(filename, html) {
+      const blob = new Blob([html], { type: "text/html" });
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob); a.download = `${slug(meta.title)}.html`; a.click();
+      a.href = URL.createObjectURL(blob); a.download = `${slug(filename.replace(/\.html$/, ""))}.html`; a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     },
   };

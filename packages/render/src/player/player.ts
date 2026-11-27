@@ -93,7 +93,8 @@ export function createPlayer(root: HTMLElement, seq: any, opts?: any): any {
 
   var gLines = mk("g", {});
   var el: any = {};
-  seq.actors.forEach(function (a: any) {
+  // Rivales primero: nuestros números quedan siempre encima y se leen aunque haya un marcador pegado.
+  seq.actors.filter(function (a: any) { return a.team !== "OWN"; }).concat(seq.actors.filter(function (a: any) { return a.team === "OWN"; })).forEach(function (a: any) {
     var own = a.team === "OWN";
     var g = mk("g", { class: own ? "fcsp-pl" + (a.kind === "back" ? " back" : "") : "fcsp-rv" });
     mk("circle", { cx: 0, cy: 0, r: own ? 1.35 : 1.1 }, g);

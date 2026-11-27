@@ -4,7 +4,7 @@ import type { Step } from "@fcs/engine";
 
 const SRC = (s: string) => (s === "MANUAL" ? "Entrenador" : s === "ASSISTANT" ? "Asistente" : "Motor");
 
-export function StepList({ steps, current, onGo, onEdit }: { steps: Step[]; current: number; onGo: (i: number) => void; onEdit?: (i: number, title: string, implies: string) => void }) {
+export function StepList({ steps, current, onGo, onEdit, trig, onTrig }: { steps: Step[]; current: number; onGo: (i: number) => void; onEdit?: (i: number, title: string, implies: string) => void; trig?: boolean[]; onTrig?: (i: number, v: boolean) => void }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [title, setTitle] = useState(""), [implies, setImplies] = useState("");
   if (!steps.length) return <p className="st-small st-muted">Aún no hay pasos.</p>;
@@ -25,6 +25,11 @@ export function StepList({ steps, current, onGo, onEdit }: { steps: Step[]; curr
               </button>
               {onEdit && <button className="st-btn ghost sm" aria-label={`Editar la frase del paso ${i + 1}`} onClick={() => { setEditing(i); setTitle(s.title); setImplies(s.implies); }}>✎</button>}
             </div>
+          )}
+          {onTrig && editing !== i && (
+            <label className="st-small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, color: "var(--st-muted)" }}>
+              <input type="checkbox" checked={!!trig?.[i]} onChange={(e) => onTrig(i, e.target.checked)} /> AHORA (paso clave)
+            </label>
           )}
         </li>
       ))}

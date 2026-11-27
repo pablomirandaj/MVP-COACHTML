@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Player } from "@fcs/engine";
 import type { Fixture, Host, StudioItem, StudioKind } from "../ports";
+import { DEFAULT_RULES } from "./dossier";
 
 export type Route = "home" | "board" | "setpieces" | "plans" | "library" | "roster";
 export const ROUTES: Route[] = ["home", "board", "setpieces", "plans", "library", "roster"];
@@ -20,6 +21,8 @@ interface Ctx {
   next: Fixture | undefined; opponent: string | undefined; libraryVersion: number; bumpLibrary: () => void;
   /** Borradores en memoria: lo que está a medias en cada sección sobrevive al cambiar de sección. */
   drafts: Map<string, unknown>;
+  /** Reglas fijas del equipo («Esto no cambia nunca») para las carpetas exportadas. */
+  rules: string[]; setRules: (r: string[]) => void;
 }
 const StudioCtx = createContext<Ctx | null>(null);
 export const useStudio = () => { const c = useContext(StudioCtx); if (!c) throw new Error("Fuera de Pizarra Studio"); return c; };
@@ -31,6 +34,7 @@ export function StudioProvider({ host, children, hashPrefix = "" }: { host: Host
   const [rosterReady, setReady] = useState(false);
   const [libraryVersion, setLib] = useState(0);
   const drafts = useRef(new Map<string, unknown>()).current;
+  const [rules, setRules] = useState<string[]>(DEFAULT_RULES);
   useEffect(() => { const on = () => setRoute(fromHash(hashPrefix)); addEventListener("hashchange", on); return () => removeEventListener("hashchange", on); }, [hashPrefix]);
   const [loaded, setLoaded] = useState(!host.team.load);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -43,7 +47,7 @@ export function StudioProvider({ host, children, hashPrefix = "" }: { host: Host
     setRoute(r);
     window.scrollTo?.({ top: 0 });
   }, []);
-  const value: Ctx = { host, route, go, hashPrefix, open, roster, setRoster, rosterReady, next, opponent: next?.rival, libraryVersion, bumpLibrary: () => setLib((v) => v + 1), drafts };
+  const value: Ctx = { host, route, go, hashPrefix, open, roster, setRoster, rosterReady, next, opponent: next?.rival, libraryVersion, bumpLibrary: () => setLib((v) => v + 1), drafts, rules, setRules };
   if (loadError) return <p style={{ padding: 24 }}>No se ha podido cargar el equipo: {loadError}</p>;
   if (!loaded) return <p style={{ padding: 24 }}>Cargando el equipo…</p>;
   return <StudioCtx.Provider value={value}>{children}</StudioCtx.Provider>;

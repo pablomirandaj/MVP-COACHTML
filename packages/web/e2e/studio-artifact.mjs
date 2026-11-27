@@ -122,6 +122,9 @@ try {
   await p.getByRole("tab", { name: "Falta lateral a favor" }).click();
   await p.getByLabel("Lado").selectOption("RIGHT");
   await p.getByRole("button", { name: "Crear la jugada" }).click();
+  await p.locator(".st-player .fcsp-board").first().waitFor();
+  await shot("04a-ver");
+  await p.getByRole("tab", { name: "Editar" }).click();
   await p.getByRole("button", { name: "Abierto", exact: true }).click();
   if ((await p.getByRole("button", { name: "Abierto", exact: true }).getAttribute("aria-pressed")) !== "true") fail("El centro no cambió a abierto");
   await shot("04-falta");
@@ -134,6 +137,7 @@ try {
   await p.getByRole("link", { name: "Planes" }).click();
   await p.getByRole("button", { name: /Salida de balón/ }).click();
   await p.getByLabel("Rivales que presionan").selectOption("2");
+  await p.getByRole("tab", { name: "Editar" }).click();
   const stepsText = await p.locator(".st-steps").innerText();
   if (!/hombre libre/i.test(stepsText)) fail("La salida de balón no nombra al hombre libre");
   await shot("05-salida");
@@ -142,7 +146,7 @@ try {
   await p.getByRole("button", { name: "Exportar HTML" }).click();
   await p.waitForFunction(() => window.__saved.length > 0);
   const saved = await p.evaluate(() => window.__saved[0]);
-  if (!saved.filename.endsWith(".html") || !saved.data.includes("Paso 1 de")) fail("El HTML exportado no tiene los pasos");
+  if (!saved.filename.endsWith(".html") || !saved.data.includes("fcsd-player") || !saved.data.includes("Esto no cambia nunca")) fail("El HTML exportado no tiene los pasos");
 
   // 7. Biblioteca con la pizarra guardada.
   await p.getByRole("link", { name: "Biblioteca" }).click();

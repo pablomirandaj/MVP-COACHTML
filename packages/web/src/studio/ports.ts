@@ -1,6 +1,6 @@
 // Puertos de Pizarra Studio (diseño §5.1): la interfaz solo habla con estas cuatro piezas. Hay dos anfitriones:
 // la página de Claude (hosts/artifact.ts) y el servidor propio (hosts/server.ts).
-import type { BoardDoc, Command, Player, PlayDoc, SceneSpec, Tracks } from "@fcs/engine";
+import type { BoardDoc, Command, Player, PlayDoc, SceneSpec, Sheet } from "@fcs/engine";
 import type { Workspace } from "@fcs/assistant";
 
 export interface TeamInfo { name: string; short: string; competition: string; season: string; colors: { primary: string; ink: string }; home_ground?: string; snapshot_at: string; source: string }
@@ -29,6 +29,8 @@ export interface StudioItem {
   revision: number; updated_at: string;
   /** Comandos aplicados (para auditoría y para rehacer con otra versión del motor). */
   history: Command[][];
+  /** Ficha de la jugada (quién hace qué, hueco, clave, riesgo). Si falta, se propone desde el motor. */
+  sheet?: Sheet;
 }
 export type ItemMeta = Omit<StudioItem, "doc" | "history"> & { doc?: StudioItem["doc"] };
 export interface Saved { id: string; revision: number; updated_at: string }
@@ -56,8 +58,8 @@ export interface AiPort {
   turn(req: AiTurnRequest): Promise<AiTurnResult>;
 }
 
-export interface ExportMeta { title: string; opponent?: string; match?: string }
-export interface ExportPort { exportHtml(tracks: Tracks, meta: ExportMeta): Promise<void> }
+/** Entrega al usuario un HTML ya construido (descarga en la página de Claude o en el navegador). */
+export interface ExportPort { saveHtml(filename: string, html: string): Promise<void> }
 
 export interface Host { mode: "artifact" | "server"; team: TeamPort; store: StorePort; ai: AiPort; exporter: ExportPort }
 

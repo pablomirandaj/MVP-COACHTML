@@ -3,7 +3,7 @@
 import { ASK_COACH, contextSummary, execTool, SYSTEM_PROMPT, type Workspace } from "@fcs/assistant";
 import type { Player } from "@fcs/engine";
 import { slug, StoreError, type AiPort, type AiTurnRequest, type ExportPort, type Host, type ItemMeta, type StorePort, type StudioItem, type TeamPort } from "../ports";
-import { exportDocument, seedRoster, SNAPSHOT, TEAM } from "./common";
+import { seedRoster, SNAPSHOT, TEAM } from "./common";
 
 type Use = (name: string) => Promise<any>;
 const use: Use = (name) => (globalThis as any).window?.claude?.use?.(name) ?? Promise.resolve(null);
@@ -113,9 +113,9 @@ function aiPort(sample: any): AiPort {
 
 function exportPort(downloads: any): ExportPort {
   return {
-    async exportHtml(tracks, meta) {
+    async saveHtml(filename, html) {
       if (!downloads) throw new Error("Esta vista no permite descargar archivos.");
-      await downloads.save({ filename: `${slug(meta.title)}.html`, data: exportDocument(tracks, meta) });
+      await downloads.save({ filename: `${slug(filename.replace(/\.html$/, ""))}.html`, data: html });
     },
   };
 }

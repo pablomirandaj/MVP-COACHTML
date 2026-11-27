@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Thumb } from "../components/Thumb";
 import { useStudio } from "../lib/context";
 import { tracksOf } from "../lib/editor";
+import { buildDossier, DEFAULT_RULES } from "../lib/dossier";
 import { shortDate, teamShort } from "../lib/format";
 import type { ItemMeta, StudioItem, StudioKind } from "../ports";
 
@@ -10,7 +11,7 @@ const KIND_ES: Record<StudioKind, string> = { BOARD: "Pizarra", SETPIECE: "Baló
 const ROUTE = { BOARD: "board", SETPIECE: "setpieces", SCENE: "plans" } as const;
 
 export function Library() {
-  const { host, go, roster, libraryVersion, bumpLibrary } = useStudio();
+  const { host, go, roster, libraryVersion, bumpLibrary, rules } = useStudio();
   const [items, setItems] = useState<ItemMeta[] | null>(null);
   const [kind, setKind] = useState<StudioKind | "ALL">("ALL");
   const [match, setMatch] = useState<number | "ALL">("ALL");
@@ -28,8 +29,11 @@ export function Library() {
   };
   const exportItem = async (id: string) => {
     try {
-      const it = await load(id); const tracks = tracksOf(it.kind, it.doc, roster, it.title);
-      if (tracks) await host.exporter.exportHtml(tracks, { title: it.title, opponent: it.opponent, match: it.match ? `Jornada ${it.match}` : undefined });
+      const it = await load(id);
+      const { html, skipped } = buildDossier([it], { team: host.team.team(), roster, rules: rules.length ? rules : DEFAULT_RULES, title: it.title,
+        match: it.match ? `Jornada ${it.match}` : undefined, opponent: it.opponent ? teamShort(it.opponent) : undefined });
+      if (skipped) throw new Error("Esta jugada no tiene pasos que exportar.");
+      await host.exporter.saveHtml(it.title, html);
     } catch (e) { setError((e as Error).message); }
   };
   return (

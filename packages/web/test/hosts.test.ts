@@ -76,12 +76,15 @@ describe("Anfitrión de la página de Claude", () => {
     expect(await host.ai.available()).toBe(false);
   });
 
-  it("exportar el HTML lo entrega a downloads con extensión .html", async () => {
+  it("exportar la carpeta la entrega a downloads con extensión .html y el formato de la J5", async () => {
     const f = fakeClaude();
     const host = await createArtifactHost();
-    const { boardTracks } = await import("@fcs/engine");
-    await host.exporter.exportHtml(boardTracks(createBoard({ own: "F_433", opp: "F_442" })), { title: "Salida / por fuera", opponent: "Sporting Hortaleza" });
+    const { buildDossier, DEFAULT_RULES } = await import("../src/studio/lib/dossier");
+    const item: StudioItem = { id: "b1", kind: "BOARD", title: "Salida / por fuera", doc: createBoard({ own: "F_433", opp: "F_442" }), revision: 1, updated_at: "", history: [] };
+    const { html, skipped } = buildDossier([item], { team: host.team.team(), roster: [], rules: DEFAULT_RULES, title: "Salida por fuera", opponent: "Sporting Hortaleza" });
+    expect(skipped).toBe(0);
+    await host.exporter.saveHtml("Salida / por fuera", html);
     expect(f.saved[0].filename).toMatch(/\.html$/);
-    expect(String(f.saved[0].data)).toContain("Sporting Hortaleza");
+    for (const t of ["Sporting Hortaleza", "Esto no cambia nunca", "data:image/png"]) expect(String(f.saved[0].data)).toContain(t);
   });
 });

@@ -1,8 +1,9 @@
 // Estado del editor (función pura): documento, historial con deshacer/rehacer y pistas para dibujar.
 // Cada acción del entrenador o cada turno del asistente es UNA entrada del historial.
 import {
-  applyBoardCommand, applyPlayCommand, boardTracks, computeScene, createSetPiece, DEFAULT_PITCH, playTracks, record, redo, sceneTracks,
-  startHistory, undo, type BoardDoc, type Clarification, type Command, type History, type Player, type PlayDoc, type SceneSpec, type Tracks,
+  applyBoardCommand, applyPlayCommand, boardTracks, computeScene, createSetPiece, DEFAULT_PITCH, playTracks, proposeSheet, record, redo, sceneTracks,
+  sequenceOfBoard, sequenceOfPlay, sequenceOfScene, startHistory, undo,
+  type BoardDoc, type Clarification, type Command, type History, type Player, type PlayDoc, type SceneSpec, type Sequence, type Sheet, type Tracks,
 } from "@fcs/engine";
 import { commandErrors } from "@fcs/assistant";
 import type { StudioKind } from "../ports";
@@ -91,4 +92,22 @@ export function tracksOf(kind: StudioKind, doc: AnyDoc | null, roster: Player[],
   if (kind === "BOARD") return { ...boardTracks(doc as BoardDoc, roster), title };
   if (kind === "SETPIECE") return playTracks(doc as PlayDoc, roster, title);
   return sceneTracks(computeScene(doc as SceneSpec, DEFAULT_PITCH), title);
+}
+
+/** Secuencia por pasos (formato de la J5) de cualquier pieza. En balón parado, números de papel o dorsales. */
+export function sequenceOf(kind: StudioKind, doc: AnyDoc | null, roster: Player[], labels: "ROLE" | "DORSAL" = "ROLE", title?: string): Sequence | null {
+  if (!doc) return null;
+  try {
+    if (kind === "BOARD") return { ...sequenceOfBoard(doc as BoardDoc), ...(title ? { title } : {}) };
+    if (kind === "SETPIECE") return sequenceOfPlay(doc as PlayDoc, roster, { labels, title });
+    const sc = computeScene(doc as SceneSpec, DEFAULT_PITCH);
+    return { ...sequenceOfScene(sc), ...(title ? { title } : {}) };
+  } catch { return null; }
+}
+
+/** Ficha propuesta por el motor para una pieza. */
+export function sheetOf(kind: StudioKind, doc: AnyDoc, seq: Sequence): Sheet {
+  if (kind === "SETPIECE") return proposeSheet(seq, { kind: "SETPIECE", doc: doc as PlayDoc });
+  if (kind === "SCENE") return proposeSheet(seq, { kind: "SCENE", scene: computeScene(doc as SceneSpec, DEFAULT_PITCH) });
+  return proposeSheet(seq, { kind: "BOARD", doc: doc as BoardDoc });
 }
