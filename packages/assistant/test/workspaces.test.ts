@@ -58,3 +58,16 @@ describe("@fcs/assistant — workspaces", () => {
     expect(doc.steps).toHaveLength(1);
   });
 });
+
+describe("@fcs/assistant — ficha de la jugada", () => {
+  it("set_sheet entrega la ficha al editor y rechaza formas inválidas", async () => {
+    let sheet: unknown = null;
+    const ws = boardWorkspace({ doc: createBoard({ own: "F_433", opp: "F_442" }), roster }, () => {}, (s) => { sheet = s; });
+    expect(ws.tools().map((t) => t.name)).toContain("set_sheet");
+    const ok = await ws.exec("set_sheet", { sheet: { subtitle: "Salida por fuera", table: [["6", "Baja entre centrales"]], hueco: "La espalda del lateral", clave: "Atraer y soltar", riesgo: "Pérdida en salida" } });
+    expect(ok.is_error).toBeFalsy();
+    expect((sheet as any).table[0]).toEqual(["6", "Baja entre centrales"]);
+    const bad = await ws.exec("set_sheet", { sheet: { subtitle: 3, table: "x" } });
+    expect(bad.is_error).toBe(true);
+  });
+});

@@ -2,7 +2,7 @@
 // (todo en el navegador) y pueden usarse en el servidor antes de guardar. Resultados cortos (≤ 1 KB) para el modelo.
 import {
   applyBoardCommand, applyPlayCommand, computeScene, createSetPiece, DEFAULT_PITCH, resolvePlayerRef, whoIsWho,
-  type BoardDoc, type Command, type Diagnostic, type EngineContext, type Player, type PlayDoc, type SceneSpec,
+  type BoardDoc, type Command, type Diagnostic, type EngineContext, type Player, type PlayDoc, type SceneSpec, type Sheet,
 } from "@fcs/engine";
 import type { LlmToolDef } from "./adapter";
 import { commandErrors } from "./validate";
@@ -29,6 +29,25 @@ const result = (o: Record<string, unknown>, is_error = false): ToolOutcome => {
 
 export function contextSummary(ws: Workspace): string { return byteClip(ws.context(), MAX_CONTEXT); }
 
+// ---- Ficha de la jugada ---------------------------------------------------------------------
+const SHEET_TOOL: LlmToolDef = {
+  name: "set_sheet",
+  description: "Escribe la ficha de la jugada como la de la J5: subtítulo, tabla quién/qué (número de papel o dorsal y su tarea), el hueco que atacamos, la clave y si sale mal. Frases cortas, en palabras del entrenador.",
+  input_schema: { type: "object", additionalProperties: false, required: ["sheet"], properties: { sheet: { type: "object", required: ["subtitle", "table", "hueco", "clave", "riesgo"], properties: {
+    subtitle: { type: "string" }, hueco: { type: "string" }, clave: { type: "string" }, riesgo: { type: "string" },
+    table: { type: "array", maxItems: 14, items: { type: "array", minItems: 2, maxItems: 2, items: { type: "string" } } } } } } },
+};
+function sheetTool(input: any, onSheet?: (s: Sheet) => void): ToolOutcome {
+  const sh = input?.sheet;
+  const str = (v: unknown, n: number) => typeof v === "string" && v.length > 0 && v.length <= n;
+  const okTable = Array.isArray(sh?.table) && sh.table.length <= 14 && sh.table.every((r: unknown) => Array.isArray(r) && r.length === 2 && str(r[0], 40) && str(r[1], 300));
+  if (!sh || !str(sh.subtitle, 140) || !okTable || !str(sh.hueco, 400) || !str(sh.clave, 400) || !str(sh.riesgo, 400))
+    return result({ error: "La ficha necesita subtitle, table [[quién, qué]] (≤ 14 filas), hueco, clave y riesgo como textos." }, true);
+  if (!onSheet) return result({ error: "Esta pieza no tiene ficha." }, true);
+  onSheet({ subtitle: sh.subtitle, table: sh.table.map((r: string[]) => [r[0], r[1]]), hueco: sh.hueco, clave: sh.clave, riesgo: sh.riesgo });
+  return result({ sheet: "guardada", rows: sh.table.length });
+}
+
 // ---- Resolver nombres de entrenador ("el pivote", "el 6", "Raúl") ----------------------------
 const RESOLVE_TOOL: LlmToolDef = {
   name: "resolve_player",
@@ -42,7 +61,7 @@ function resolveIn(text: string, formation: string, labels: Record<string, strin
 }
 
 // ---- Pizarra ------------------------------------------------------------------------------
-export function boardWorkspace(state: { doc: BoardDoc; roster: Player[]; opponent?: string }, onChange: (doc: BoardDoc) => void): Workspace {
+export function boardWorkspace(state: { doc: BoardDoc; roster: Player[]; opponent?: string }, onChange: (doc: BoardDoc) => void, onSheet?: (s: Sheet) => void): Workspace {
   return {
     kind: "BOARD",
     context() {
@@ -62,9 +81,10 @@ export function boardWorkspace(state: { doc: BoardDoc; roster: Player[]; opponen
         `Plantilla:\n${rosterLines(state.roster)}`,
       ].join("\n");
     },
-    tools: (): LlmToolDef[] => [commandsTool("apply_commands", "Aplica comandos board.* a la pizarra (add_step, move, pass, press, note, mark_step, set_formation, set_labels, rename, remove_step)."), RESOLVE_TOOL],
+    tools: (): LlmToolDef[] => [commandsTool("apply_commands", "Aplica comandos board.* a la pizarra (add_step, move, pass, press, note, mark_step, set_formation, set_labels, rename, remove_step)."), RESOLVE_TOOL, ...(onSheet ? [SHEET_TOOL] : [])],
     async exec(name, input) {
       if (name === "resolve_player") return resolveIn(input?.text, state.doc.own.formation, state.doc.own.labels, state.roster, "own:");
+      if (name === "set_sheet") return sheetTool(input, onSheet);
       if (name !== "apply_commands") return result({ error: `Herramienta desconocida: ${name}` }, true);
       const cmds = input?.commands as Command[];
       const err = commandErrors(cmds);
@@ -83,7 +103,7 @@ export function boardWorkspace(state: { doc: BoardDoc; roster: Player[]; opponen
 const EDIT_OPS = new Set(["play.move_actor", "play.shift_timing", "play.adjust_delivery", "play.set_delivery", "play.set_movement", "play.constraint", "play.assign_player", "play.set_taker", "play.remove_actor", "play.mark"]);
 const CREATE_OPS = new Set(["play.create", "play.set_taker", "play.set_delivery", "play.add_roles", "play.set_role", "play.relation", "play.constraint", "assert"]);
 
-export function setPieceWorkspace(state: { doc: PlayDoc | null; type: string; roster: Player[]; opponent?: string; lineupPlayerIds?: string[] }, onChange: (doc: PlayDoc) => void): Workspace {
+export function setPieceWorkspace(state: { doc: PlayDoc | null; type: string; roster: Player[]; opponent?: string; lineupPlayerIds?: string[] }, onChange: (doc: PlayDoc) => void, onSheet?: (s: Sheet) => void): Workspace {
   const ctx = (): EngineContext => ({ pitch: DEFAULT_PITCH, roster: state.roster, ...(state.lineupPlayerIds ? { lineupPlayerIds: state.lineupPlayerIds } : {}) });
   const summary = (d: PlayDoc) => {
     const name = (pid?: string | null) => { const p = state.roster.find((x) => x.id === pid); return p ? `${p.n ?? "-"} ${p.name}` : "—"; };
@@ -103,9 +123,10 @@ export function setPieceWorkspace(state: { doc: PlayDoc | null; type: string; ro
     tools: () => [
       commandsTool("create_setpiece", "Crea o rehace la jugada: play.create {type, side, depth_m?, distance_m?, variant?, scheme?} y comandos de creación."),
       commandsTool("apply_commands", "Edita la jugada actual con comandos play.* de edición (incluido play.mark en defensa)."),
-      RESOLVE_TOOL,
+      RESOLVE_TOOL, ...(onSheet ? [SHEET_TOOL] : []),
     ],
     async exec(name, input) {
+      if (name === "set_sheet") return sheetTool(input, onSheet);
       if (name === "resolve_player") {
         const t = String(input?.text ?? "");
         const own = state.doc?.actors.filter((a) => a.team === "OWN") ?? [];
@@ -152,14 +173,15 @@ const SCENE_TOOL: LlmToolDef = {
   input_schema: { type: "object", additionalProperties: false, required: ["spec"], properties: { spec: { type: "object", required: ["type", "own", "opp", "params", "keyframes"] } } },
 };
 
-export function sceneWorkspace(state: { spec: SceneSpec; roster: Player[]; opponent?: string }, onChange: (spec: SceneSpec) => void): Workspace {
+export function sceneWorkspace(state: { spec: SceneSpec; roster: Player[]; opponent?: string }, onChange: (spec: SceneSpec) => void, onSheet?: (s: Sheet) => void): Workspace {
   return {
     kind: "SCENE",
     context: () => [`ESCENA${state.opponent ? ` contra ${state.opponent}` : ""} (especificación actual):`, JSON.stringify(state.spec),
       `Quién es quién en nuestro ${state.spec.own.formation} (ranuras para "who"/"holder"):\n${whoIsWho(state.spec.own.formation, state.spec.own.labels ?? {}, state.roster)}`,
       `Plantilla:\n${rosterLines(state.roster)}`].join("\n"),
-    tools: () => [SCENE_TOOL, RESOLVE_TOOL],
+    tools: () => [SCENE_TOOL, RESOLVE_TOOL, ...(onSheet ? [SHEET_TOOL] : [])],
     async exec(name, input) {
+      if (name === "set_sheet") return sheetTool(input, onSheet);
       if (name === "resolve_player") return resolveIn(input?.text, state.spec.own.formation, state.spec.own.labels ?? {}, state.roster, "");
       if (name !== "update_scene") return result({ error: `Herramienta desconocida: ${name}` }, true);
       const spec = input?.spec as SceneSpec;
