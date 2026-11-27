@@ -23,9 +23,15 @@ export interface PitchProps {
   onSelect?: (actorId: string | null) => void;
   /** Desplazamiento en metros del marco de ataque (dx hacia la portería rival, dy hacia la derecha). */
   onDragEnd?: (actorId: string, dx_m: number, dy_m: number) => void;
+  /** Toque en el césped (fuera de un jugador), en coordenadas normalizadas del marco de ataque. */
+  onPitchClick?: (pt: { u: number; v: number }) => void;
+  /** Colores: fichas propias (relleno y borde) y rivales. Por defecto, los de la app. */
+  ownColor?: string; ownInk?: string; oppColor?: string;
+  /** Jugadores resaltados (p. ej. el que tiene el balón o el pasador elegido). */
+  highlight?: string[];
 }
 
-export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag, onSelect, onDragEnd }: PitchProps) {
+export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag, onSelect, onDragEnd, onPitchClick, ownColor, ownInk, oppColor, highlight }: PitchProps) {
   const vertical = useVertical();
   const L = tracks.pitch.length_m, W = tracks.pitch.width_m;
   const x0 = tracks.view === "HALF_ATT" ? L / 2 - 2 : -3, x1 = L + 3;
@@ -60,7 +66,12 @@ export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag
   const s = { fill: "none", stroke: C.pl, strokeWidth: 0.3 };
   return (
     <svg className="pitch" viewBox={vb.join(" ")} role="img" aria-label={tracks.title} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)}
-      onClick={(e) => { if (e.target === e.currentTarget) onSelect?.(null); }}>
+      onClick={(e) => {
+        const el = e.target as Element;
+        if (el.closest("[data-actor]")) return;
+        if (onPitchClick && rootRef.current) { const p = toPitch(e as unknown as RPointerEvent); onPitchClick({ u: Math.round((p.x / L) * 10000) / 10000, v: Math.round((p.y / W) * 10000) / 10000 }); return; }
+        onSelect?.(null);
+      }}>
       <defs>
         <clipPath id="vb"><rect x={vb[0]} y={vb[1]} width={vb[2]} height={vb[3]} /></clipPath>
         {[["ah", "#fff"], ["ahp", C.press], ["ahc", C.cover]].map(([id, c]) => (
@@ -91,13 +102,13 @@ export function Pitch({ tracks, t, hideBall, showPaths = true, selected, canDrag
             if (drag?.id === a.id) { x += drag.x - drag.sx; y += drag.y - drag.sy; }
             const draggable = !!canDrag?.(a.id);
             return (
-              <g key={a.id} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${K})`} onPointerDown={down(a.id)}
+              <g key={a.id} data-actor={a.id} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${K})`} onPointerDown={down(a.id)}
                 style={{ cursor: draggable ? "grab" : "pointer", touchAction: "none" }} role="button" aria-label={a.title} tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect?.(a.id); }}>
                 <title>{a.title + (a.proposal ? " (propuesta)" : "")}</title>
                 {a.team === "OWN"
-                  ? <circle r={1.3} fill={C.own} stroke={selected === a.id ? C.sel : "#fff"} strokeWidth={selected === a.id ? 0.5 : 0.25} strokeDasharray={a.proposal ? "0.6 0.4" : undefined} />
-                  : <rect x={-1.05} y={-1.05} width={2.1} height={2.1} rx={0.35} fill={C.opp} stroke={selected === a.id ? C.sel : "#e5e7eb"} strokeWidth={0.15} opacity={0.92} />}
+                  ? <circle r={1.3} fill={ownColor ?? C.own} stroke={selected === a.id || highlight?.includes(a.id) ? C.sel : ownInk ?? "#fff"} strokeWidth={selected === a.id || highlight?.includes(a.id) ? 0.5 : ownInk ? 0.35 : 0.25} strokeDasharray={a.proposal ? "0.6 0.4" : undefined} />
+                  : <rect x={-1.05} y={-1.05} width={2.1} height={2.1} rx={0.35} fill={oppColor ?? C.opp} stroke={selected === a.id || highlight?.includes(a.id) ? C.sel : "#e5e7eb"} strokeWidth={selected === a.id || highlight?.includes(a.id) ? 0.4 : 0.15} opacity={0.92} />}
                 {a.label && <g transform={vertical ? "rotate(90)" : undefined}>
                   <text textAnchor="middle" dominantBaseline="central" fontSize={a.team === "OWN" ? (a.label.length > 2 ? 0.95 : 1.25) : 0.8} fontWeight={a.team === "OWN" ? 700 : 400} fill="#fff">{a.label}</text>
                 </g>}
